@@ -5,7 +5,7 @@
  * @license https://github.com/borodulin/yii2-oauth-server/blob/master/LICENSE
  */
 
-namespace app\oauth\models;
+namespace conquer\oauth2\models;
 
 use Yii;
 
@@ -87,4 +87,10 @@ class OauthClient extends \yii\db\ActiveRecord
     {
         return $this->hasMany(OauthRefreshToken::className(), ['client_id' => 'client_id']);
     }
+    
+    public function finishAuthorization()
+    {
+        
+    }
+    
 }

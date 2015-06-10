@@ -5,7 +5,7 @@
  * @license https://github.com/borodulin/yii2-oauth-server/blob/master/LICENSE
  */
 
-namespace app\oauth\models;
+namespace conquer\oauth2\models;
 
 use Yii;
 
