@@ -16,7 +16,8 @@
         }
     ],
     "require": {
-        "yiisoft/yii2": ">=2.0.4"
+        "yiisoft/yii2": ">=2.0.4",
+        "jakeasmith/http_build_url": "*"
     },
     "autoload": {
         "psr-4": {
@@ -25,7 +26,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0.0-dev"
+            "dev-master": "1.0.1-dev"
         }
     }
 }

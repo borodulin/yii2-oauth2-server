@@ -14,12 +14,12 @@ use yii\web\Response;
  * @author Andrey Borodulin
  *
  */
-class OauthTokenAction extends \yii\base\Action
+class OauthAction extends \yii\base\Action
 {
     
     public $grantTypes = [
             'authorization_code' => '\conquer\oauth\models\OauthAuthorizationCode',
-            'refresh_token' => '\conquer\oauth\models\OauthAuthorizationCode',
+            'refresh_token' => '\conquer\oauth\models\OauthRefreshToken',
 //             'client_credentials' => '\conquer\oauth\models\Oauth',
 //             'password' => '\conquer\oauth\models\Oauth',
 //             'urn:ietf:params:oauth:grant-type:jwt-bearer' => '',

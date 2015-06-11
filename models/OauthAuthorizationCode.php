@@ -110,7 +110,7 @@ class OauthAuthorizationCode extends \yii\db\ActiveRecord
         /**
          * @link http://tools.ietf.org/html/rfc6749#section-4.1.3
          */
-        if (strncmp($authCode->redirect_uri, $request->post('redirect_uri'), strlen($authCode->redirect_uri)!==0))
+        if (strcmp($authCode->redirect_uri, $request->post('redirect_uri'))!==0)
             throw new OauthException("The redirect URI is missing or do not match", 'redirect_uri_mismatch');
 
         if (empty($authCode->expires)||($authCode->expires < time()))

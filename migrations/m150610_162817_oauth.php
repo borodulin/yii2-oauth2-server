@@ -39,8 +39,7 @@ class m150610_162817_oauth extends Migration
                 'scopes' => Schema::TYPE_TEXT,
                 'PRIMARY KEY (access_token)',
         ]);
-        $this->addForeignKey('fk_oauth_access_token_oauth_client_client_id', '{{%oauth_access_token}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
-
+        
         $this->createTable('{{%oauth_refresh_token}}', [
                 'refresh_token' => Schema::TYPE_STRING . '(40) NOT NULL',
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
@@ -49,7 +48,6 @@ class m150610_162817_oauth extends Migration
                 'scopes' => Schema::TYPE_TEXT,
                 'PRIMARY KEY (refresh_token)',
         ]);
-        $this->addForeignKey('fk_oauth_refresh_token_oauth_client_client_id', '{{%oauth_refresh_token}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
         
         $this->createTable('{{%oauth_authorization_code}}', [
                 'authorization_code' => Schema::TYPE_STRING . '(40) NOT NULL',
@@ -61,7 +59,10 @@ class m150610_162817_oauth extends Migration
                 'id_token' => Schema::TYPE_STRING . '(40) NOT NULL',
                 'PRIMARY KEY (authorization_code)',
         ]);
-        $this->addForeignKey('fk_oauth_authorization_code_oauth_client_client_id', '{{%oauth_authorization_code}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
+        
+        $this->addforeignkey('fk_refresh_token_oauth_client_client_id', '{{%oauth_refresh_token}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
+        $this->addforeignkey('fk_authorization_code_oauth_client_client_id', '{{%oauth_authorization_code}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
+        $this->addforeignkey('fk_access_token_oauth_client_client_id', '{{%oauth_access_token}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
         
     }
     
