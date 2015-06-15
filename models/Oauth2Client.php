@@ -24,14 +24,14 @@ use Yii;
  * @property OauthAuthorizationCode[] $oauthAuthorizationCodes
  * @property OauthRefreshToken[] $oauthRefreshTokens
  */
-class OauthClient extends \yii\db\ActiveRecord
+class Oauth2Client extends \yii\db\ActiveRecord
 {
     /**
      * @inheritdoc
      */
     public static function tableName()
     {
-        return '{{%oauth_client}}';
+        return '{{%oauth2_client}}';
     }
 
     /**
@@ -88,9 +88,9 @@ class OauthClient extends \yii\db\ActiveRecord
         return $this->hasMany(OauthRefreshToken::className(), ['client_id' => 'client_id']);
     }
     
-    public function finishAuthorization()
+    public function setClientSecret($value)
     {
-        
+        $this->client_secret = \Yii::$app->security->generatePasswordHash($value);
     }
     
 }

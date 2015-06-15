@@ -18,7 +18,7 @@ class m150610_162817_oauth extends Migration
     // Use safeUp/safeDown to run migration code within a transaction
     public function safeUp()
     {   
-        $this->createTable('{{%oauth_client}}', [
+        $this->createTable('{{%oauth2_client}}', [
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
                 'client_secret' => Schema::TYPE_STRING . '(80) NOT NULL',
                 'redirect_uri' => Schema::TYPE_TEXT . ' NOT NULL',
@@ -31,7 +31,7 @@ class m150610_162817_oauth extends Migration
                 'PRIMARY KEY (client_id)',
         ]);
         
-        $this->createTable('{{%oauth_access_token}}', [
+        $this->createTable('{{%oauth2_access_token}}', [
                 'access_token' => Schema::TYPE_STRING . '(40) NOT NULL',
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
                 'user_id' => Schema::TYPE_INTEGER . ' NOT NULL',
@@ -40,7 +40,7 @@ class m150610_162817_oauth extends Migration
                 'PRIMARY KEY (access_token)',
         ]);
         
-        $this->createTable('{{%oauth_refresh_token}}', [
+        $this->createTable('{{%oauth2_refresh_token}}', [
                 'refresh_token' => Schema::TYPE_STRING . '(40) NOT NULL',
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
                 'user_id' => Schema::TYPE_INTEGER . ' NOT NULL',
@@ -49,7 +49,7 @@ class m150610_162817_oauth extends Migration
                 'PRIMARY KEY (refresh_token)',
         ]);
         
-        $this->createTable('{{%oauth_authorization_code}}', [
+        $this->createTable('{{%oauth2_authorization_code}}', [
                 'authorization_code' => Schema::TYPE_STRING . '(40) NOT NULL',
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
                 'user_id' => Schema::TYPE_INTEGER . ' NOT NULL',
@@ -60,17 +60,17 @@ class m150610_162817_oauth extends Migration
                 'PRIMARY KEY (authorization_code)',
         ]);
         
-        $this->addforeignkey('fk_refresh_token_oauth_client_client_id', '{{%oauth_refresh_token}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
-        $this->addforeignkey('fk_authorization_code_oauth_client_client_id', '{{%oauth_authorization_code}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
-        $this->addforeignkey('fk_access_token_oauth_client_client_id', '{{%oauth_access_token}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
+        $this->addforeignkey('fk_refresh_token_oauth2_client_client_id', '{{%oauth_refresh_token}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
+        $this->addforeignkey('fk_authorization_code_oauth2_client_client_id', '{{%oauth_authorization_code}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
+        $this->addforeignkey('fk_access_token_oauth2_client_client_id', '{{%oauth_access_token}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
         
     }
     
     public function safeDown()
     {
-        $this->dropTable('{{%oauth_authorization_code}}');
-        $this->dropTable('{{%oauth_refresh_token}}');
-        $this->dropTable('{{%oauth_access_token}}');
-        $this->dropTable('{{%oauth_client}}');
+        $this->dropTable('{{%oauth2_authorization_code}}');
+        $this->dropTable('{{%oauth2_refresh_token}}');
+        $this->dropTable('{{%oauth2_access_token}}');
+        $this->dropTable('{{%oauth2_client}}');
     }
 }

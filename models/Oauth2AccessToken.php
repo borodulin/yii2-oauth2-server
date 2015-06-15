@@ -10,9 +10,9 @@ namespace conquer\oauth2\models;
 use Yii;
 
 /**
- * This is the model class for table "oauth_refresh_token".
+ * This is the model class for table "oauth_access_token".
  *
- * @property string $refresh_token
+ * @property string $access_token
  * @property string $client_id
  * @property integer $user_id
  * @property integer $expires
@@ -21,14 +21,14 @@ use Yii;
  * @property OauthClient $client
  * @property User $user
  */
-class OauthRefreshToken extends \yii\db\ActiveRecord
+class Oauth2AccessToken extends \yii\db\ActiveRecord
 {
     /**
      * @inheritdoc
      */
     public static function tableName()
     {
-        return '{{%oauth_refresh_token}}';
+        return '{{%oauth2_access_token}}';
     }
 
     /**
@@ -37,10 +37,10 @@ class OauthRefreshToken extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['refresh_token', 'client_id', 'user_id', 'expires'], 'required'],
+            [['access_token', 'client_id', 'user_id', 'expires'], 'required'],
             [['user_id', 'expires'], 'integer'],
             [['scopes'], 'string'],
-            [['refresh_token'], 'string', 'max' => 40],
+            [['access_token'], 'string', 'max' => 40],
             [['client_id'], 'string', 'max' => 80]
         ];
     }
@@ -51,7 +51,7 @@ class OauthRefreshToken extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'refresh_token' => 'Refresh Token',
+            'access_token' => 'Access Token',
             'client_id' => 'Client ID',
             'user_id' => 'User ID',
             'expires' => 'Expires',

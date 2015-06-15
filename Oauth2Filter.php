@@ -17,9 +17,9 @@ use conquer\oauth2\models\OauthAccessToken;
  * @author Andrey Borodulin
  * 
  */
-class OauthFilter extends \yii\base\ActionFilter
+class Oauth2Filter extends \yii\base\ActionFilter
 {
-    
+    // Token type to respond with. Currently only "Bearer" supported.
     public $tokenType = 'Bearer';
 
     /**

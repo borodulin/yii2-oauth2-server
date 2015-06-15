@@ -10,25 +10,33 @@ namespace conquer\oauth2\models;
 use Yii;
 
 /**
- * This is the model class for table "oauth_access_token".
+ * This is the model class for table "oauth_authorization_code".
  *
- * @property string $access_token
+ * @property string $authorization_code
  * @property string $client_id
  * @property integer $user_id
+ * @property string $redirect_uri
  * @property integer $expires
  * @property string $scopes
+ * @property string $id_token
  *
  * @property OauthClient $client
  * @property User $user
  */
-class OauthAccessToken extends \yii\db\ActiveRecord
+class Oauth2AuthorizationCode extends \yii\db\ActiveRecord
 {
+    /**
+     * 
+     * @var OauthClient
+     */
+    private $_client;
+    
     /**
      * @inheritdoc
      */
     public static function tableName()
     {
-        return '{{%oauth_access_token}}';
+        return '{{%oauth2_authorization_code}}';
     }
 
     /**
@@ -37,11 +45,12 @@ class OauthAccessToken extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['access_token', 'client_id', 'user_id', 'expires'], 'required'],
+            [['authorization_code', 'client_id', 'user_id', 'redirect_uri', 'expires', 'id_token'], 'required'],
             [['user_id', 'expires'], 'integer'],
             [['scopes'], 'string'],
-            [['access_token'], 'string', 'max' => 40],
-            [['client_id'], 'string', 'max' => 80]
+            [['authorization_code'], 'string', 'max' => 40],
+            [['client_id', 'id_token'], 'string', 'max' => 80],
+            [['redirect_uri'], 'string', 'max' => 2000]
         ];
     }
 
@@ -51,11 +60,13 @@ class OauthAccessToken extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'access_token' => 'Access Token',
+            'authorization_code' => 'Authorization Code',
             'client_id' => 'Client ID',
             'user_id' => 'User ID',
+            'redirect_uri' => 'Redirect Uri',
             'expires' => 'Expires',
             'scopes' => 'Scopes',
+            'id_token' => 'Id Token',
         ];
     }
 

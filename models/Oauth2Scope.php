@@ -15,14 +15,14 @@ use Yii;
  * @property string $scope
  * @property integer $is_default
  */
-class OauthScope extends \yii\db\ActiveRecord
+class Oauth2Scope extends \yii\db\ActiveRecord
 {
     /**
      * @inheritdoc
      */
     public static function tableName()
     {
-        return '{{%oauth_scope}}';
+        return '{{%oauth2_scope}}';
     }
 
     /**

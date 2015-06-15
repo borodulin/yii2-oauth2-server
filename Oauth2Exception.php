@@ -13,15 +13,17 @@ use yii\web\Response;
  * @author Andrey Borodulin
  * 
  */
-class OauthException extends \yii\base\UserException
+class Oauth2Exception extends \yii\base\UserException
 {
     /**
      * @var integer HTTP status code, such as 403, 404, 500, etc.
      */
-    public $statusCode;
+    protected $statusCode;
 
-    public $name;
+    protected $name;
 
+    
+    
     /**
      * Constructor.
      * @param string $message error message
