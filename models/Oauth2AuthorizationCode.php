@@ -46,7 +46,7 @@ class Oauth2AuthorizationCode extends \yii\db\ActiveRecord
     {
         return [
             [['authorization_code', 'client_id', 'user_id', 'redirect_uri', 'expires', 'id_token'], 'required'],
-            [['user_id', 'expires'], 'integer'],
+            [['user_id', 'expires', 'created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
             [['scopes'], 'string'],
             [['authorization_code'], 'string', 'max' => 40],
             [['client_id', 'id_token'], 'string', 'max' => 80],
@@ -54,6 +54,17 @@ class Oauth2AuthorizationCode extends \yii\db\ActiveRecord
         ];
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function behaviors()
+    {
+        return [
+            ['class'=>\yii\behaviors\TimestampBehavior::className()],
+            ['class'=>\yii\behaviors\BlameableBehavior::className()],
+        ];
+    }
+    
     /**
      * @inheritdoc
      */

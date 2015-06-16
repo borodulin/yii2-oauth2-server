@@ -9,8 +9,9 @@ namespace conquer\oauth2;
 
 use conquer\oauth2\Oauth2Server;
 use conquer\oauth2\Oauth2Exception;
+use conquer\oauth2\models\Oauth2AccessToken;
 use yii\base\Action;
-
+use yii\web\Response;
 
 /**
  * Oauth2Bearer is an action filter that supports the authentication method based on HTTP Bearer token.
@@ -45,14 +46,11 @@ class Oauth2Bearer extends \yii\filters\auth\AuthMethod
      */
     public function beforeAction($action)
     {
-        \Yii::$app->response->format = Response::FORMAT_JSON;
+        $response = $this->response ? : \Yii::$app->getResponse();
         
-        /* @var $accessToken \conquer\oauth2\models\OauthAccessToken */
-        $accessToken = OauthAccessToken::findOne(['access_token' => $this->getAccessToken()]);
-        if($accessToken->expires < time())
-            throw new OauthException('The access token provided has expired', 'expired_token');
-    
-        return true;
+        $response->format = Response::FORMAT_JSON;
+
+        return parent::beforeAction($action);
     }
     
     /**
@@ -72,18 +70,10 @@ class Oauth2Bearer extends \yii\filters\auth\AuthMethod
         
         if (empty($identity))
             throw new Oauth2Exception('User is not found', self::ERROR_USER_DENIED);
-        \Yii::$app->user->switchIdentity($identity);
         
-        
-        $user->switchIdentity($identity);
-        
+        $user->setIdentity($identity);
 
-        if ($identity === null) {
-            $this->handleFailure($response);
-        }
         return $identity;
-
-        return null;
     }
 
     /**
@@ -93,5 +83,13 @@ class Oauth2Bearer extends \yii\filters\auth\AuthMethod
     {
         $realm =  empty($this->realm) ? $this->owner->getUniqueId() : $this->realm; 
         $response->getHeaders()->set('WWW-Authenticate', "Bearer realm=\"{$realm}\"");
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function handleFailure($response)
+    {
+        throw new Oauth2Exception('You are requesting with an invalid credential.');
     }
 }

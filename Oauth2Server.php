@@ -221,13 +221,13 @@ class Oauth2Server extends \yii\base\Component
         } elseif ($clientId = $request->get('client_id', $request->post('client_id'))) {
             $clientSecret = $request->get('client_secret', $request->post('client_secret'));
         } else
-            throw new OauthException('Client id was not found in the headers or body', self::ERROR_INVALID_CLIENT);
+            throw new Oauth2Exception('Client id was not found in the headers or body', self::ERROR_INVALID_CLIENT);
         /* @var $client OauthClient */
-        if (!$client = OauthClient::findOne(['client_id'=>$clientId]))
-            throw new OauthException('The client was not found', self::ERROR_INVALID_CLIENT);
+        if (!$client = Oauth2Client::findOne(['client_id'=>$clientId]))
+            throw new Oauth2Exception('The client was not found', self::ERROR_INVALID_CLIENT);
     
-        if (!\Yii::$app->security->validatePassword($clientSecret, $client->client_secret))
-            throw new OauthException('The client credentials are invalid', self::ERROR_INVALID_CLIENT);
+//         if (!\Yii::$app->security->validatePassword($clientSecret, $client->client_secret))
+//             throw new Oauth2Exception('The client credentials are invalid', self::ERROR_INVALID_CLIENT);
     
         return $client;
     }
@@ -248,7 +248,7 @@ class Oauth2Server extends \yii\base\Component
             // @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.1.2.1
             // @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.2.2.1
             if (strncasecmp($redirectUri, $client->redirect_uri, strlen($client->redirect_uri))!==0)
-                throw new OauthException('The redirect URI provided is missing or does not match', self::ERROR_REDIRECT_URI_MISMATCH);
+                throw new Oauth2Exception('The redirect URI provided is missing or does not match', self::ERROR_REDIRECT_URI_MISMATCH);
             return $redirectUri;
         }
         return $client->redirect_uri;
@@ -259,16 +259,21 @@ class Oauth2Server extends \yii\base\Component
      * @throws OauthRedirectException
      * @return string|null
      */
-    public function validateState()
+    public function validateState($redirectUri = null)
     {
+        $request = \Yii::$app->request;
         // Validate state parameter exists (if configured to enforce this)
-        if(!$state = $request->get('state', $request->post('state')) && $this->enforceState)
-            throw new Oauth2RedirectException($redirectUri, "The state parameter is required.");
+        if(!($state = $request->get('state', $request->post('state'))) && $this->enforceState)
+            if($redirectUri)
+                throw new Oauth2RedirectException($redirectUri, "The state parameter is required.");
+            else
+                throw new Oauth2Exception("The state parameter is required.");
         return $state;        
     }
     
     public function validateResponseType($redirectUri = null)
     {
+        $request = \Yii::$app->request;
         if(!$responseType = $request->get('response_type',$request->post('response_type')))
             if($redirectUri)
                 throw new Oauth2RedirectException($redirectUri, 'Invalid or missing response type.', $state);
@@ -279,6 +284,7 @@ class Oauth2Server extends \yii\base\Component
                 throw new Oauth2RedirectException($redirectUri, 'Invalid or missing response type.', $state);
             else
             throw new Oauth2RedirectException($redirectUri, 'An unsupported response type was requested.', 'unsupported_response_type', $state);
+        return $responseType;
     }
     /**
      * 
@@ -290,6 +296,7 @@ class Oauth2Server extends \yii\base\Component
      */
     public function validateScope($client, $redirectUri = null)
     {
+        $request = \Yii::$app->request;
         if($scope = $request->get('scope', $request->post('scope'))){
             // Validate that the requested scope is supported
             if (!$this->checkSets($scope, $client->scopes))
@@ -452,18 +459,21 @@ class Oauth2Server extends \yii\base\Component
         $client = $this->validateClient();
         $redirectUri = $this->validateRedirectUri($client);
         $state = $this->validateState();
-        if(\Yii::$app->user->isGuest)
+        $scope = $this->validateScope($client, $redirectUri);
+        $user = \Yii::$app->user;
+        if($user->isGuest)
             throw new Oauth2RedirectException($redirectUri, "The user denied access to your application", $state, self::ERROR_USER_DENIED);
         
         $responseType = $this->validateResponseType($redirectUri);
         switch ($responseType){
             case self::RESPONSE_TYPE_ACCESS_TOKEN:
-                $result["fragment"] = $this->createAccessToken($client_id, $user_id, $scope);
+                $result["fragment"] = $this->createAccessToken($client->client_id, $user->id, $scope);
                 $result["query"]["state"] = $state;
                 break;
             case self::RESPONSE_TYPE_AUTH_CODE:
-                $result["query"]["code"] = $this->createAuthCode($client_id, $user_id, $redirect_uri, $scope);
-                $result["query"]["state"] = $state;
+                $result["query"]["code"] = $this->createAuthorizationCode($client->client_id, $user->id, $redirectUri, $scope);
+                if($state)
+                    $result["query"]["state"] = $state;
                 break;
         }
         $redirectUri = http_build_url($redirectUri,$result, HTTP_URL_JOIN_QUERY);
@@ -491,11 +501,11 @@ class Oauth2Server extends \yii\base\Component
         $getToken = $request->get(self::TOKEN_TYPE_BEARER);
     
         // Check that exactly one method was used
-        $methodsUsed = !empty($header) + !empty($postToken) + !empty($getToken);
+        $methodsUsed = isset($authHeader) + isset($postToken) + isset($getToken);
         if ($methodsUsed > 1) {
-            throw new OauthException('Only one method may be used to authenticate at a time (Auth header, POST or GET).');
+            throw new Oauth2Exception('Only one method may be used to authenticate at a time (Auth header, POST or GET).');
         } elseif ($methodsUsed == 0) {
-            throw new OauthException('The access token was not found.');
+            throw new Oauth2Exception('The access token was not found.');
         }
     
         // HEADER: Get the access token from the header
@@ -503,7 +513,7 @@ class Oauth2Server extends \yii\base\Component
             if (preg_match("/^Bearer\\s+(.*?)$/", $authHeader, $matches)) 
                 $token = $matches[1];
             else
-                throw new OauthException('Malformed auth header.');
+                throw new Oauth2Exception('Malformed auth header.');
         } else {
             // POST: Get the token from POST data
             if ($postToken) {
@@ -512,7 +522,7 @@ class Oauth2Server extends \yii\base\Component
         
                 // IETF specifies content-type. NB: Not all webservers populate this _SERVER variable
                 if($request->contentType != 'application/x-www-form-urlencoded')
-                    throw new OauthException('The content type for POST requests must be "application/x-www-form-urlencoded"');
+                    throw new Oauth2Exception('The content type for POST requests must be "application/x-www-form-urlencoded"');
         
                 $token = $postToken;
             } else 
@@ -605,12 +615,13 @@ class Oauth2Server extends \yii\base\Component
      * @param string $scope
      * @return string
      */
-    public function createAuthorizationCode($clientId, $userId, $scope = null)
+    public function createAuthorizationCode($clientId, $userId, $redirectUri, $scope = null)
     {
         $authorizationCode = new Oauth2AuthorizationCode();
         $authorizationCode->authorization_code = $this->generateToken();
         $authorizationCode->client_id = $clientId;
         $authorizationCode->user_id = $userId;
+        $authorizationCode->redirect_uri = $redirectUri;
         $authorizationCode->scopes = $scope;
         $authorizationCode->expires = time() + $this->authCodeLifetime;
         $authorizationCode->save();

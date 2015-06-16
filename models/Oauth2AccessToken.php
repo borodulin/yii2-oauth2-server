@@ -7,8 +7,6 @@
 
 namespace conquer\oauth2\models;
 
-use Yii;
-
 /**
  * This is the model class for table "oauth_access_token".
  *
@@ -38,13 +36,24 @@ class Oauth2AccessToken extends \yii\db\ActiveRecord
     {
         return [
             [['access_token', 'client_id', 'user_id', 'expires'], 'required'],
-            [['user_id', 'expires'], 'integer'],
+            [['user_id', 'expires', 'created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
             [['scopes'], 'string'],
             [['access_token'], 'string', 'max' => 40],
             [['client_id'], 'string', 'max' => 80]
         ];
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function behaviors()
+    {
+        return [
+            ['class'=>\yii\behaviors\TimestampBehavior::className()],
+            ['class'=>\yii\behaviors\BlameableBehavior::className()],
+        ];
+    }
+    
     /**
      * @inheritdoc
      */

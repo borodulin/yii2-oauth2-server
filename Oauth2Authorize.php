@@ -25,14 +25,14 @@ class Oauth2Authorize extends \yii\base\ActionFilter
      */
     public function beforeAction($action)
     {
-        $response = \Yii::$app->response; 
-        $oldFormat = $response->format;
-        $response->format = Response::FORMAT_JSON;
+//         $response = \Yii::$app->response; 
+//         $oldFormat = $response->format;
+//         $response->format = Response::FORMAT_JSON;
         
         $oauth2Server = $this->getOauth2Server();
         $oauth2Server->validateAuthorizeRequest();
         
-        $response->format = $oldFormat;
+//         $response->format = $oldFormat;
         return true;
     }
 

@@ -24,10 +24,10 @@ class m150610_162817_oauth extends Migration
                 'redirect_uri' => Schema::TYPE_TEXT . ' NOT NULL',
                 'grant_types' => Schema::TYPE_TEXT . '(80) NOT NULL',
                 'scopes' => Schema::TYPE_TEXT,
-                'user_id' => Schema::TYPE_INTEGER . ' NOT NULL',
-                'expires' => Schema::TYPE_INTEGER . ' NOT NULL',
-                'scopes' => Schema::TYPE_TEXT,
-                'public_key' => Schema::TYPE_TEXT,
+                'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'created_by' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'updated_by' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'PRIMARY KEY (client_id)',
         ]);
         
@@ -37,6 +37,10 @@ class m150610_162817_oauth extends Migration
                 'user_id' => Schema::TYPE_INTEGER,
                 'expires' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'scopes' => Schema::TYPE_TEXT,
+                'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'created_by' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'updated_by' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'PRIMARY KEY (access_token)',
         ]);
         
@@ -46,6 +50,10 @@ class m150610_162817_oauth extends Migration
                 'user_id' => Schema::TYPE_INTEGER,
                 'expires' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'scopes' => Schema::TYPE_TEXT,
+                'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'created_by' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'updated_by' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'PRIMARY KEY (refresh_token)',
         ]);
         
@@ -57,12 +65,16 @@ class m150610_162817_oauth extends Migration
                 'expires' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'scopes' => Schema::TYPE_TEXT,
                 'id_token' => Schema::TYPE_STRING . '(40) NOT NULL',
+                'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'created_by' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'updated_by' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'PRIMARY KEY (authorization_code)',
         ]);
         
-        $this->addforeignkey('fk_refresh_token_oauth2_client_client_id', '{{%oauth_refresh_token}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
-        $this->addforeignkey('fk_authorization_code_oauth2_client_client_id', '{{%oauth_authorization_code}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
-        $this->addforeignkey('fk_access_token_oauth2_client_client_id', '{{%oauth_access_token}}', 'client_id', '{{%oauth_client}}', 'client_id', 'cascade', 'cascade');
+        $this->addforeignkey('fk_refresh_token_oauth2_client_client_id', '{{%oauth2_refresh_token}}', 'client_id', '{{%oauth2_client}}', 'client_id', 'cascade', 'cascade');
+        $this->addforeignkey('fk_authorization_code_oauth2_client_client_id', '{{%oauth2_authorization_code}}', 'client_id', '{{%oauth2_client}}', 'client_id', 'cascade', 'cascade');
+        $this->addforeignkey('fk_access_token_oauth2_client_client_id', '{{%oauth2_access_token}}', 'client_id', '{{%oauth2_client}}', 'client_id', 'cascade', 'cascade');
         
     }
     

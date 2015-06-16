@@ -40,14 +40,25 @@ class Oauth2Client extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['client_id', 'client_secret', 'redirect_uri', 'user_id', 'public_key'], 'required'],
+            [['client_id', 'client_secret', 'redirect_uri'], 'required'],
             [['scopes'], 'string'],
-            [['user_id'], 'integer'],
+            [['created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
             [['client_id', 'client_secret', 'grant_types'], 'string', 'max' => 80],
-            [['redirect_uri', 'public_key'], 'string', 'max' => 2000]
+            [['redirect_uri'], 'string', 'max' => 2000]
         ];
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function behaviors()
+    {
+        return [
+            ['class'=>\yii\behaviors\TimestampBehavior::className()],
+            ['class'=>\yii\behaviors\BlameableBehavior::className()],
+        ];
+    }
+    
     /**
      * @inheritdoc
      */
@@ -59,8 +70,6 @@ class Oauth2Client extends \yii\db\ActiveRecord
             'redirect_uri' => 'Redirect URI used for Authorization Grant',
             'grant_types' => 'Space-delimited list of grant types permitted, null = all',
             'scopes' => 'Space-delimited list of approved scopes',
-            'user_id' => 'FK to oauth_users.user_id',
-            'public_key' => 'Public key for encryption',
         ];
     }
 
