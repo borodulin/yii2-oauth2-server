@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://github.com/borodulin/yii2-oauth-server
+ * @link https://github.com/borodulin/yii2-oauth2-server
  * @copyright Copyright (c) 2015 Andrey Borodulin
- * @license https://github.com/borodulin/yii2-oauth-server/blob/master/LICENSE
+ * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
 use yii\db\Schema;
@@ -34,7 +34,7 @@ class m150610_162817_oauth extends Migration
         $this->createTable('{{%oauth2_access_token}}', [
                 'access_token' => Schema::TYPE_STRING . '(40) NOT NULL',
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
-                'user_id' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'user_id' => Schema::TYPE_INTEGER,
                 'expires' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'scopes' => Schema::TYPE_TEXT,
                 'PRIMARY KEY (access_token)',
@@ -43,7 +43,7 @@ class m150610_162817_oauth extends Migration
         $this->createTable('{{%oauth2_refresh_token}}', [
                 'refresh_token' => Schema::TYPE_STRING . '(40) NOT NULL',
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
-                'user_id' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'user_id' => Schema::TYPE_INTEGER,
                 'expires' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'scopes' => Schema::TYPE_TEXT,
                 'PRIMARY KEY (refresh_token)',
@@ -52,7 +52,7 @@ class m150610_162817_oauth extends Migration
         $this->createTable('{{%oauth2_authorization_code}}', [
                 'authorization_code' => Schema::TYPE_STRING . '(40) NOT NULL',
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
-                'user_id' => Schema::TYPE_INTEGER . ' NOT NULL',
+                'user_id' => Schema::TYPE_INTEGER,
                 'redirect_uri' => Schema::TYPE_TEXT . ' NOT NULL',
                 'expires' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'scopes' => Schema::TYPE_TEXT,

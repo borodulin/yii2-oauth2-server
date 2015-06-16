@@ -2,12 +2,12 @@
     "name": "conquer/oauth2",
     "description": "The Oauth2 Server extension for the Yii2 framework",
     "keywords": ["yii2", "oauth2", "oauth2-server"],
-    "homepage": "https://github.com/borodulin/yii2-oauth-server",
+    "homepage": "https://github.com/borodulin/yii2-oauth2-server",
     "type": "yii2-extension",
     "license": "MIT",
     "support": {
-        "issues": "https://github.com/borodulin/yii2-oauth-server/issues",
-        "source": "https://github.com/borodulin/yii2-oauth-server"
+        "issues": "https://github.com/borodulin/yii2-oauth2-server/issues",
+        "source": "https://github.com/borodulin/yii2-oauth2-server"
     },
     "authors": [
         {

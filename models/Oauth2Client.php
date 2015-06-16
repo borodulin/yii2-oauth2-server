@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://github.com/borodulin/yii2-oauth-server
+ * @link https://github.com/borodulin/yii2-oauth2-server
  * @copyright Copyright (c) 2015 Andrey Borodulin
- * @license https://github.com/borodulin/yii2-oauth-server/blob/master/LICENSE
+ * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
 namespace conquer\oauth2\models;
@@ -91,6 +91,11 @@ class Oauth2Client extends \yii\db\ActiveRecord
     public function setClientSecret($value)
     {
         $this->client_secret = \Yii::$app->security->generatePasswordHash($value);
+    }
+    
+    public function generateToken()
+    {
+        return \Yii::$app->security->generateRandomKey(40);
     }
     
 }

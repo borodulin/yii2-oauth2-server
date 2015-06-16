@@ -1,12 +1,11 @@
 <?php
 /**
- * @link https://github.com/borodulin/yii2-oauth-server
+ * @link https://github.com/borodulin/yii2-oauth2-server
  * @copyright Copyright (c) 2015 Andrey Borodulin
- * @license https://github.com/borodulin/yii2-oauth-server/blob/master/LICENSE
+ * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
 namespace conquer\oauth2;
-
 
 use yii\web\Response;
 
@@ -17,7 +16,7 @@ use yii\web\Response;
  * @author Andrey Borodulin
  * 
  */
-class Oauth2RedirectException extends OauthException
+class Oauth2RedirectException extends Oauth2Exception
 {
 	
 	protected $redirectUri;
@@ -25,16 +24,16 @@ class Oauth2RedirectException extends OauthException
 	protected $name;
 	
 	/**
-	 * @param string $redirect_uri 
-	 * @param string $error A single error code as described in Section 4.1.2.1
-	 * @param string $error_description (optional)
+	 * @param string $redirectUri 
+	 * @param string $error
+	 * @param string $errorDescription (optional)
 	 * @param string $state (optional) 
 	 * 
 	 * @see http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.1.2.1
 	 */
-	public function __construct($redirect_uri, $error_description = null, $state = null, $error = 'invalid_request')
+	public function __construct($redirectUri, $errorDescription = null, $state = null, $error = 'invalid_request')
 	{
-		parent::__construct($error_description, $error);
+		parent::__construct($errorDescription, $error);
 		
 		$this->name = $error;
 		
@@ -42,15 +41,17 @@ class Oauth2RedirectException extends OauthException
 	        'error' => $error,
 		];
 		
-		if($error_description)
-		  $query['error_description'] = $error_description;
+		if($errorDescription)
+		  $query['error_description'] = $errorDescription;
+
+// 		$state = isset($_POST['state']) ? $_POST['state'] : (isset($_GET['state']) ? $_GET['state'] : null);
 		
 		if($state)
 		    $query['state'] = $state;
 		
 		\Yii::$app->response->redirect(http_build_url($redirect_uri,[
 	        PHP_URL_QUERY => $query  
-		], HTTP_URL_REPLACE | HTTP_URL_JOIN_QUERY ));
+		], HTTP_URL_REPLACE | HTTP_URL_JOIN_QUERY));
 	}
 	
 	/**
