@@ -31,7 +31,7 @@ use yii\web\Response;
  *
  * @author Andrey Borodulin
  */
-class Oauth2Bearer extends \yii\filters\auth\AuthMethod
+class BearerAuth extends \yii\filters\auth\AuthMethod
 {
     /**
      * @var string the HTTP authentication realm

@@ -15,11 +15,17 @@ use conquer\oauth2\models\OauthAuthorizationCode;
  * @author Andrey Borodulin
  *
  */
-class Oauth2TokenAction extends \yii\base\Action
+class TokenAction extends \yii\base\Action
 {
+    
+    public $grantTypes = [
+        ''
+    ];
+    
     public function init()
     {
         \Yii::$app->response->format = Response::FORMAT_JSON;
+        $this->controller->enableCsrfValidation = false;
     }
     
     public function run()
@@ -28,8 +34,6 @@ class Oauth2TokenAction extends \yii\base\Action
 
         /* @var $oauth2Server Oauth2Server */
         $oauth2Server = \Yii::createObject(Oauth2Server::className());
-        
-        $grantType = $oauth2Server->validateGrantType();
         
         $client = $oauth2Server->validateClient();
         

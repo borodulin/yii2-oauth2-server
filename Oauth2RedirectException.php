@@ -50,8 +50,8 @@ class Oauth2RedirectException extends Oauth2Exception
 		    $query['state'] = $state;
 		
 		\Yii::$app->response->redirect(http_build_url($redirect_uri,[
-	        PHP_URL_QUERY => $query  
-		], HTTP_URL_REPLACE | HTTP_URL_JOIN_QUERY));
+	        PHP_URL_QUERY => http_build_query($query)  
+		], HTTP_URL_JOIN_QUERY));
 	}
 	
 	/**

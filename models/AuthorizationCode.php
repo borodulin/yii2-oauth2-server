@@ -20,10 +20,10 @@ use Yii;
  * @property string $scopes
  * @property string $id_token
  *
- * @property OauthClient $client
+ * @property Client $client
  * @property User $user
  */
-class Oauth2AuthorizationCode extends \yii\db\ActiveRecord
+class AuthorizationCode extends \yii\db\ActiveRecord
 {
     /**
      * 
@@ -45,26 +45,15 @@ class Oauth2AuthorizationCode extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['authorization_code', 'client_id', 'user_id', 'redirect_uri', 'expires', 'id_token'], 'required'],
-            [['user_id', 'expires', 'created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
+            [['authorization_code', 'client_id', 'user_id', 'redirect_uri', 'expires'], 'required'],
+            [['user_id', 'expires'], 'integer'],
             [['scopes'], 'string'],
             [['authorization_code'], 'string', 'max' => 40],
-            [['client_id', 'id_token'], 'string', 'max' => 80],
+            [['client_id'], 'string', 'max' => 80],
             [['redirect_uri'], 'string', 'max' => 2000]
         ];
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function behaviors()
-    {
-        return [
-            ['class'=>\yii\behaviors\TimestampBehavior::className()],
-            ['class'=>\yii\behaviors\BlameableBehavior::className()],
-        ];
-    }
-    
     /**
      * @inheritdoc
      */
@@ -77,7 +66,6 @@ class Oauth2AuthorizationCode extends \yii\db\ActiveRecord
             'redirect_uri' => 'Redirect Uri',
             'expires' => 'Expires',
             'scopes' => 'Scopes',
-            'id_token' => 'Id Token',
         ];
     }
 

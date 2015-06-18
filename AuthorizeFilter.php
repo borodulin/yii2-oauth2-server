@@ -15,10 +15,12 @@ use conquer\oauth2\Oauth2Server;
  * @author Andrey Borodulin
  * 
  */
-class Oauth2Authorize extends \yii\base\ActionFilter
+class AuthorizeFilter extends \yii\base\ActionFilter
 {
 
     private $_oauth2Server;
+
+    public $authCodeLifetime = 30;
     
     /**
      * @inheritdoc

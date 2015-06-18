@@ -14,6 +14,7 @@ use conquer\oauth2\models\Oauth2Client;
 use conquer\oauth2\models\conquer\oauth2\models;
 use conquer\oauth2\Oauth2RedirectException;
 use yii\web\IdentityInterface;
+use yii\helpers\VarDumper;
 
 /**
  * 
@@ -53,92 +54,7 @@ class Oauth2Server extends \yii\base\Component
     const RESPONSE_TYPE_AUTH_CODE = 'code';
     const RESPONSE_TYPE_ACCESS_TOKEN = 'token';
     
-    /**
-     * The request is missing a required parameter, includes an unsupported
-     * parameter or parameter value, or is otherwise malformed.
-     *
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.1.2.1
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.2.2.1
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-5.2
-     */
-    const ERROR_INVALID_REQUEST = 'invalid_request';
-    
-    /**
-     * The client identifier provided is invalid.
-     *
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-5.2
-     */
-    const ERROR_INVALID_CLIENT = 'invalid_client';
-    
-    /**
-     * The client is not authorized to use the requested response type.
-     *
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.1.2.1
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.2.2.1
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-5.2
-     */
-    const ERROR_UNAUTHORIZED_CLIENT = 'unauthorized_client';
-    
-    /**
-     * The redirection URI provided does not match a pre-registered value.
-     *
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-3.1.2.4
-     */
-    const ERROR_REDIRECT_URI_MISMATCH = 'redirect_uri_mismatch';
-    
-    /**
-     * The end-user or authorization server denied the request.
-     * This could be returned, for example, if the resource owner decides to reject
-     * access to the client at a later point.
-     *
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.1.2.1
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.2.2.1
-     */
-    const ERROR_USER_DENIED = 'access_denied';
-    
-    /**
-     * The requested response type is not supported by the authorization server.
-     *
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.1.2.1
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.2.2.1
-     */
-    const ERROR_UNSUPPORTED_RESPONSE_TYPE = 'unsupported_response_type';
-    
-    /**
-     * The requested scope is invalid, unknown, or malformed.
-     *
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.1.2.1
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.2.2.1
-     */
-    const ERROR_INVALID_SCOPE = 'invalid_scope';
-    
-    /**
-     * The provided authorization grant is invalid, expired,
-     * revoked, does not match the redirection URI used in the
-     * authorization request, or was issued to another client.
-     *
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-5.2
-     */
-    const ERROR_INVALID_GRANT = 'invalid_grant';
-    
-    /**
-     * The authorization grant is not supported by the authorization server.
-     *
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-5.2
-     */
-    const ERROR_UNSUPPORTED_GRANT_TYPE = 'unsupported_grant_type';
-    
-    /**
-     * The request requires higher privileges than provided by the access token.
-     * The resource server SHOULD respond with the HTTP 403 (Forbidden) status
-     * code and MAY include the "scope" attribute with the scope necessary to
-     * access the protected resource.
-     *
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.1.2.1
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.2.2.1
-     * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-5.2
-     */
-    const ERROR_INSUFFICIENT_SCOPE = 'invalid_scope';
+
     
     private $oldFefreshToken;
     
@@ -213,7 +129,7 @@ class Oauth2Server extends \yii\base\Component
      * @link http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-2.4.1
      * @throws OauthException
      */
-    public function validateClient()
+    public function validateClient($checkCredentials = false)
     {
         $request = \Yii::$app->request;
         if ($clientId = $request->headers->get('PHP_AUTH_USER')) {
@@ -222,13 +138,13 @@ class Oauth2Server extends \yii\base\Component
             $clientSecret = $request->get('client_secret', $request->post('client_secret'));
         } else
             throw new Oauth2Exception('Client id was not found in the headers or body', self::ERROR_INVALID_CLIENT);
-        /* @var $client OauthClient */
+        /* @var $client Oauth2Client */
         if (!$client = Oauth2Client::findOne(['client_id'=>$clientId]))
             throw new Oauth2Exception('The client was not found', self::ERROR_INVALID_CLIENT);
-    
-//         if (!\Yii::$app->security->validatePassword($clientSecret, $client->client_secret))
-//             throw new Oauth2Exception('The client credentials are invalid', self::ERROR_INVALID_CLIENT);
-    
+        
+        if($checkCredentials && !\Yii::$app->security->validatePassword($clientSecret, $client->client_secret))
+            throw new Oauth2Exception('The client credentials are invalid', self::ERROR_INVALID_CLIENT);
+        
         return $client;
     }
     
@@ -349,14 +265,6 @@ class Oauth2Server extends \yii\base\Component
                 \Yii::$app->user->setIdentity($identity);
                 
                 
-                $result = [
-                    'access_token' => $this->createAccessToken($client->client_id, $authCode->user_id),
-                    'expires_in' => $this->accessTokenLifetime,
-                    'token_type' => self::RESPONSE_TYPE_ACCESS_TOKEN,
-                    'scope' => $scope,
-                    'refresh_token' => $this->createRefreshToken($client->client_id, $authCode->user_id),
-                ];
-                
                 break;
                 	
             case self::GRANT_TYPE_USER_CREDENTIALS:
@@ -374,14 +282,6 @@ class Oauth2Server extends \yii\base\Component
                     \Yii::$app->user->setIdentity($identity);
                 } else
                     throw new OauthException("Grant type \"$grantType\" is not supported", self::ERROR_UNSUPPORTED_GRANT_TYPE); 
-
-                $result = [
-                    'access_token' => $this->createAccessToken($client->client_id, $authCode->user_id),
-                    'expires_in' => $this->accessTokenLifetime,
-                    'token_type' => self::RESPONSE_TYPE_ACCESS_TOKEN,
-                    'scope' => $scope,
-                    'refresh_token' => $this->createRefreshToken($client->client_id, $authCode->user_id),
-                ];
 
                 break;
                 	
@@ -467,16 +367,17 @@ class Oauth2Server extends \yii\base\Component
         $responseType = $this->validateResponseType($redirectUri);
         switch ($responseType){
             case self::RESPONSE_TYPE_ACCESS_TOKEN:
-                $result["fragment"] = $this->createAccessToken($client->client_id, $user->id, $scope);
-                $result["query"]["state"] = $state;
+                $parts["fragment"] = $this->createAccessToken($client->client_id, $user->id, $scope);
+                $parts["query"] = http_build_query(["state"=> $state]);
                 break;
             case self::RESPONSE_TYPE_AUTH_CODE:
-                $result["query"]["code"] = $this->createAuthorizationCode($client->client_id, $user->id, $redirectUri, $scope);
+                $query["code"] = $this->createAuthorizationCode($client->client_id, $user->id, $redirectUri, $scope);
                 if($state)
-                    $result["query"]["state"] = $state;
+                    $query["state"] = $state;
+                $parts['query'] = http_build_query($query);
                 break;
         }
-        $redirectUri = http_build_url($redirectUri,$result, HTTP_URL_JOIN_QUERY);
+        $redirectUri = http_build_url($redirectUri, $parts, HTTP_URL_JOIN_QUERY);
         \Yii::$app->response->redirect($redirectUri);
     }
     
@@ -624,7 +525,9 @@ class Oauth2Server extends \yii\base\Component
         $authorizationCode->redirect_uri = $redirectUri;
         $authorizationCode->scopes = $scope;
         $authorizationCode->expires = time() + $this->authCodeLifetime;
-        $authorizationCode->save();
-        return $authorizationCode->authorization_code; 
+        if($authorizationCode->save())
+            return $authorizationCode->authorization_code;
+        else
+            throw new Oauth2Exception(VarDumper::dumpAsString($authorizationCode->errors),'system_error');
     }
 }
