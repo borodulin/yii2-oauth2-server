@@ -17,8 +17,6 @@ use conquer\oauth2\OAuth2Trait;
  */
 class AccessToken extends ResponseTypeAbstract
 {
-    use OAuth2Trait;
-    
     public $tokeType = 'bearer';
     
     public function rules()
@@ -36,17 +34,18 @@ class AccessToken extends ResponseTypeAbstract
 
     public function getResponseData()
     {
-        $accessToken = \conquer\oauth2\models\AccessToken::createAccessToken(
-            $this->client_id,
-            \Yii::$app->user->id,
-            $this->accessTokenLifetime+time(),
-            $this->scope
-        );
-        $refreshToken = \conquer\oauth2\models\RefreshToken::createRefreshToken(
-            $this->client_id,
-            \Yii::$app->user->id,
-            $this->refreshTokenLifetime+time()
-        );
+        $accessToken = \conquer\oauth2\models\AccessToken::createAccessToken([
+                'client_id' => $this->client_id,
+                'user_id' => \Yii::$app->user->id,
+                'expires' => $this->accessTokenLifetime + time(),
+                'scope' => $this->scope,
+        ]);
+        $refreshToken = \conquer\oauth2\models\RefreshToken::createRefreshToken([
+                'client_id' => $this->client_id,
+                'user_id' => \Yii::$app->user->id,
+                'expires' => $this->refreshTokenLifetime + time(),
+                'scope' => $this->scope,
+        ]);
         return [
             'fragment'=>[
                 "access_token" => $accessToken->access_token,
