@@ -12,18 +12,19 @@ use conquer\oauth2\Oauth2Exception;
 use conquer\oauth2\models\Oauth2AccessToken;
 use yii\base\Action;
 use yii\web\Response;
+use conquer\oauth2\tokentypes\Bearer;
 
 /**
- * Oauth2Bearer is an action filter that supports the authentication method based on HTTP Bearer token.
+ * BearerAuth is an action filter that supports the authentication method based on OAuth2 Bearer token.
  *
- * You may use Oauth2Bearer by attaching it as a behavior to a controller or module, like the following:
+ * You may use BearerAuth by attaching it as a behavior to a controller or module, like the following:
  *
  * ```php
  * public function behaviors()
  * {
  *     return [
  *         'bearerAuth' => [
- *             'class' => \conquer\oauth2\Oauth2Bearer::className(),
+ *             'class' => \conquer\oauth2\BearerAuth::className(),
  *         ],
  *     ];
  * }
@@ -38,6 +39,11 @@ class BearerAuth extends \yii\filters\auth\AuthMethod
      */
     public $realm;
 
+    /**
+     * @var string the class name of the [[identity]] object.
+     */
+    public $identityClass;
+    
 
     /**
      * @param \yii\base\Action $action
@@ -58,18 +64,17 @@ class BearerAuth extends \yii\filters\auth\AuthMethod
      */
     public function authenticate($user, $request, $response)
     {
-        /* @var $oauth2Server \conquer\oauth2\Oauth2Server */
-        $oauth2Server = \Yii::createObject(Oauth2Server::className());
+        $bearer = new Bearer();
         
-        /* @var $accessToken Oauth2AccessToken */
-        $accessToken = $oauth2Server->validateBearerToken();
+        $accessToken = $bearer->getBearerToken();
         
         /* @var $user \yii\web\User */
+        $identityClass = is_null($this->identityClass) ? $user->identityClass : $this->identityClass;
         
-        $identity = $oauth2Server->identity->findIdentity($accessToken->user_id);
+        $identity = $identityClass::findIdentity($accessToken->user_id);
         
         if (empty($identity))
-            throw new Oauth2Exception('User is not found', self::ERROR_USER_DENIED);
+            throw new Exception('User is not found.', self::ERROR_USER_DENIED);
         
         $user->setIdentity($identity);
 

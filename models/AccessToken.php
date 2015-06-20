@@ -7,6 +7,9 @@
 
 namespace conquer\oauth2\models;
 
+use conquer\oauth2\Exception;
+use yii\helpers\VarDumper;
+
 /**
  * This is the model class for table "oauth_access_token".
  *
@@ -14,9 +17,9 @@ namespace conquer\oauth2\models;
  * @property string $client_id
  * @property integer $user_id
  * @property integer $expires
- * @property string $scopes
+ * @property string $scope
  *
- * @property OauthClient $client
+ * @property Client $client
  * @property User $user
  */
 class AccessToken extends \yii\db\ActiveRecord
@@ -37,7 +40,7 @@ class AccessToken extends \yii\db\ActiveRecord
         return [
             [['access_token', 'client_id', 'user_id', 'expires'], 'required'],
             [['user_id', 'expires'], 'integer'],
-            [['scopes'], 'string'],
+            [['scope'], 'string'],
             [['access_token'], 'string', 'max' => 40],
             [['client_id'], 'string', 'max' => 80]
         ];
@@ -53,10 +56,26 @@ class AccessToken extends \yii\db\ActiveRecord
             'client_id' => 'Client ID',
             'user_id' => 'User ID',
             'expires' => 'Expires',
-            'scopes' => 'Scopes',
+            'scope' => 'Scopes',
         ];
     }
 
+    /**
+     * @param array $attributes
+     * @throws Exception
+     * @return \conquer\oauth2\models\AccessToken
+     */
+    public static function createAccessToken(array $attributes)
+    {
+        $attributes['access_token'] = \Yii::$app->security->generateRandomString(40);
+        $accessToken = new static($attributes);
+        if($accessToken->save())
+            return $accessToken;
+        else
+            \Yii::error(__CLASS__. ' validation error:'. VarDumper::dumpAsString($accessToken->errors));
+        throw new Exception('Unable to create access token', Exception::INTERNAL_ERROR);
+    }
+    
     /**
      * @return \yii\db\ActiveQuery
      */

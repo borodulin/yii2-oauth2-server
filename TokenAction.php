@@ -9,6 +9,8 @@ namespace conquer\oauth2;
 
 use yii\web\Response;
 use conquer\oauth2\models\OauthAuthorizationCode;
+use conquer\oauth2\granttypes\GrantTypeAbstract;
+use yii\validators\Validator;
 
 /**
  * 
@@ -18,9 +20,7 @@ use conquer\oauth2\models\OauthAuthorizationCode;
 class TokenAction extends \yii\base\Action
 {
     
-    public $grantTypes = [
-        ''
-    ];
+   
     
     public function init()
     {
@@ -31,14 +31,12 @@ class TokenAction extends \yii\base\Action
     public function run()
     {
         $request = \Yii::$app->request;
-
-        /* @var $oauth2Server Oauth2Server */
-        $oauth2Server = \Yii::createObject(Oauth2Server::className());
         
-        $client = $oauth2Server->validateClient();
+        $grantType = GrantTypeAbstract::createGrantType();
         
-        $scope = $oauth2Server->validateScope($client);
+        $grantType->validate();
         
-        \Yii::$app->response->data = $oauth2Server->validateGrantType($client);
+        \Yii::$app->response->data = $grantType->getResponseData();
+                
     }
 }

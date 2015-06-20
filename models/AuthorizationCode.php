@@ -8,6 +8,8 @@
 namespace conquer\oauth2\models;
 
 use Yii;
+use conquer\oauth2\Exception;
+use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "oauth_authorization_code".
@@ -17,20 +19,13 @@ use Yii;
  * @property integer $user_id
  * @property string $redirect_uri
  * @property integer $expires
- * @property string $scopes
- * @property string $id_token
+ * @property string $scope
  *
  * @property Client $client
  * @property User $user
  */
 class AuthorizationCode extends \yii\db\ActiveRecord
 {
-    /**
-     * 
-     * @var OauthClient
-     */
-    private $_client;
-    
     /**
      * @inheritdoc
      */
@@ -45,12 +40,12 @@ class AuthorizationCode extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['authorization_code', 'client_id', 'user_id', 'redirect_uri', 'expires'], 'required'],
+            [['authorization_code', 'client_id', 'user_id', 'expires'], 'required'],
             [['user_id', 'expires'], 'integer'],
-            [['scopes'], 'string'],
+            [['scope'], 'string'],
             [['authorization_code'], 'string', 'max' => 40],
             [['client_id'], 'string', 'max' => 80],
-            [['redirect_uri'], 'string', 'max' => 2000]
+            [['redirect_uri'], 'url'],
         ];
     }
 
@@ -65,10 +60,27 @@ class AuthorizationCode extends \yii\db\ActiveRecord
             'user_id' => 'User ID',
             'redirect_uri' => 'Redirect Uri',
             'expires' => 'Expires',
-            'scopes' => 'Scopes',
+            'scope' => 'Scopes',
         ];
     }
 
+    /**
+     * 
+     * @param array $params
+     * @throws Exception
+     * @return \conquer\oauth2\models\AuthorizationCode
+     */
+    public static function createAuthorizationCode(array $params)
+    {
+        $params['authorization_code'] = \Yii::$app->security->generateRandomString(40); 
+        $authCode = new static($params);
+        if($authCode->save())
+            return $authCode;
+        else
+            \Yii::error(__CLASS__.' validation error: '.VarDumper::dumpAsString($authCode->errors));
+        throw new Exception('Unable to create authorization code', Exception::INTERNAL_ERROR);
+    }
+    
     /**
      * @return \yii\db\ActiveQuery
      */

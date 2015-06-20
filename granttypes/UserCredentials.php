@@ -11,7 +11,7 @@ namespace conquer\oauth2\granttypes;
  *
  * @author Andrey Borodulin
  */
-class RefreshTokenGrant extends GrantTypeAbstract
+class UserCredentials extends GrantTypeAbstract
 {
-    
+
 }

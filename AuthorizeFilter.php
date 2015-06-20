@@ -9,6 +9,7 @@ namespace conquer\oauth2;
 
 use yii\web\Response;
 use conquer\oauth2\Oauth2Server;
+use conquer\oauth2\responsetypes\ResponseTypeAbstract;
 
 /**
  * 
@@ -18,7 +19,7 @@ use conquer\oauth2\Oauth2Server;
 class AuthorizeFilter extends \yii\base\ActionFilter
 {
 
-    private $_oauth2Server;
+    private $_responseType;
 
     public $authCodeLifetime = 30;
     
@@ -27,14 +28,10 @@ class AuthorizeFilter extends \yii\base\ActionFilter
      */
     public function beforeAction($action)
     {
-//         $response = \Yii::$app->response; 
-//         $oldFormat = $response->format;
-//         $response->format = Response::FORMAT_JSON;
+        $this->_responseType = ResponseTypeAbstract::createResponseType();
         
-        $oauth2Server = $this->getOauth2Server();
-        $oauth2Server->validateAuthorizeRequest();
-        
-//         $response->format = $oldFormat;
+        $this->_responseType->validate();
+
         return true;
     }
 
@@ -46,22 +43,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
         if(\Yii::$app->user->isGuest)
             return $result;
         else {
-            $oauth2Server = $this->getOauth2Server();
-            $oauth2Server->finishAuthorization();
+            $this->_responseType->finishAuthorization();
         }
     }
-
-    /**
-     * 
-     * @return Oauth2Server
-     */
-    protected function getOauth2Server()
-    {
-        if(empty($this->_oauth2Server))
-            $this->_oauth2Server = \Yii::createObject(Oauth2Server::className());
-        return $this->_oauth2Server;
-    }
-    
-
-    
 }

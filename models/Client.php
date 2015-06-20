@@ -15,14 +15,14 @@ use Yii;
  * @property string $client_id
  * @property string $client_secret
  * @property string $redirect_uri
- * @property string $grant_types
- * @property string $scopes
+ * @property string $grant_type
+ * @property string $scope
  * @property integer $user_id
  * @property string $public_key
  *
- * @property OauthAccessToken[] $oauthAccessTokens
- * @property OauthAuthorizationCode[] $oauthAuthorizationCodes
- * @property OauthRefreshToken[] $oauthRefreshTokens
+ * @property AccessToken[] $oauthAccessTokens
+ * @property AuthorizationCode[] $oauthAuthorizationCodes
+ * @property RefreshToken[] $oauthRefreshTokens
  */
 class Client extends \yii\db\ActiveRecord
 {
@@ -41,9 +41,9 @@ class Client extends \yii\db\ActiveRecord
     {
         return [
             [['client_id', 'client_secret', 'redirect_uri'], 'required'],
-            [['scopes'], 'string'],
+            [['scope'], 'string'],
             [['created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
-            [['client_id', 'client_secret', 'grant_types'], 'string', 'max' => 80],
+            [['client_id', 'client_secret', 'grant_type'], 'string', 'max' => 80],
             [['redirect_uri'], 'string', 'max' => 2000]
         ];
     }
@@ -68,8 +68,8 @@ class Client extends \yii\db\ActiveRecord
             'client_id' => 'Unique client identifier',
             'client_secret' => 'Client secret',
             'redirect_uri' => 'Redirect URI used for Authorization Grant',
-            'grant_types' => 'Space-delimited list of grant types permitted, null = all',
-            'scopes' => 'Space-delimited list of approved scopes',
+            'grant_type' => 'Space-delimited list of grant types permitted, null = all',
+            'scope' => 'Space-delimited list of approved scopes',
         ];
     }
 
@@ -101,10 +101,4 @@ class Client extends \yii\db\ActiveRecord
     {
         $this->client_secret = \Yii::$app->security->generatePasswordHash($value);
     }
-    
-    public function generateToken()
-    {
-        return \Yii::$app->security->generateRandomKey(40);
-    }
-    
 }

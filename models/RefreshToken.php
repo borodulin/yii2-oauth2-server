@@ -7,18 +7,18 @@
 
 namespace conquer\oauth2\models;
 
-use Yii;
+use conquer\oauth2\Exception;
 
 /**
- * This is the model class for table "oauth_refresh_token".
+ * This is the model class for table "{{%oauth2_refresh_token}}".
  *
  * @property string $refresh_token
  * @property string $client_id
  * @property integer $user_id
  * @property integer $expires
- * @property string $scopes
+ * @property string $scope
  *
- * @property OauthClient $client
+ * @property Client $client
  * @property User $user
  */
 class RefreshToken extends \yii\db\ActiveRecord
@@ -39,7 +39,7 @@ class RefreshToken extends \yii\db\ActiveRecord
         return [
             [['refresh_token', 'client_id', 'user_id', 'expires'], 'required'],
             [['user_id', 'expires'], 'integer'],
-            [['scopes'], 'string'],
+            [['scope'], 'string'],
             [['refresh_token'], 'string', 'max' => 40],
             [['client_id'], 'string', 'max' => 80]
         ];
@@ -55,10 +55,27 @@ class RefreshToken extends \yii\db\ActiveRecord
             'client_id' => 'Client ID',
             'user_id' => 'User ID',
             'expires' => 'Expires',
-            'scopes' => 'Scopes',
+            'scope' => 'Scope',
         ];
     }
 
+    /**
+     * 
+     * @param array $attributes
+     * @throws Exception
+     * @return \conquer\oauth2\models\RefreshToken
+     */
+    public static function createRefreshToken(array $attributes)
+    {
+        $attributes['refresh_token'] = \Yii::$app->security->generateRandomString(40);
+        $refreshToken = new static($attributes);
+        if($refreshToken->save())
+            return $refreshToken;
+        else
+            \Yii::error(__CLASS__. ' validation error:'. VarDumper::dumpAsString($refreshToken->errors));
+        throw new Exception('Unable to create refresh token', Exception::INTERNAL_ERROR);
+    }
+    
     /**
      * @return \yii\db\ActiveQuery
      */

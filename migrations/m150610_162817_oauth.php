@@ -22,8 +22,8 @@ class m150610_162817_oauth extends Migration
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
                 'client_secret' => Schema::TYPE_STRING . '(80) NOT NULL',
                 'redirect_uri' => Schema::TYPE_TEXT . ' NOT NULL',
-                'grant_types' => Schema::TYPE_TEXT . '(80) NOT NULL',
-                'scopes' => Schema::TYPE_TEXT,
+                'grant_type' => Schema::TYPE_TEXT,
+                'scope' => Schema::TYPE_TEXT,                
                 'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
                 'created_by' => Schema::TYPE_INTEGER . ' NOT NULL',
@@ -36,7 +36,7 @@ class m150610_162817_oauth extends Migration
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
                 'user_id' => Schema::TYPE_INTEGER,
                 'expires' => Schema::TYPE_INTEGER . ' NOT NULL',
-                'scopes' => Schema::TYPE_TEXT,
+                'scope' => Schema::TYPE_TEXT,
                 'PRIMARY KEY (access_token)',
         ]);
         
@@ -45,7 +45,7 @@ class m150610_162817_oauth extends Migration
                 'client_id' => Schema::TYPE_STRING . '(80) NOT NULL',
                 'user_id' => Schema::TYPE_INTEGER,
                 'expires' => Schema::TYPE_INTEGER . ' NOT NULL',
-                'scopes' => Schema::TYPE_TEXT,
+                'scope' => Schema::TYPE_TEXT,
                 'PRIMARY KEY (refresh_token)',
         ]);
         
@@ -55,7 +55,7 @@ class m150610_162817_oauth extends Migration
                 'user_id' => Schema::TYPE_INTEGER,
                 'redirect_uri' => Schema::TYPE_TEXT . ' NOT NULL',
                 'expires' => Schema::TYPE_INTEGER . ' NOT NULL',
-                'scopes' => Schema::TYPE_TEXT,
+                'scope' => Schema::TYPE_TEXT,
                 'PRIMARY KEY (authorization_code)',
         ]);
         
