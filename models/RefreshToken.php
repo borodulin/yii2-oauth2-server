@@ -67,6 +67,8 @@ class RefreshToken extends \yii\db\ActiveRecord
      */
     public static function createRefreshToken(array $attributes)
     {
+        static::deleteAll(['<', 'expires', time()]);
+        
         $attributes['refresh_token'] = \Yii::$app->security->generateRandomString(40);
         $refreshToken = new static($attributes);
         if($refreshToken->save())

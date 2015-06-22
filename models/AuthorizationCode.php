@@ -72,6 +72,8 @@ class AuthorizationCode extends \yii\db\ActiveRecord
      */
     public static function createAuthorizationCode(array $params)
     {
+        static::deleteAll(['<', 'expires', time()]);
+        
         $params['authorization_code'] = \Yii::$app->security->generateRandomString(40); 
         $authCode = new static($params);
         if($authCode->save())

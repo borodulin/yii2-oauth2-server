@@ -67,6 +67,8 @@ class AccessToken extends \yii\db\ActiveRecord
      */
     public static function createAccessToken(array $attributes)
     {
+        static::deleteAll(['<', 'expires', time()]);
+        
         $attributes['access_token'] = \Yii::$app->security->generateRandomString(40);
         $accessToken = new static($attributes);
         if($accessToken->save())
