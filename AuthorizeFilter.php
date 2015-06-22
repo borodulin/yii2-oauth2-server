@@ -28,7 +28,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
      */
     public function beforeAction($action)
     {
-        $this->_responseType = ResponseTypeAbstract::createResponseType();
+        $this->_responseType = ResponseTypeAbstract::createResponseType(['authCodeLifetime'=>$this->authCodeLifetime]);
         
         $this->_responseType->validate();
 

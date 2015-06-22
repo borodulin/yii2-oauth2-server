@@ -20,7 +20,8 @@ use yii\validators\Validator;
 class TokenAction extends \yii\base\Action
 {
     
-   
+    public $accessTokenLifetime = 3600;
+    public $refreshTokenLifetime = 1209600;
     
     public function init()
     {
@@ -32,7 +33,10 @@ class TokenAction extends \yii\base\Action
     {
         $request = \Yii::$app->request;
         
-        $grantType = GrantTypeAbstract::createGrantType();
+        $grantType = GrantTypeAbstract::createGrantType([
+                'accessTokenLifetime' => $this->accessTokenLifetime,
+                'refreshTokenLifetime' => $this->refreshTokenLifetime,
+        ]);
         
         $grantType->validate();
         

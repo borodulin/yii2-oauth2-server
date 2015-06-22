@@ -37,7 +37,7 @@ abstract class GrantTypeAbstract extends \yii\base\Model
      * @throws Exception
      * @return GrantTypeAbstract
      */
-    public static function createGrantType()
+    public static function createGrantType(array $params = [])
     {
         $request = \Yii::$app->request;
         
@@ -45,7 +45,7 @@ abstract class GrantTypeAbstract extends \yii\base\Model
             throw new Exception('The grant type was not specified in the request');
         
         if(isset(self::$grantTypes[$grantType]))
-            return \Yii::createObject(self::$grantTypes[$grantType]);
+            return \Yii::createObject(self::$grantTypes[$grantType], $params);
         else
             throw new Exception("An unsupported grant type was requested", Exception::UNSUPPORTED_GRANT_TYPE);
     }
