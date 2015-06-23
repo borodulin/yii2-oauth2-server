@@ -103,31 +103,31 @@ trait OAuth2Trait
         
             $authHeader = $request->getHeaders()->get('Authorization');
         
-            $postToken = $request->post('bearer');
-            $getToken = $request->get('bearer');
+            $postToken = $request->post('access_token');
+            $getToken = $request->get('access_token');
         
             // Check that exactly one method was used
             $methodsCount = isset($authHeader) + isset($postToken) + isset($getToken);
             if ($methodsCount > 1)
-                $this->addError($attribute, 'Only one method may be used to authenticate at a time (Auth header, POST or GET).');
+                throw new Exception('Only one method may be used to authenticate at a time (Auth header, POST or GET).');
             elseif ($methodsCount == 0)
-                $this->addError($attribute, 'The access token was not found.');
+                throw new Exception('The access token was not found.');
         
             // HEADER: Get the access token from the header
             if ($authHeader) {
                 if (preg_match("/^Bearer\\s+(.*?)$/", $authHeader, $matches))
                     $token = $matches[1];
                 else
-                    $this->addError($attribute, 'Malformed auth header.');
+                    throw new Exception('Malformed auth header.');
             } else {
                 // POST: Get the token from POST data
                 if ($postToken) {
                     if(!$request->isPost)
-                        $this->addError($attribute, 'When putting the token in the body, the method must be POST.');
+                        throw new Exception('When putting the token in the body, the method must be POST.');
         
                     // IETF specifies content-type. NB: Not all webservers populate this _SERVER variable
                     if($request->contentType != 'application/x-www-form-urlencoded')
-                        $this->addError($attribute, 'The content type for POST requests must be "application/x-www-form-urlencoded"');
+                        throw new Exception('The content type for POST requests must be "application/x-www-form-urlencoded"');
                     $token = $postToken;
                 } else
                     $token = $getToken;
