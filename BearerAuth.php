@@ -46,20 +46,6 @@ class BearerAuth extends \yii\filters\auth\AuthMethod
     
 
     /**
-     * @param \yii\base\Action $action
-     * (non-PHPdoc)
-     * @see \yii\filters\auth\AuthMethod::beforeAction()
-     */
-    public function beforeAction($action)
-    {
-        $response = $this->response ? : \Yii::$app->getResponse();
-        
-        $response->format = Response::FORMAT_JSON;
-
-        return parent::beforeAction($action);
-    }
-    
-    /**
      * @inheritdoc
      */
     public function authenticate($user, $request, $response)
