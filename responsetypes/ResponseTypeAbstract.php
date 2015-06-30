@@ -9,7 +9,7 @@ namespace conquer\oauth2\responsetypes;
 use conquer\oauth2\Exception;
 use conquer\oauth2\RedirectException;
 use conquer\oauth2\models\Client;
-use conquer\oauth2\Oauth2Trait;
+use conquer\oauth2\OAuth2Trait;
 
 /**
  * 
