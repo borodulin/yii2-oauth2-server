@@ -88,7 +88,7 @@ class AuthorizationCode extends \yii\db\ActiveRecord
      */
     public function getClient()
     {
-        return $this->hasOne(OauthClient::className(), ['client_id' => 'client_id']);
+        return $this->hasOne(Client::className(), ['client_id' => 'client_id']);
     }
 
     /**

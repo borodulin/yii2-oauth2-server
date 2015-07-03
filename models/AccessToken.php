@@ -9,6 +9,7 @@ namespace conquer\oauth2\models;
 
 use conquer\oauth2\Exception;
 use yii\helpers\VarDumper;
+use yii\db\ActiveRecord;
 
 /**
  * This is the model class for table "oauth_access_token".
@@ -83,7 +84,7 @@ class AccessToken extends \yii\db\ActiveRecord
      */
     public function getClient()
     {
-        return $this->hasOne(OauthClient::className(), ['client_id' => 'client_id']);
+        return $this->hasOne(Client::className(), ['client_id' => 'client_id']);
     }
 
     /**
@@ -91,6 +92,8 @@ class AccessToken extends \yii\db\ActiveRecord
      */
     public function getUser()
     {
-        return $this->hasOne(User::className(), ['user_id' => 'user_id']);
+        $identity = isset(\Yii::$app->user->identity) ? \Yii::$app->user->identity : null;
+        if($identity instanceof ActiveRecord)
+            return $this->hasOne(get_class($identity), ['user_id' => $identity->primaryKey()]);
     }
 }

@@ -10,7 +10,7 @@ namespace conquer\oauth2\models;
 use Yii;
 
 /**
- * This is the model class for table "oauth_client".
+ * This is the model class for table "oauth2_client".
  *
  * @property string $client_id
  * @property string $client_secret
@@ -20,9 +20,9 @@ use Yii;
  * @property integer $user_id
  * @property string $public_key
  *
- * @property AccessToken[] $oauthAccessTokens
- * @property AuthorizationCode[] $oauthAuthorizationCodes
- * @property RefreshToken[] $oauthRefreshTokens
+ * @property AccessToken[] $accessTokens
+ * @property AuthorizationCode[] $authorizationCodes
+ * @property RefreshToken[] $refreshTokens
  */
 class Client extends \yii\db\ActiveRecord
 {
@@ -54,8 +54,8 @@ class Client extends \yii\db\ActiveRecord
     public function behaviors()
     {
         return [
-            ['class'=>\yii\behaviors\TimestampBehavior::className()],
-            ['class'=>\yii\behaviors\BlameableBehavior::className()],
+            \yii\behaviors\TimestampBehavior::className(),
+            \yii\behaviors\BlameableBehavior::className(),
         ];
     }
     
@@ -76,24 +76,24 @@ class Client extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getOauthAccessTokens()
+    public function getAccessTokens()
     {
-        return $this->hasMany(OauthAccessToken::className(), ['client_id' => 'client_id']);
+        return $this->hasMany(AccessToken::className(), ['client_id' => 'client_id']);
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getOauthAuthorizationCodes()
+    public function getAuthorizationCodes()
     {
-        return $this->hasMany(OauthAuthorizationCode::className(), ['client_id' => 'client_id']);
+        return $this->hasMany(AuthorizationCode::className(), ['client_id' => 'client_id']);
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getOauthRefreshTokens()
+    public function getRefreshTokens()
     {
-        return $this->hasMany(OauthRefreshToken::className(), ['client_id' => 'client_id']);
+        return $this->hasMany(RefreshToken::className(), ['client_id' => 'client_id']);
     }
 }
