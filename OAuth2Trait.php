@@ -195,7 +195,7 @@ trait OAuth2Trait
     
     public function validateClient_secret($attribute, $params)
     {
-        if(empty($this->client) || !\Yii::$app->security->validatePassword($this->$attribute, $this->client->client_secret))
+        if(empty($this->client) || !\Yii::$app->security->compareString($this->client->client_secret, $this->$attribute))
             $this->addError($attribute, 'The client credentials are invalid', Exception::INVALID_CLIENT);
     }
     

@@ -96,9 +96,4 @@ class Client extends \yii\db\ActiveRecord
     {
         return $this->hasMany(OauthRefreshToken::className(), ['client_id' => 'client_id']);
     }
-    
-    public function setClientSecret($value)
-    {
-        $this->client_secret = \Yii::$app->security->generatePasswordHash($value);
-    }
 }
