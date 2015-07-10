@@ -91,58 +91,6 @@ trait OAuth2Trait
         $request = \Yii::$app->request;
         return $request->post('refresh_token',$request->get('refresh_token'));
     }
-    /**
-     * 
-     * @throws Exception
-     * @return \conquer\oauth2\models\AccessToken
-     */
-    public function getBearerToken()
-    {
-        if (is_null($this->_bearerToken)) {
-            $request = \Yii::$app->request;
-        
-            $authHeader = $request->getHeaders()->get('Authorization');
-        
-            $postToken = $request->post('access_token');
-            $getToken = $request->get('access_token');
-        
-            // Check that exactly one method was used
-            $methodsCount = isset($authHeader) + isset($postToken) + isset($getToken);
-            if ($methodsCount > 1)
-                throw new Exception('Only one method may be used to authenticate at a time (Auth header, POST or GET).');
-            elseif ($methodsCount == 0)
-                throw new Exception('The access token was not found.');
-        
-            // HEADER: Get the access token from the header
-            if ($authHeader) {
-                if (preg_match("/^Bearer\\s+(.*?)$/", $authHeader, $matches))
-                    $token = $matches[1];
-                else
-                    throw new Exception('Malformed auth header.');
-            } else {
-                // POST: Get the token from POST data
-                if ($postToken) {
-                    if(!$request->isPost)
-                        throw new Exception('When putting the token in the body, the method must be POST.');
-        
-                    // IETF specifies content-type. NB: Not all webservers populate this _SERVER variable
-                    if($request->contentType != 'application/x-www-form-urlencoded')
-                        throw new Exception('The content type for POST requests must be "application/x-www-form-urlencoded"');
-                    $token = $postToken;
-                } else
-                    $token = $getToken;
-            }
-
-            if(!$accessToken = AccessToken::findOne(['access_token'=>$token]))
-                throw new Exception('The access token provided is invalid.', Exception::ERROR_INVALID_GRANT);
-        
-            if($accessToken->expires < time())
-                throw new Exception('The access token provided has expired.', Exception::ERROR_INVALID_GRANT);
-            
-            return $accessToken;
-        }
-        return $this->_bearerToken;
-    }
     
     /**
      *
@@ -186,11 +134,6 @@ trait OAuth2Trait
     public function validateClient_id($attribute, $params)
     {
         $this->getClient();
-    }
-    
-    public function validateBearerToken($attribute, $params)
-    {
-        $this->getBearerToken();
     }
     
     public function validateClient_secret($attribute, $params)

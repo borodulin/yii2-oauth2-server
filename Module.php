@@ -14,6 +14,8 @@ use conquer\oauth2\console\Oauth2Controller;
 class Module extends \yii\base\Module implements \yii\base\BootstrapInterface
 {
 
+    public $behaviors;
+    
     /**
      * @inheritdoc
      */
@@ -31,5 +33,15 @@ class Module extends \yii\base\Module implements \yii\base\BootstrapInterface
             ];
         }
     }
-
+    
+    /**
+     * @inheritdoc
+     */
+    public function behaviors()
+    {
+        if(!empty($this->behaviors))
+            return $this->behaviors;
+        else
+            return parent::behaviors();
+    }
 }
