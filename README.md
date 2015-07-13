@@ -3,7 +3,7 @@ Yii2 OAuth 2.0 Server
 
 ## Description
 
-
+This extension provides simple implementation of [Oauth 2.0](http://tools.ietf.org/wg/oauth/draft-ietf-oauth-v2/) specification using Yii2 framework.
 
 # Installation
 
