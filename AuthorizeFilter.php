@@ -23,12 +23,30 @@ class AuthorizeFilter extends \yii\base\ActionFilter
 
     private $_storeKey = 'ear6kme7or19rnfldtmwsxgzxsrmngqw';
     
+    /**
+     * Authorization Code lifetime
+     * 30 seconds by default
+     * @var integer
+     */
     public $authCodeLifetime = 30;
+    /**
+     * Access Token lifetime
+     * 1 hour by default
+     * @var integer
+     */
     public $accessTokenLifetime = 3600;
+    /**
+     * Refresh Token lifetime
+     * 2 weeks by default
+     * @var integer
+     */
     public $refreshTokenLifetime = 1209600;
     
     /**
-     * @inheritdoc
+     * Performs OAuth 2.0 request validation and store granttype object in the session,
+     * so, user can go from our authorization server to the third party OAuth provider.
+     * You should call finishAuthorization() in current controller to continue client authorization, 
+     * or to stop with Access Denied error message if user is not logged on 
      */
     public function beforeAction($action)
     {   
@@ -46,7 +64,8 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     }
 
     /**
-     * @inheritdoc
+     * If user is logged on, do oauth login immediatly,
+     * continue authorization in the another case
      */
     public function afterAction($action, $result)
     {
@@ -71,6 +90,11 @@ class AuthorizeFilter extends \yii\base\ActionFilter
         return $this->_responseType;
     }
     
+    /**
+     * Finish oauth authorization.
+     * Builds redirect uri and performs redirect.
+     * If user is not logged on, redirect uri contains the Access Denied Error
+     */
     public function finishAuthorization()
     {
         $responseType = $this->getResponseType();
