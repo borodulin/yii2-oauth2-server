@@ -98,7 +98,7 @@ class Authorization extends GrantTypeAbstract
     
     public function getCode()
     {
-        return $this->getRequestValue('code');
+        return self::getRequestValue('code');
     }
     
     public function validateCode($attribute, $params)

@@ -23,6 +23,9 @@ trait OAuth2Trait
 {
     private $_client;
     
+    const TOKEN_TYPE = 'bearer';
+    
+    public $authCodeLifetime = 30;
     public $accessTokenLifetime = 3600;
     public $refreshTokenLifetime = 1209600;
     
@@ -65,37 +68,37 @@ trait OAuth2Trait
     
     public function getGrant_type()
     {
-        return $this->getRequestValue('grant_type');
+        return self::getRequestValue('grant_type');
     }
     
     public function getClient_id()
     {
-        return $this->getRequestValue('client_id', 'PHP_AUTH_USER');
+        return self::getRequestValue('client_id', 'PHP_AUTH_USER');
     }
     
     public function getClient_secret()
     {
-        return $this->getRequestValue('client_secret', 'PHP_AUTH_PW');
+        return self::getRequestValue('client_secret', 'PHP_AUTH_PW');
     }
     
     public function getRedirect_uri()
     {
-        return $this->getRequestValue('redirect_uri');
+        return self::getRequestValue('redirect_uri');
     }
     
     public function getScope()
     {
-        return $this->getRequestValue('scope');
+        return self::getRequestValue('scope');
     }
     
     public function getState()
     {
-        return $this->getRequestValue('state');
+        return self::getRequestValue('state');
     }
     
     public function getResponse_type()
     {
-        return $this->getRequestValue('response_type');
+        return self::getRequestValue('response_type');
     }
     
     /**

@@ -13,8 +13,6 @@ namespace conquer\oauth2\responsetypes;
  */
 class Implicit extends ResponseTypeAbstract
 {
-    const TOKEN_TYPE = 'bearer';
-    
     /**
      * Value MUST be set to "token"
      * @var string
