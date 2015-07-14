@@ -57,9 +57,7 @@ trait OAuth2Trait
         static $request;
         if (is_null($request))
             $request = \Yii::$app->request;
-        if ($header)
-            $result = $request->headers->get($header);
-        if (isset($result))
+        if ($header && ($result = $request->headers->get($header)))
             return $result;
         else
             return $request->post($param, $request->get($param));
