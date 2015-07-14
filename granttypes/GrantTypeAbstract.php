@@ -19,12 +19,12 @@ abstract class GrantTypeAbstract extends \yii\base\Model
     use OAuth2Trait;
     
     public static $grantTypes = [
-        'authorization_code' => 'conquer\oauth2\granttypes\AuthorizationCode',
-//        'client_credentials' => 'conquer\oauth2\granttypes\ClientCredentials',
-//        'password' => 'conquer\oauth2\granttypes\UserCredentials',
+        'authorization_code' => 'conquer\oauth2\granttypes\Authorization',
+//         'client_credentials' => 'conquer\oauth2\granttypes\ClientCredentials',
+//         'password' => 'conquer\oauth2\granttypes\UserCredentials',
         'refresh_token' => 'conquer\oauth2\granttypes\RefreshToken',
-//        'token' => 'conquer\oauth2\granttypes\Implicit',
-//        'urn:ietf:params:oauth:grant-type:jwt-bearer' => 'conquer\oauth2\granttypes\JwtBearer',
+//         'token' => 'conquer\oauth2\granttypes\Implicit',
+//         'urn:ietf:params:oauth:grant-type:jwt-bearer' => 'conquer\oauth2\granttypes\JwtBearer',
     ];
 
     /**

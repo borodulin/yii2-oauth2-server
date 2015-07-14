@@ -5,7 +5,7 @@ Yii2 OAuth 2.0 Server
 
 This extension provides simple implementation of [Oauth 2.0](http://tools.ietf.org/wg/oauth/draft-ietf-oauth-v2/) specification using Yii2 framework.
 
-# Installation
+## Installation
 
 The preferred way to install this extension is through [composer](http://getcomposer.org/download/). 
 
@@ -27,7 +27,7 @@ To create database tables run migration command
 $ yii migrate --migrationPath=@conquer/oauth2/migrations
 ```
 
-# Usage
+## Usage
 
 Authorization routine
 ```php
@@ -70,7 +70,7 @@ class AuthController extends \yii\web\Controller
     }
 }
 ```
-Usage in Api Controller
+Api controller sample
 ```php
 class ApiController extends \yii\web\Controller
 {
@@ -102,6 +102,6 @@ class ApiController extends \yii\web\Controller
 }
 ```
 
-# License
+## License
 
-**conquer/oauth2** is released under the MIT License. See the bundled `LICENSE.md` for details.
+**conquer/oauth2** is released under the MIT License. See the bundled `LICENSE` for details.

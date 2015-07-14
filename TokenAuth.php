@@ -57,7 +57,7 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
         $identity = $identityClass::findIdentity($accessToken->user_id);
         
         if (empty($identity))
-            throw new Exception('User is not found.', Exception::USER_DENIED);
+            throw new Exception('User is not found.', Exception::ACCESS_DENIED);
         
         $user->setIdentity($identity);
 

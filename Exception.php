@@ -15,19 +15,20 @@ use yii\web\Response;
  */
 class Exception extends \yii\base\UserException
 {
-    
-    const INVALID_REQUEST = 'invalid_request';
+    const ACCESS_DENIED = 'access_denied';
     const INVALID_CLIENT = 'invalid_client';
-    const UNAUTHORIZED_CLIENT = 'unauthorized_client';
-    const REDIRECT_URI_MISMATCH = 'redirect_uri_mismatch';
-    const USER_DENIED = 'access_denied';
-    const UNSUPPORTED_RESPONSE_TYPE = 'unsupported_response_type';
-    const INVALID_SCOPE = 'invalid_scope';
     const INVALID_GRANT = 'invalid_grant';
+    const INVALID_REQUEST = 'invalid_request';
+    const INVALID_SCOPE = 'invalid_scope';
+    const REDIRECT_URI_MISMATCH = 'redirect_uri_mismatch';
+    const SERVER_ERROR = 'server_error';
+    const TEMPORARILY_UNAVAILABLE = 'temporarily_unavailable';
+    const UNAUTHORIZED_CLIENT = 'unauthorized_client';
     const UNSUPPORTED_GRANT_TYPE = 'unsupported_grant_type';
-    const INSUFFICIENT_SCOPE = 'invalid_scope';
+    const UNSUPPORTED_RESPONSE_TYPE = 'unsupported_response_type';
+    
     const NOT_IMPLEMENTED = 'not_implemented';
-    const INTERNAL_ERROR = 'internal_error';
+    
         
     protected $error;
 
@@ -39,7 +40,7 @@ class Exception extends \yii\base\UserException
      * @param string $error A single error code
      * @param string $name error name
      */
-    public function __construct($error_description = null, $error = 'invalid_request')
+    public function __construct($error_description = null, $error = self::INVALID_REQUEST)
     {
         $this->error = $error;
         parent::__construct($error_description, 0, null);
@@ -50,6 +51,6 @@ class Exception extends \yii\base\UserException
      */
     public function getName()
     {
-        return isset($this->error) ? $this->error : 'OAuth Exception';
+        return isset($this->error) ? $this->error : self::SERVER_ERROR;
     }
 }

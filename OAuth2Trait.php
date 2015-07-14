@@ -9,6 +9,7 @@ namespace conquer\oauth2;
 
 use conquer\oauth2\models\Client;
 use conquer\oauth2\Exception;
+use conquer\oauth2\RedirectException;
 use conquer\oauth2\models\AuthorizationCode;
 use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\models\RefreshToken;
@@ -21,75 +22,82 @@ use conquer\oauth2\models\RefreshToken;
 trait OAuth2Trait
 {
     private $_client;
-    private $_authCode;
-    private $_refreshToken;
-    private $_bearerToken;
     
     public $accessTokenLifetime = 3600;
     public $refreshTokenLifetime = 1209600;
-    public $authCodeLifetime = 30;
     
+    public function init()
+    {
+        foreach ($this->safeAttributes() as $name) {
+            $this->$name = $this->{'get'.$name}();
+        }
+    }
+
     public function addError($attribute, $error="")
     {
         throw new Exception($error, Exception::INVALID_REQUEST);
     }
     
+    public function errorServer($error, $type = Exception::INVALID_REQUEST)
+    {
+        throw new Exception($error, Exception::INVALID_REQUEST);
+    }
+    
+    public function errorRedirect($error, $type = Exception::INVALID_REQUEST)
+    {
+        $redirectUri = isset($this->redirect_uri) ? $this->redirect_uri : $this->getClient()->redirect_uri;
+        if ($redirectUri)
+            throw new RedirectException($redirectUri, $error, $type, isset($this->state)?$this->state:null);
+        else
+            throw new Exception($error, $type);
+    }
+    
+    public static function getRequestValue($param, $header = null)
+    {
+        static $request;
+        if (is_null($request))
+            $request = \Yii::$app->request;
+        if ($header)
+            $result = $request->headers->get($header);
+        if (isset($result))
+            return $result;
+        else
+            return $request->post($param, $request->get($param));
+    }
+    
     public function getGrant_type()
     {
-        $request = \Yii::$app->request;
-        return $request->post('grant_type', $request->get('grant_type'));
+        return $this->getRequestValue('grant_type');
     }
     
     public function getClient_id()
     {
-        $request = \Yii::$app->request;    
-        if (!$clientId = $request->headers->get('PHP_AUTH_USER'))
-            $clientId = $request->post('client_id', $request->get('client_id'));
-        return $clientId;
+        return $this->getRequestValue('client_id', 'PHP_AUTH_USER');
     }
     
     public function getClient_secret()
     {
-        $request = \Yii::$app->request;
-        if(!$clientSecret = $request->headers->get('PHP_AUTH_PW'))
-            $clientSecret = $request->post('client_secret', $request->get('client_secret'));
-        return $clientSecret;
+        return $this->getRequestValue('client_secret', 'PHP_AUTH_PW');
     }
     
     public function getRedirect_uri()
     {
-        $request = \Yii::$app->request;
-        return $request->post('redirect_uri', $request->get('redirect_uri'));
+        return $this->getRequestValue('redirect_uri');
     }
     
     public function getScope()
     {
-        $request = \Yii::$app->request;
-        return $request->post('scope', $request->get('scope'));
+        return $this->getRequestValue('scope');
     }
     
     public function getState()
     {
-        $request = \Yii::$app->request;
-        return $request->post('state', $request->get('state'));
+        return $this->getRequestValue('state');
     }
     
     public function getResponse_type()
     {
-        $request = \Yii::$app->request;
-        return $request->post('response_type',$request->get('response_type'));
-    }
-    
-    public function getCode()
-    {
-        $request = \Yii::$app->request;
-        return $request->post('code',$request->get('code'));
-    }
-    
-    public function getRefresh_token()
-    {
-        $request = \Yii::$app->request;
-        return $request->post('refresh_token',$request->get('refresh_token'));
+        return $this->getRequestValue('response_type');
     }
     
     /**
@@ -98,37 +106,13 @@ trait OAuth2Trait
      */
     public function getClient()
     {
-        if(is_null($this->_client)){
-            if(!$this->_client = Client::findOne(['client_id' => $this->getClient_id()]))
-                throw new Exception('The client credentials are invalid', Exception::INVALID_CLIENT);
+        if (is_null($this->_client)) {
+            if (empty($this->client_id))
+                $this->errorServer('Unknown client', Exception::INVALID_CLIENT);
+            if (!$this->_client = Client::findOne(['client_id' => $this->client_id]))
+                $this->errorServer('Unknown client', Exception::INVALID_CLIENT);
         }
         return $this->_client;
-    }
-    
-    /**
-     *
-     * @return \conquer\oauth2\models\AuthorizationCode
-     */
-    public function getAuthCode()
-    {
-        if(is_null($this->_authCode)){
-            if(!$this->_authCode = AuthorizationCode::findOne(['authorization_code' => $this->getCode()]))
-                throw new Exception('The Authorization code is invalid');
-        }
-        return $this->_authCode;
-    }
-    
-    /**
-     *
-     * @return \conquer\oauth2\models\RefreshToken
-     */
-    public function getRefreshToken()
-    {
-        if(is_null($this->_refreshToken)){
-            if(!$this->_refreshToken = RefreshToken::findOne(['refresh_token' => $this->getRefresh_token()]))
-                throw new Exception('The Refresh Token is invalid');
-        }
-        return $this->_refreshToken;
     }
     
     public function validateClient_id($attribute, $params)
@@ -138,41 +122,27 @@ trait OAuth2Trait
     
     public function validateClient_secret($attribute, $params)
     {
-        if(empty($this->client) || !\Yii::$app->security->compareString($this->client->client_secret, $this->$attribute))
-            $this->addError($attribute, 'The client credentials are invalid', Exception::INVALID_CLIENT);
+        if (!\Yii::$app->security->compareString($this->getClient()->client_secret, $this->$attribute))
+            $this->addError($attribute, 'The client credentials are invalid', Exception::UNAUTHORIZED_CLIENT);
     }
     
     public function validateRedirect_uri($attribute, $params)
     {
-        if(empty($this->$attribute))
-            $this->$attribute = $this->client->redirect_uri;
-        elseif (strncasecmp($this->$attribute, $this->client->redirect_uri, strlen($this->client->redirect_uri))!==0)
-            $this->addError($attribute, 'The redirect URI provided is missing or does not match', Exception::REDIRECT_URI_MISMATCH);
+        if (!empty($this->$attribute)){
+            $clientRedirectUri = $this->getClient()->redirect_uri;
+            if (strncasecmp($this->$attribute, $clientRedirectUri, strlen($clientRedirectUri))!==0)
+                $this->errorServer('The redirect URI provided is missing or does not match', Exception::REDIRECT_URI_MISMATCH);
+        }
     }
     
-    public function validateRefresh_token($attribute, $params)
-    {
-        if(empty($this->$attribute))
-            $this->addError($attribute, 'The Refresh token is missing');
-        $this->getRefreshToken();
-    }
-    
-    /**
-     *
-     */
     public function validateScope($attribute, $params)
     {
         if (!$this->checkSets($this->$attribute, $this->client->scopes))
-//             if(isset($this->redirect_uri))
-//                 throw new RedirectException($this->redirect_uri, 'An unsupported scope was requested.', Exception::INSUFFICIENT_SCOPE);
-//             else
-                $this->addError($attribute, 'An unsupported scope was requested.', Exception::INSUFFICIENT_SCOPE);
+            $this->errorRedirect('The requested scope is invalid, unknown, or malformed.', Exception::INVALID_SCOPE);
     }
     
     public function validateCode($attribute, $params)
     {
-        if(!$this->getCode())
-            $this->addError($attribute, 'The Authorization Code is invalid');
         $this->getAuthCode();
     }
     

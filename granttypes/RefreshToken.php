@@ -15,6 +15,8 @@ use conquer\oauth2\models\AccessToken;
  */
 class RefreshToken extends GrantTypeAbstract
 {
+    private $_refreshToken;
+    
     public function rules()
     {
         return [
@@ -54,4 +56,29 @@ class RefreshToken extends GrantTypeAbstract
             'refresh_token' => $refreshToken->refresh_token,
         ];
     }
+    
+    public function validateRefresh_token($attribute, $params)
+    {
+        $this->getRefreshToken();
+    }
+    
+    /**
+     *
+     * @return \conquer\oauth2\models\RefreshToken
+     */
+    public function getRefreshToken()
+    {
+        if (is_null($this->_refreshToken)) {
+            if (empty($this->refresh_token))
+                $this->errorServer('The request is missing "refresh_token" parameter');
+            if (!$this->_refreshToken = RefreshToken::findOne(['refresh_token' => $this->refresh_token]))
+                throw new Exception('The Refresh Token is invalid');
+        }
+        return $this->_refreshToken;
+    }
+    
+    public function getRefresh_token()
+    {
+        return $this->getRequestValue('refresh_token');
+    }    
 }

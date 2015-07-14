@@ -15,7 +15,7 @@ use conquer\oauth2\OAuth2Trait;
  *
  * @author Andrey Borodulin
  */
-class AccessToken extends ResponseTypeAbstract
+class Implicit extends ResponseTypeAbstract
 {
     public $tokeType = 'bearer';
     
@@ -23,7 +23,7 @@ class AccessToken extends ResponseTypeAbstract
     {
         return [
             [['client_id'], 'required'],
-            [['client_id'], 'string', 'max' => 80],
+            [['client_id', 'state'], 'string', 'max' => 80],
             [['redirect_uri'], 'url'],
             [['client_id'], 'validateClient_id'],
             [['redirect_uri'], 'validateRedirect_uri'],
