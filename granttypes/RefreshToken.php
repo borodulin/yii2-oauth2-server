@@ -17,6 +17,32 @@ class RefreshToken extends GrantTypeAbstract
 {
     private $_refreshToken;
     
+    /**
+     * Value MUST be set to "refresh_token". 
+     * @var string
+     */
+    public $grant_type;
+    /**
+     * The refresh token issued to the client.
+     * @var string
+     */
+    public $refresh_token;
+    /**
+     * The scope of the access request as described by Section 3.3.
+     * @var string
+     */
+    public $scope;
+    /**
+     * 
+     * @var string
+     */
+    public $client_id;
+    /**
+     *
+     * @var string
+     */    
+    public $client_secret;
+    
     public function rules()
     {
         return [
