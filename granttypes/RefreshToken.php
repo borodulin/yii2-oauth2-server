@@ -46,7 +46,7 @@ class RefreshToken extends GrantTypeAbstract
     public function rules()
     {
         return [
-            [['client_id', 'client_secret', 'refresh_token'], 'required'],
+            [['client_id', 'grant_type', 'client_secret', 'refresh_token'], 'required'],
             [['client_id', 'client_secret'], 'string', 'max' => 80],
             [['refresh_token'], 'string', 'max' => 40],
             [['client_id'], 'validateClient_id'],
