@@ -93,7 +93,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     /**
      * Finish oauth authorization.
      * Builds redirect uri and performs redirect.
-     * If user is not logged on, redirect uri contains the Access Denied Error
+     * If user is not logged on, redirect contains the Access Denied Error
      */
     public function finishAuthorization()
     {
