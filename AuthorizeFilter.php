@@ -107,5 +107,11 @@ class AuthorizeFilter extends \yii\base\ActionFilter
         
         \Yii::$app->response->redirect($redirectUri);
     }
-    
+    /**
+     * @return boolean
+     */
+    public function getIsOauthRequest()
+    {
+        return \Yii::$app->session->has($this->_storeKey);
+    }
 }
