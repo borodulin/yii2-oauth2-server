@@ -99,7 +99,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     {
         $responseType = $this->getResponseType();
         if (\Yii::$app->user->isGuest)
-            $responeType->errorRedirect('The user denied access to your application', Exception::ACCESS_DENIED);
+            $responeType->errorRedirect('The User denied access to your application', Exception::ACCESS_DENIED);
         
         $parts = $responseType->getResponseData();
         
