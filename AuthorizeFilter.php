@@ -45,8 +45,8 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     /**
      * Performs OAuth 2.0 request validation and store granttype object in the session,
      * so, user can go from our authorization server to the third party OAuth provider.
-     * You should call finishAuthorization() in the current controller to continue client authorization 
-     * or to stop with Access Denied error message if the user is not logged on 
+     * You should call finishAuthorization() in the current controller to finish client authorization 
+     * or to stop with Access Denied error message if the user is not logged on.
      */
     public function beforeAction($action)
     {   
