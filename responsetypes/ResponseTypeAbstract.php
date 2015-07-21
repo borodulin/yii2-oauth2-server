@@ -45,10 +45,10 @@ abstract class ResponseTypeAbstract extends \yii\base\Model
      */
     public static function createResponseType(array $params = [])
     {
-        if(!$responseType = self::getRequestValue('response_type'))
+        if (!$responseType = self::getRequestValue('response_type'))
             throw new Exception('Invalid or missing response type');
     
-        if(isset(self::$responseTypes[$responseType]))
+        if (isset(self::$responseTypes[$responseType]))
             return \Yii::createObject(self::$responseTypes[$responseType], $params);
         else
             throw new Exception("An unsupported response type was requested.", Exception::UNSUPPORTED_RESPONSE_TYPE);

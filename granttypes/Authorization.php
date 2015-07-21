@@ -61,21 +61,24 @@ class Authorization extends GrantTypeAbstract
     public function validateRedirect_uri($attribute, $params)
     {
         $authCode = $this->getAuthCode();
+
         if ($authCode->redirect_uri && (strcasecmp($this->$attribute, $authCode->redirect_uri)!==0))
             $this->errorServer('The redirect URI provided does not match', Exception::REDIRECT_URI_MISMATCH);
+
         parent::validateRedirect_uri($attribute, $params);
     }
     
     public function getResponseData()
     {
         $authCode = $this->getAuthCode();
+
         $acessToken = AccessToken::createAccessToken([
             'client_id' => $this->client_id,
             'user_id' => $authCode->user_id,
             'expires' => $this->accessTokenLifetime + time(),
             'scope' => $authCode->scope,
         ]);
-        
+
         $refreshToken = RefreshToken::createRefreshToken([
             'client_id' => $this->client_id,
             'user_id' => $authCode->user_id,
@@ -87,6 +90,7 @@ class Authorization extends GrantTypeAbstract
          * @link https://tools.ietf.org/html/rfc6749#section-4.1.2
          */ 
         $authCode->delete();
+
         return  [
             'access_token' => $acessToken->access_token,
             'expires_in' => $this->accessTokenLifetime,
@@ -115,8 +119,8 @@ class Authorization extends GrantTypeAbstract
         if (is_null($this->_authCode)){
             if (empty($this->code))
                 $this->errorRedirect('Authorization code is missing.', Exception::INVALID_REQUEST);
-            if(!$this->_authCode = AuthorizationCode::findOne(['authorization_code' => $this->code]))
-                $this->errorServer('The authorization code is not found or has been expired.', Exception::INVALID_CLIENT);
+            if (!$this->_authCode = AuthorizationCode::findOne(['authorization_code' => $this->code]))
+                $this->errorRedirect('The authorization code is not found or has been expired.', Exception::INVALID_CLIENT);
         }
         return $this->_authCode;
     }

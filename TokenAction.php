@@ -41,6 +41,5 @@ class TokenAction extends \yii\base\Action
         $grantType->validate();
         
         \Yii::$app->response->data = $grantType->getResponseData();
-                
     }
 }

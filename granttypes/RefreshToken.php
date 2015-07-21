@@ -74,6 +74,7 @@ class RefreshToken extends GrantTypeAbstract
             'expires' => $this->refreshTokenLifetime + time(),
             'scope' => $refreshToken->scope,
         ]);
+        
         return  [
             'access_token' => $acessToken->access_token,
             'expires_in' => $this->accessTokenLifetime,
@@ -98,7 +99,7 @@ class RefreshToken extends GrantTypeAbstract
             if (empty($this->refresh_token))
                 $this->errorServer('The request is missing "refresh_token" parameter');
             if (!$this->_refreshToken = RefreshToken::findOne(['refresh_token' => $this->refresh_token]))
-                throw new Exception('The Refresh Token is invalid');
+                $this->errorServer('The Refresh Token is invalid');
         }
         return $this->_refreshToken;
     }

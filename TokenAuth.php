@@ -43,7 +43,6 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
      */
     public $identityClass;
     
-
     /**
      * @inheritdoc
      */
@@ -123,10 +122,10 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
                     $token = $getToken;
             }
     
-            if(!$accessToken = AccessToken::findOne(['access_token'=>$token]))
+            if (!$accessToken = AccessToken::findOne(['access_token'=>$token]))
                 throw new Exception('The access token provided is invalid.', Exception::INVALID_GRANT);
     
-            if($accessToken->expires < time())
+            if ($accessToken->expires < time())
                 throw new Exception('The access token provided has expired.', Exception::INVALID_GRANT);
     
             $this->_accessToken = $accessToken;

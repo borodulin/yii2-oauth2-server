@@ -39,7 +39,7 @@ class Module extends \yii\base\Module implements \yii\base\BootstrapInterface
      */
     public function behaviors()
     {
-        if(!empty($this->behaviors))
+        if (!empty($this->behaviors))
             return $this->behaviors;
         else
             return parent::behaviors();
