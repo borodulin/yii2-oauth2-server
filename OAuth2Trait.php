@@ -23,7 +23,7 @@ trait OAuth2Trait
 {
     private $_client;
     
-    const TOKEN_TYPE = 'bearer';
+    public $tokenType = 'bearer';
     
     public $authCodeLifetime = 30;
     public $accessTokenLifetime = 3600;

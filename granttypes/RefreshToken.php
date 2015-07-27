@@ -78,7 +78,7 @@ class RefreshToken extends GrantTypeAbstract
         return  [
             'access_token' => $acessToken->access_token,
             'expires_in' => $this->accessTokenLifetime,
-            'token_type' => 'bearer',
+            'token_type' => $this->tokenType,
             'scope' => $refreshToken->scope,
             'refresh_token' => $refreshToken->refresh_token,
         ];

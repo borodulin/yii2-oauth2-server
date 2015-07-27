@@ -39,7 +39,7 @@ class Implicit extends GrantTypeAbstract
         return  [
             'access_token' => $acessToken->access_token,
             'expires_in' => $this->accessTokenLifetime,
-            'token_type' => self::TOKEN_TYPE,
+            'token_type' => $this->tokenType,
             'scope' => $this->scope,
             'refresh_token' => $refreshToken->refresh_token,
         ];
