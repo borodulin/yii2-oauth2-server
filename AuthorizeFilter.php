@@ -69,10 +69,11 @@ class AuthorizeFilter extends \yii\base\ActionFilter
      */
     public function afterAction($action, $result)
     {
-        if(\Yii::$app->user->isGuest)
+        if (\Yii::$app->user->isGuest) {
             return $result;
-        else 
+        } else {
             $this->finishAuthorization();
+        }
     }
     
     /**
@@ -82,10 +83,11 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     public function getResponseType()
     {
         if (empty($this->_responseType)) {
-            if (\Yii::$app->session->has($this->_storeKey))
+            if (\Yii::$app->session->has($this->_storeKey)) {
                 $this->_responseType = unserialize(\Yii::$app->session->get($this->_storeKey));
-            else
+            } else {
                 throw new Exception('Invalid server state or the User Session has expired', Exception::SERVER_ERROR);
+            }
         }
         return $this->_responseType;
     }
@@ -98,9 +100,9 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     public function finishAuthorization()
     {
         $responseType = $this->getResponseType();
-        if (\Yii::$app->user->isGuest)
+        if (\Yii::$app->user->isGuest) {
             $responeType->errorRedirect('The User denied access to your application', Exception::ACCESS_DENIED);
-        
+        }
         $parts = $responseType->getResponseData();
         
         $redirectUri = http_build_url($responseType->redirect_uri, $parts, HTTP_URL_JOIN_QUERY);

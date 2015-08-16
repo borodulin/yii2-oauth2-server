@@ -97,17 +97,18 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
     
             // Check that exactly one method was used
             $methodsCount = isset($authHeader) + isset($postToken) + isset($getToken);
-            if ($methodsCount > 1)
+            if ($methodsCount > 1) {
                 throw new Exception('Only one method may be used to authenticate at a time (Auth header, POST or GET).');
-            elseif ($methodsCount == 0)
+            } elseif ($methodsCount == 0) {
                 throw new Exception('The access token was not found.');
-    
+            }
             // HEADER: Get the access token from the header
             if ($authHeader) {
-                if (preg_match("/^Bearer\\s+(.*?)$/", $authHeader, $matches))
+                if (preg_match("/^Bearer\\s+(.*?)$/", $authHeader, $matches)) {
                     $token = $matches[1];
-                else
+                } else {
                     throw new Exception('Malformed auth header.');
+                }
             } else {
                 // POST: Get the token from POST data
                 if ($postToken) {
@@ -118,16 +119,17 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
                     if($request->contentType != 'application/x-www-form-urlencoded')
                         throw new Exception('The content type for POST requests must be "application/x-www-form-urlencoded"');
                     $token = $postToken;
-                } else
+                } else {
                     $token = $getToken;
+                }
             }
     
-            if (!$accessToken = AccessToken::findOne(['access_token'=>$token]))
+            if (!$accessToken = AccessToken::findOne(['access_token'=>$token])) {
                 throw new Exception('The access token provided is invalid.', Exception::INVALID_GRANT);
-    
-            if ($accessToken->expires < time())
+            }
+            if ($accessToken->expires < time()) {
                 throw new Exception('The access token provided has expired.', Exception::INVALID_GRANT);
-    
+            }
             $this->_accessToken = $accessToken;
         }
         return $this->_accessToken;

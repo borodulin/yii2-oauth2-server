@@ -73,12 +73,12 @@ class Authorization extends ResponseTypeAbstract
             ],
         ];
     
-        if (isset($this->state))
+        if (isset($this->state)) {
             $parts['query']['state'] = $this->state;
-    
-        if (isset($parts['query']) && is_array($parts['query']))
+        }
+        if (isset($parts['query']) && is_array($parts['query'])) {
             $parts['query'] = http_build_query($parts['query']);
-        
+        }
         return $parts;
     }
     

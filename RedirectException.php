@@ -33,14 +33,14 @@ class RedirectException extends Exception
         
         $query = [ 'error' => $error];
         
-        if ($error_description)
+        if ($error_description) {
             $query['error_description'] = $error_description;
-        
+        }
         $request = \Yii::$app->request;
         
-        if ($state)
+        if ($state) {
             $query['state'] = $state;
-        
+        }
         \Yii::$app->response->redirect(http_build_url($redirect_uri, [
             PHP_URL_QUERY => $query
         ], HTTP_URL_REPLACE | HTTP_URL_JOIN_QUERY ));

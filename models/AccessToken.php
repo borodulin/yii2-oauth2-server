@@ -73,11 +73,11 @@ class AccessToken extends \yii\db\ActiveRecord
         $attributes['access_token'] = \Yii::$app->security->generateRandomString(40);
         $accessToken = new static($attributes);
 
-        if ($accessToken->save())
+        if ($accessToken->save()) {
             return $accessToken;
-        else
+        } else {
             \Yii::error(__CLASS__. ' validation error:'. VarDumper::dumpAsString($accessToken->errors));
-
+        }
         throw new Exception('Unable to create access token', Exception::INTERNAL_ERROR);
     }
     
@@ -95,7 +95,8 @@ class AccessToken extends \yii\db\ActiveRecord
     public function getUser()
     {
         $identity = isset(\Yii::$app->user->identity) ? \Yii::$app->user->identity : null;
-        if ($identity instanceof ActiveRecord)
+        if ($identity instanceof ActiveRecord) {
             return $this->hasOne(get_class($identity), ['user_id' => $identity->primaryKey()]);
+        }
     }
 }

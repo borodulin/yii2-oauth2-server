@@ -72,11 +72,11 @@ class RefreshToken extends \yii\db\ActiveRecord
         $attributes['refresh_token'] = \Yii::$app->security->generateRandomString(40);
         $refreshToken = new static($attributes);
 
-        if ($refreshToken->save())
+        if ($refreshToken->save()) {
             return $refreshToken;
-        else
+        } else {
             \Yii::error(__CLASS__. ' validation error:'. VarDumper::dumpAsString($refreshToken->errors));
-
+        }
         throw new Exception('Unable to create refresh token', Exception::INTERNAL_ERROR);
     }
     

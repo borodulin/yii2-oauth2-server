@@ -81,9 +81,9 @@ class Implicit extends ResponseTypeAbstract
             'refresh_token' => $refreshToken->refresh_token,
         ];
                 
-        if (!empty($this->state))
+        if (!empty($this->state)) {
             $fragment['state'] = $this->state;
-        
+        }
         return [
             'fragment'=>$fragment,
         ];

@@ -39,13 +39,14 @@ abstract class GrantTypeAbstract extends \yii\base\Model
      */
     public static function createGrantType(array $params = [])
     {
-        if (!$grantType = self::getRequestValue('grant_type'))
+        if (!$grantType = self::getRequestValue('grant_type')) {
             throw new Exception('The grant type was not specified in the request');
-        
-        if(isset(self::$grantTypes[$grantType]))
+        }
+        if (isset(self::$grantTypes[$grantType])) {
             return \Yii::createObject(self::$grantTypes[$grantType], $params);
-        else
+        } else {
             throw new Exception("An unsupported grant type was requested", Exception::UNSUPPORTED_GRANT_TYPE);
+        }
     }
     
     

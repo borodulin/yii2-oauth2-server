@@ -96,10 +96,12 @@ class RefreshToken extends GrantTypeAbstract
     public function getRefreshToken()
     {
         if (is_null($this->_refreshToken)) {
-            if (empty($this->refresh_token))
+            if (empty($this->refresh_token)) {
                 $this->errorServer('The request is missing "refresh_token" parameter');
-            if (!$this->_refreshToken = RefreshToken::findOne(['refresh_token' => $this->refresh_token]))
+            }
+            if (!$this->_refreshToken = RefreshToken::findOne(['refresh_token' => $this->refresh_token])) {
                 $this->errorServer('The Refresh Token is invalid');
+            }
         }
         return $this->_refreshToken;
     }

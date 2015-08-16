@@ -26,6 +26,15 @@ class ClientController extends Controller
         ];
     }
 
+    public function render($view, $params = [])
+    {
+        if (Yii::$app->request->isAjax) {
+            return $this->renderAjax($view, $params);
+        } else {
+            return parent::render($view, $params);
+        }
+    }
+    
     /**
      * Lists all Client models.
      * @return mixed
@@ -48,14 +57,9 @@ class ClientController extends Controller
      */
     public function actionView($id)
     {
-        if(Yii::$app->request->isAjax)
-            return $this->renderAjax('view', [
-                'model' => $this->findModel($id),
-            ]);
-        else
-            return $this->render('view', [
-                'model' => $this->findModel($id),
-            ]);
+        return $this->render('view', [
+            'model' => $this->findModel($id),
+        ]);
     }
 
     /**
@@ -68,19 +72,15 @@ class ClientController extends Controller
         $model = new Client();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            if(Yii::$app->request->isAjax)
+            if (Yii::$app->request->isAjax) {
                 return $this->redirect(['index']);
-            else
+            } else {
                 return $this->redirect(['view', 'id' => $model->client_id]);
+            }
         } else {
-            if(Yii::$app->request->isAjax)
-                return $this->renderAjax('create', [
-                    'model' => $model,
-                ]);
-            else
-                return $this->render('create', [
-                    'model' => $model,
-                ]);
+            return $this->render('create', [
+                'model' => $model,
+            ]);
         }
     }
 
@@ -95,19 +95,15 @@ class ClientController extends Controller
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            if(Yii::$app->request->isAjax)
+            if (Yii::$app->request->isAjax) {
                 return $this->redirect(['index']);
-            else
+            } else {
                 return $this->redirect(['view', 'id' => $model->client_id]);
+            }
         } else {
-            if(Yii::$app->request->isAjax)
-                return $this->renderAjax('update', [
-                    'model' => $model,
-                ]);
-            else
-                return $this->render('update', [
-                    'model' => $model,
-                ]);
+            return $this->render('update', [
+                'model' => $model,
+            ]);
         }
     }
 

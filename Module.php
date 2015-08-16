@@ -29,7 +29,7 @@ class Module extends \yii\base\Module implements \yii\base\BootstrapInterface
             ], false);
         } elseif ($app instanceof \yii\console\Application) {
             $app->controllerMap[$this->id] = [
-                    'class' => Oauth2Controller::className(),
+                   'class' => Oauth2Controller::className(),
             ];
         }
     }
@@ -39,9 +39,10 @@ class Module extends \yii\base\Module implements \yii\base\BootstrapInterface
      */
     public function behaviors()
     {
-        if (!empty($this->behaviors))
+        if (!empty($this->behaviors)) {
             return $this->behaviors;
-        else
+        } else {
             return parent::behaviors();
+        }
     }
 }

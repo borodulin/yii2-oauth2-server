@@ -77,11 +77,11 @@ class AuthorizationCode extends \yii\db\ActiveRecord
         $params['authorization_code'] = \Yii::$app->security->generateRandomString(40); 
         $authCode = new static($params);
 
-        if ($authCode->save())
+        if ($authCode->save()) {
             return $authCode;
-        else
+        } else {
             \Yii::error(__CLASS__.' validation error: '.VarDumper::dumpAsString($authCode->errors));
-
+        }
         throw new Exception('Unable to create authorization code', Exception::INTERNAL_ERROR);
     }
     

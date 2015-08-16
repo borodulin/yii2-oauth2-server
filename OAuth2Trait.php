@@ -49,21 +49,24 @@ trait OAuth2Trait
     public function errorRedirect($error, $type = Exception::INVALID_REQUEST)
     {
         $redirectUri = isset($this->redirect_uri) ? $this->redirect_uri : $this->getClient()->redirect_uri;
-        if ($redirectUri)
+        if ($redirectUri) {
             throw new RedirectException($redirectUri, $error, $type, isset($this->state)?$this->state:null);
-        else
+        } else {
             throw new Exception($error, $type);
+        }
     }
     
     public static function getRequestValue($param, $header = null)
     {
         static $request;
-        if (is_null($request))
+        if (is_null($request)) {
             $request = \Yii::$app->request;
-        if ($header && ($result = $request->headers->get($header)))
+        }
+        if ($header && ($result = $request->headers->get($header))) {
             return $result;
-        else
+        } else {
             return $request->post($param, $request->get($param));
+        }
     }
     
     public function getGrant_type()
@@ -108,10 +111,12 @@ trait OAuth2Trait
     public function getClient()
     {
         if (is_null($this->_client)) {
-            if (empty($this->client_id))
+            if (empty($this->client_id)) {
                 $this->errorServer('Unknown client', Exception::INVALID_CLIENT);
-            if (!$this->_client = Client::findOne(['client_id' => $this->client_id]))
+            }
+            if (!$this->_client = Client::findOne(['client_id' => $this->client_id])) {
                 $this->errorServer('Unknown client', Exception::INVALID_CLIENT);
+            }
         }
         return $this->_client;
     }
@@ -123,23 +128,26 @@ trait OAuth2Trait
     
     public function validateClient_secret($attribute, $params)
     {
-        if (!\Yii::$app->security->compareString($this->getClient()->client_secret, $this->$attribute))
+        if (!\Yii::$app->security->compareString($this->getClient()->client_secret, $this->$attribute)) {
             $this->addError($attribute, 'The client credentials are invalid', Exception::UNAUTHORIZED_CLIENT);
+        }
     }
     
     public function validateRedirect_uri($attribute, $params)
     {
         if (!empty($this->$attribute)){
             $clientRedirectUri = $this->getClient()->redirect_uri;
-            if (strncasecmp($this->$attribute, $clientRedirectUri, strlen($clientRedirectUri))!==0)
+            if (strncasecmp($this->$attribute, $clientRedirectUri, strlen($clientRedirectUri))!==0) {
                 $this->errorServer('The redirect URI provided is missing or does not match', Exception::REDIRECT_URI_MISMATCH);
+            }
         }
     }
     
     public function validateScope($attribute, $params)
     {
-        if (!$this->checkSets($this->$attribute, $this->client->scopes))
+        if (!$this->checkSets($this->$attribute, $this->client->scopes)) {
             $this->errorRedirect('The requested scope is invalid, unknown, or malformed.', Exception::INVALID_SCOPE);
+        }
     }
     
     public function validateCode($attribute, $params)
@@ -156,12 +164,12 @@ trait OAuth2Trait
      */
     public function checkSets($requiredSet, $availableSet)
     {
-        if (!is_array($requiredSet))
+        if (!is_array($requiredSet)) {
             $requiredSet = explode(' ', trim($requiredSet));
-    
-        if (!is_array($availableSet))
+        }
+        if (!is_array($availableSet)) {
             $availableSet = explode(' ', trim($availableSet));
-    
+        }
         return (count(array_diff($requiredSet, $availableSet)) == 0);
     }
 }
