@@ -7,7 +7,6 @@
 
 namespace conquer\oauth2\granttypes;
 
-use conquer\oauth2\models\Client;
 use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\models\RefreshToken;
 use conquer\oauth2\models\AuthorizationCode;

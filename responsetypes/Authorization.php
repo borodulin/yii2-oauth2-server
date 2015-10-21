@@ -7,7 +7,7 @@
 
 namespace conquer\oauth2\responsetypes;
 
-use conquer\oauth2\OAuth2Trait;
+use conquer\oauth2\models\AuthorizationCode;
 
 /**
  * @link https://tools.ietf.org/html/rfc6749#section-4.1.1
@@ -60,26 +60,24 @@ class Authorization extends ResponseTypeAbstract
     
     public function getResponseData()
     {
-        $authCode = \conquer\oauth2\models\AuthorizationCode::createAuthorizationCode([
+        $authCode = AuthorizationCode::createAuthorizationCode([
             'client_id' => $this->client_id,
             'user_id' => \Yii::$app->user->id,
             'expires' => $this->authCodeLifetime+time(),
             'scope' => $this->scope,
         ]);
     
-        $parts = [
-            'query'=>[
-                'code' => $authCode->authorization_code,
-            ],
+        $query = [
+            'code' => $authCode->authorization_code,
         ];
     
         if (isset($this->state)) {
-            $parts['query']['state'] = $this->state;
+            $query['state'] = $this->state;
         }
-        if (isset($parts['query']) && is_array($parts['query'])) {
-            $parts['query'] = http_build_query($parts['query']);
-        }
-        return $parts;
+
+        return [
+            'query' => http_build_query($query),
+        ];
     }
     
     

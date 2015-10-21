@@ -9,7 +9,6 @@ namespace conquer\oauth2;
 
 use conquer\oauth2\Exception;
 use conquer\oauth2\models\AccessToken;
-use yii\web\Response;
 
 /**
  * TokenAuth is an action filter that supports the authentication method based on the OAuth2 Access Token.

@@ -7,6 +7,8 @@
 
 namespace conquer\oauth2\responsetypes;
 
+use conquer\oauth2\models\AccessToken;
+
 /**
  * @link https://tools.ietf.org/html/rfc6749#section-4.2.1
  * @author Andrey Borodulin
@@ -59,17 +61,10 @@ class Implicit extends ResponseTypeAbstract
 
     public function getResponseData()
     {
-        $accessToken = \conquer\oauth2\models\AccessToken::createAccessToken([
+        $accessToken = AccessToken::createAccessToken([
             'client_id' => $this->client_id,
             'user_id' => \Yii::$app->user->id,
             'expires' => $this->accessTokenLifetime + time(),
-            'scope' => $this->scope,
-        ]);
-        
-        $refreshToken = \conquer\oauth2\models\RefreshToken::createRefreshToken([
-            'client_id' => $this->client_id,
-            'user_id' => \Yii::$app->user->id,
-            'expires' => $this->refreshTokenLifetime + time(),
             'scope' => $this->scope,
         ]);
         
@@ -78,14 +73,13 @@ class Implicit extends ResponseTypeAbstract
             'expires_in' => $this->accessTokenLifetime,
             'token_type' => $this->tokenType,
             'scope' => $this->scope,
-            'refresh_token' => $refreshToken->refresh_token,
         ];
                 
         if (!empty($this->state)) {
             $fragment['state'] = $this->state;
         }
         return [
-            'fragment'=>$fragment,
+            'fragment' => http_build_query($fragment),
         ];
     }
     

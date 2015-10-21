@@ -7,8 +7,6 @@
 
 namespace conquer\oauth2\granttypes;
 use conquer\oauth2\Exception;
-use conquer\oauth2\RedirectException;
-use conquer\oauth2\models\Client;
 use conquer\oauth2\OAuth2Trait;
 
 /**
@@ -23,7 +21,7 @@ abstract class GrantTypeAbstract extends \yii\base\Model
 //         'client_credentials' => 'conquer\oauth2\granttypes\ClientCredentials',
 //         'password' => 'conquer\oauth2\granttypes\UserCredentials',
         'refresh_token' => 'conquer\oauth2\granttypes\RefreshToken',
-//         'token' => 'conquer\oauth2\granttypes\Implicit',
+        'token' => 'conquer\oauth2\granttypes\Implicit',
 //         'urn:ietf:params:oauth:grant-type:jwt-bearer' => 'conquer\oauth2\granttypes\JwtBearer',
     ];
 
