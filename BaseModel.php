@@ -1,39 +1,55 @@
 <?php
-/**
- * @link https://github.com/borodulin/yii2-oauth-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
- * @license https://github.com/borodulin/yii2-oauth-server/blob/master/LICENSE
- */
 
 namespace conquer\oauth2;
 
-use conquer\oauth2\models\Client;
-use conquer\oauth2\Exception;
-use conquer\oauth2\RedirectException;
+use yii\helpers\ArrayHelper;
 
-/**
- * 
- * @author Andrey Borodulin
- *
- */
-trait OAuth2Trait
+abstract class BaseModel extends \yii\base\Model
 {
-    private $_client;
+    protected $_client;
     
+    /**
+     * @link https://tools.ietf.org/html/rfc6749#section-7.1
+     * @var string
+     */
     public $tokenType = 'bearer';
     
+    /**
+     * Authorization Code lifetime
+     * 30 seconds by default
+     * @var integer
+     */
     public $authCodeLifetime = 30;
+    
+    /**
+     * Access Token lifetime
+     * 1 hour by default
+     * @var integer
+     */
     public $accessTokenLifetime = 3600;
+    
+    /**
+     * Refresh Token lifetime
+     * 2 weeks by default
+     * @var integer
+     */
     public $refreshTokenLifetime = 1209600;
+    
     
     public function init()
     {
-        foreach ($this->safeAttributes() as $name) {
-            $this->$name = $this->{'get'.$name}();
+        $headers = [
+            'client_id' => 'PHP_AUTH_USER',
+            'client_secret' => 'PHP_AUTH_PW',
+        ];
+        
+        $attributes = array_flip($this->safeAttributes());
+        foreach ($attributes as $attribute) {
+            $this->$attribute = self::getRequestValue($attribute, ArrayHelper::getValue($headers, $attribute));
         }
     }
-
-    public function addError($attribute, $error="")
+    
+    public function addError($attribute, $error = "")
     {
         throw new Exception($error, Exception::INVALID_REQUEST);
     }
@@ -53,6 +69,8 @@ trait OAuth2Trait
         }
     }
     
+    abstract function getResponseData();
+    
     public static function getRequestValue($param, $header = null)
     {
         static $request;
@@ -64,41 +82,6 @@ trait OAuth2Trait
         } else {
             return $request->post($param, $request->get($param));
         }
-    }
-    
-    public function getGrant_type()
-    {
-        return self::getRequestValue('grant_type');
-    }
-    
-    public function getClient_id()
-    {
-        return self::getRequestValue('client_id', 'PHP_AUTH_USER');
-    }
-    
-    public function getClient_secret()
-    {
-        return self::getRequestValue('client_secret', 'PHP_AUTH_PW');
-    }
-    
-    public function getRedirect_uri()
-    {
-        return self::getRequestValue('redirect_uri');
-    }
-    
-    public function getScope()
-    {
-        return self::getRequestValue('scope');
-    }
-    
-    public function getState()
-    {
-        return self::getRequestValue('state');
-    }
-    
-    public function getResponse_type()
-    {
-        return self::getRequestValue('response_type');
     }
     
     /**
@@ -147,11 +130,6 @@ trait OAuth2Trait
         }
     }
     
-    public function validateCode($attribute, $params)
-    {
-        $this->getAuthCode();
-    }
-    
     /**
      * Checks if everything in required set is contained in available set.
      *
@@ -159,7 +137,7 @@ trait OAuth2Trait
      * @param string|array $availableSet
      * @return boolean
      */
-    public function checkSets($requiredSet, $availableSet)
+    protected function checkSets($requiredSet, $availableSet)
     {
         if (!is_array($requiredSet)) {
             $requiredSet = explode(' ', trim($requiredSet));
@@ -169,4 +147,5 @@ trait OAuth2Trait
         }
         return (count(array_diff($requiredSet, $availableSet)) == 0);
     }
+    
 }

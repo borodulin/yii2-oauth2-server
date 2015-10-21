@@ -11,12 +11,13 @@ use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\models\RefreshToken;
 use conquer\oauth2\models\AuthorizationCode;
 use conquer\oauth2\Exception;
+use conquer\oauth2\BaseModel;
 
 /**
  * @link https://tools.ietf.org/html/rfc6749#section-4.1.3 
  * @author Andrey Borodulin
  */
-class Authorization extends GrantTypeAbstract
+class Authorization extends BaseModel
 {
     private $_authCode;
     
@@ -97,11 +98,6 @@ class Authorization extends GrantTypeAbstract
             'scope' => $this->scope,
             'refresh_token' => $refreshToken->refresh_token,
         ];
-    }
-    
-    public function getCode()
-    {
-        return self::getRequestValue('code');
     }
     
     public function validateCode($attribute, $params)

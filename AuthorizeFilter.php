@@ -20,21 +20,25 @@ class AuthorizeFilter extends \yii\base\ActionFilter
 
     private $_responseType;
 
-    private $_storeKey = 'ear6kme7or19rnfldtmwsxgzxsrmngqw';
+    public $responseTypes = [
+            'token' => 'conquer\oauth2\responsetypes\Implicit',
+            'code' => 'conquer\oauth2\responsetypes\Authorization',
+    ];
     
     /**
-     * Authorization Code lifetime
-     * 30 seconds by default
-     * @var integer
+     * 
+     * @var boolean
      */
-    public $authCodeLifetime = 30;
+    public $allowImplicit = true;
     
-    /**
-     * Access Token lifetime
-     * 1 hour by default
-     * @var integer
-     */
-    public $accessTokenLifetime = 3600;
+    public $storeKey = 'ear6kme7or19rnfldtmwsxgzxsrmngqw';
+    
+    public function init()
+    {
+        if (!$this->allowImplicit) {
+            unset($this->responseTypes['token']);
+        }
+    }
     
     /**
      * Performs OAuth 2.0 request validation and store granttype object in the session,
@@ -43,15 +47,21 @@ class AuthorizeFilter extends \yii\base\ActionFilter
      * or to stop with Access Denied error message if the user is not logged on.
      */
     public function beforeAction($action)
-    {   
-        $this->_responseType = ResponseTypeAbstract::createResponseType([
-            'authCodeLifetime' => $this->authCodeLifetime,
-            'accessTokenLifetime' => $this->accessTokenLifetime, 
-        ]);
+    {
+        if (!$responseType = BaseModel::getRequestValue('response_type')) {
+            throw new Exception('Invalid or missing response type');
+        }
+        if (isset($this->responseTypes[$responseType])) {
+            $this->_responseType = \Yii::createObject($this->responseTypes[$responseType]);
+        } else {
+            throw new Exception("An unsupported response type was requested.", Exception::UNSUPPORTED_RESPONSE_TYPE);
+        }
         
         $this->_responseType->validate();
 
-        \Yii::$app->session->set($this->_storeKey, serialize($this->_responseType));
+        if ($this->storeKey) {
+            \Yii::$app->session->set($this->storeKey, serialize($this->_responseType));
+        }
         
         return true;
     }
@@ -71,13 +81,13 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     
     /**
      * @throws Exception
-     * @return \conquer\oauth2\responsetypes\ResponseTypeAbstract
+     * @return \conquer\oauth2\BaseModel
      */
-    public function getResponseType()
+    protected function getResponseType()
     {
-        if (empty($this->_responseType)) {
-            if (\Yii::$app->session->has($this->_storeKey)) {
-                $this->_responseType = unserialize(\Yii::$app->session->get($this->_storeKey));
+        if (empty($this->_responseType) && $this->storeKey) {
+            if (\Yii::$app->session->has($this->storeKey)) {
+                $this->_responseType = unserialize(\Yii::$app->session->get($this->storeKey));
             } else {
                 throw new Exception('Invalid server state or the User Session has expired', Exception::SERVER_ERROR);
             }
@@ -111,7 +121,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
      */
     public function getIsOauthRequest()
     {
-        return \Yii::$app->session->has($this->_storeKey);
+        return !empty($this->storeKey) && \Yii::$app->session->has($this->storeKey);
     }
 }
 

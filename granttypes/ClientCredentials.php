@@ -7,10 +7,11 @@
 
 namespace conquer\oauth2\granttypes;
 
+use conquer\oauth2\BaseModel;
 /**
  * @author Andrey Borodulin
  */
-class ClientCredentials extends GrantTypeAbstract
+class ClientCredentials extends BaseModel
 {
 
 }

@@ -8,7 +8,6 @@
 namespace conquer\oauth2;
 
 use yii\web\Response;
-use conquer\oauth2\granttypes\GrantTypeAbstract;
 
 /**
  * 
@@ -18,18 +17,13 @@ use conquer\oauth2\granttypes\GrantTypeAbstract;
 class TokenAction extends \yii\base\Action
 {
     
-    /**
-     * Access Token lifetime
-     * 1 hour by default
-     * @var integer
-     */
-    public $accessTokenLifetime = 3600;
-    /**
-     * Refresh Token lifetime
-     * 2 weeks by default
-     * @var integer
-     */
-    public $refreshTokenLifetime = 1209600;
+    public static $grantTypes = [
+            'authorization_code' => 'conquer\oauth2\granttypes\Authorization',
+            'refresh_token' => 'conquer\oauth2\granttypes\RefreshToken',
+//         'client_credentials' => 'conquer\oauth2\granttypes\ClientCredentials',
+//         'password' => 'conquer\oauth2\granttypes\UserCredentials',
+//         'urn:ietf:params:oauth:grant-type:jwt-bearer' => 'conquer\oauth2\granttypes\JwtBearer',
+    ];
     
     public function init()
     {
@@ -39,15 +33,17 @@ class TokenAction extends \yii\base\Action
     
     public function run()
     {
-        $request = \Yii::$app->request;
+        if (!$grantType = BaseModel::getRequestValue('grant_type')) {
+            throw new Exception('The grant type was not specified in the request');
+        }
+        if (isset($this->grantTypes[$grantType])) {
+            $grantModel = \Yii::createObject($this->grantTypes[$grantType]);
+        } else {
+            throw new Exception("An unsupported grant type was requested", Exception::UNSUPPORTED_GRANT_TYPE);
+        }
         
-        $grantType = GrantTypeAbstract::createGrantType([
-                'accessTokenLifetime' => $this->accessTokenLifetime,
-                'refreshTokenLifetime' => $this->refreshTokenLifetime,
-        ]);
+        $grantModel->validate();
         
-        $grantType->validate();
-        
-        \Yii::$app->response->data = $grantType->getResponseData();
+        \Yii::$app->response->data = $grantModel->getResponseData();
     }
 }
