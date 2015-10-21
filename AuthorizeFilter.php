@@ -90,7 +90,11 @@ class AuthorizeFilter extends \yii\base\ActionFilter
         }
         $parts = $responseType->getResponseData();
         
-        $redirectUri = http_build_url($responseType->redirect_uri, $parts, HTTP_URL_JOIN_QUERY);
+        $redirectUri = http_build_url($responseType->redirect_uri, $parts, HTTP_URL_JOIN_QUERY | HTTP_URL_STRIP_FRAGMENT);
+
+        if (isset($parts['fragment'])) {
+            $redirectUri .= '#'.$parts['fragment'];
+        }
         
         \Yii::$app->response->redirect($redirectUri);
     }
@@ -102,3 +106,4 @@ class AuthorizeFilter extends \yii\base\ActionFilter
         return \Yii::$app->session->has($this->_storeKey);
     }
 }
+

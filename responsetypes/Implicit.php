@@ -79,7 +79,7 @@ class Implicit extends ResponseTypeAbstract
             $fragment['state'] = $this->state;
         }
         return [
-            'fragment'=>$fragment,
+            'fragment' => http_build_query($fragment),
         ];
     }
     

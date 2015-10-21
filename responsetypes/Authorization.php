@@ -67,19 +67,17 @@ class Authorization extends ResponseTypeAbstract
             'scope' => $this->scope,
         ]);
     
-        $parts = [
-            'query'=>[
-                'code' => $authCode->authorization_code,
-            ],
+        $query = [
+            'code' => $authCode->authorization_code,
         ];
     
         if (isset($this->state)) {
-            $parts['query']['state'] = $this->state;
+            $query['state'] = $this->state;
         }
-        if (isset($parts['query']) && is_array($parts['query'])) {
-            $parts['query'] = http_build_query($parts['query']);
-        }
-        return $parts;
+
+        return [
+            'query' => http_build_query($query),
+        ];
     }
     
     
