@@ -10,9 +10,6 @@ namespace conquer\oauth2;
 use conquer\oauth2\models\Client;
 use conquer\oauth2\Exception;
 use conquer\oauth2\RedirectException;
-use conquer\oauth2\models\AuthorizationCode;
-use conquer\oauth2\models\AccessToken;
-use conquer\oauth2\models\RefreshToken;
 
 /**
  * 

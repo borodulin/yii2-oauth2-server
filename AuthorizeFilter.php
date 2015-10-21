@@ -7,7 +7,6 @@
 
 namespace conquer\oauth2;
 
-use yii\web\Response;
 use yii\web\Session;
 use conquer\oauth2\responsetypes\ResponseTypeAbstract;
 
@@ -29,18 +28,6 @@ class AuthorizeFilter extends \yii\base\ActionFilter
      * @var integer
      */
     public $authCodeLifetime = 30;
-    /**
-     * Access Token lifetime
-     * 1 hour by default
-     * @var integer
-     */
-    public $accessTokenLifetime = 3600;
-    /**
-     * Refresh Token lifetime
-     * 2 weeks by default
-     * @var integer
-     */
-    public $refreshTokenLifetime = 1209600;
     
     /**
      * Performs OAuth 2.0 request validation and store granttype object in the session,
@@ -52,8 +39,6 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     {   
         $this->_responseType = ResponseTypeAbstract::createResponseType([
             'authCodeLifetime' => $this->authCodeLifetime,
-            'accessTokenLifetime' => $this->accessTokenLifetime,
-            'refreshTokenLifetime' => $this->refreshTokenLifetime,                
         ]);
         
         $this->_responseType->validate();

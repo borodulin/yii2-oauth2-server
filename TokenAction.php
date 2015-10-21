@@ -8,9 +8,7 @@
 namespace conquer\oauth2;
 
 use yii\web\Response;
-use conquer\oauth2\models\OauthAuthorizationCode;
 use conquer\oauth2\granttypes\GrantTypeAbstract;
-use yii\validators\Validator;
 
 /**
  * 
@@ -20,7 +18,17 @@ use yii\validators\Validator;
 class TokenAction extends \yii\base\Action
 {
     
+    /**
+     * Access Token lifetime
+     * 1 hour by default
+     * @var integer
+     */
     public $accessTokenLifetime = 3600;
+    /**
+     * Refresh Token lifetime
+     * 2 weeks by default
+     * @var integer
+     */
     public $refreshTokenLifetime = 1209600;
     
     public function init()

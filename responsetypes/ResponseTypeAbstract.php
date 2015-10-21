@@ -7,8 +7,6 @@
 
 namespace conquer\oauth2\responsetypes;
 use conquer\oauth2\Exception;
-use conquer\oauth2\RedirectException;
-use conquer\oauth2\models\Client;
 use conquer\oauth2\OAuth2Trait;
 use yii\helpers\ArrayHelper;
 
@@ -19,8 +17,6 @@ use yii\helpers\ArrayHelper;
 abstract class ResponseTypeAbstract extends \yii\base\Model
 {
     use OAuth2Trait;
-    
-    public $authCodeLifetime = 30;
     
     public static $responseTypes = [
         'token' => 'conquer\oauth2\responsetypes\Implicit',
@@ -33,8 +29,6 @@ abstract class ResponseTypeAbstract extends \yii\base\Model
     {
         return ArrayHelper::merge($this->safeAttributes(),[
             'authCodeLifetime',
-            'accessTokenLifetime',
-            'refreshTokenLifetime',
         ]);
     }
     

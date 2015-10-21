@@ -7,6 +7,13 @@
 
 namespace conquer\oauth2\granttypes;
 
+use conquer\oauth2\models\AccessToken;
+
+/**
+ * @link https://tools.ietf.org/html/rfc6749#section-4.2
+ * 
+ * @author Andrey Borodulin
+ */
 class Implicit extends GrantTypeAbstract
 {
     public function rules()
@@ -20,6 +27,11 @@ class Implicit extends GrantTypeAbstract
         ];
     }
     
+    /**
+     * 
+     * @link https://tools.ietf.org/html/rfc6749#section-4.2.2
+     * @return array
+     */
     public function getResponseData()
     {
         $acessToken = AccessToken::createAccessToken([
@@ -28,20 +40,14 @@ class Implicit extends GrantTypeAbstract
             'expires' => $this->accessTokenLifetime + time(),
             'scope' => $this->scope,
         ]);
-    
-        $refreshToken = RefreshToken::createRefreshToken([
-            'client_id' => $this->client_id,
-            'user_id' => \Yii::$app->user->id,
-            'expires' => $this->refreshTokenLifetime + time(),
-            'scope' => $this->scope,
-        ]);
-
+        
+        // The authorization server MUST NOT issue a refresh token.
+        
         return  [
             'access_token' => $acessToken->access_token,
             'expires_in' => $this->accessTokenLifetime,
             'token_type' => $this->tokenType,
             'scope' => $this->scope,
-            'refresh_token' => $refreshToken->refresh_token,
         ];
     }
 }
