@@ -29,6 +29,7 @@ abstract class ResponseTypeAbstract extends \yii\base\Model
     {
         return ArrayHelper::merge($this->safeAttributes(),[
             'authCodeLifetime',
+            'accessTokenLifetime',
         ]);
     }
     

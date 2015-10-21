@@ -30,6 +30,13 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     public $authCodeLifetime = 30;
     
     /**
+     * Access Token lifetime
+     * 1 hour by default
+     * @var integer
+     */
+    public $accessTokenLifetime = 3600;
+    
+    /**
      * Performs OAuth 2.0 request validation and store granttype object in the session,
      * so, user can go from our authorization server to the third party OAuth provider.
      * You should call finishAuthorization() in the current controller to finish client authorization 
@@ -39,6 +46,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     {   
         $this->_responseType = ResponseTypeAbstract::createResponseType([
             'authCodeLifetime' => $this->authCodeLifetime,
+            'accessTokenLifetime' => $this->accessTokenLifetime, 
         ]);
         
         $this->_responseType->validate();
