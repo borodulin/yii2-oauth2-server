@@ -11,12 +11,13 @@ use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\models\RefreshToken;
 use conquer\oauth2\models\AuthorizationCode;
 use conquer\oauth2\Exception;
+use conquer\oauth2\BaseModel;
 
 /**
  * @link https://tools.ietf.org/html/rfc6749#section-4.1.3 
  * @author Andrey Borodulin
  */
-class Authorization extends GrantTypeAbstract
+class Authorization extends BaseModel
 {
     private $_authCode;
     
@@ -25,11 +26,13 @@ class Authorization extends GrantTypeAbstract
      * @var string
      */
     public $grant_type;
+    
     /**
      * The authorization code received from the authorization server.
      * @var string
      */
     public $code;
+    
     /**
      * REQUIRED, if the "redirect_uri" parameter was included in the
      * authorization request as described in Section 4.1.1, and their
@@ -38,11 +41,19 @@ class Authorization extends GrantTypeAbstract
      * @var string
      */
     public $redirect_uri;
+    
     /**
      * 
      * @var string
      */
     public $client_id;
+    
+    /**
+     * Access Token Scope
+     * @link https://tools.ietf.org/html/rfc6749#section-3.3
+     * @var string
+     */
+    public $scope;
     
     public function rules()
     {
@@ -97,11 +108,6 @@ class Authorization extends GrantTypeAbstract
             'scope' => $this->scope,
             'refresh_token' => $refreshToken->refresh_token,
         ];
-    }
-    
-    public function getCode()
-    {
-        return self::getRequestValue('code');
     }
     
     public function validateCode($attribute, $params)

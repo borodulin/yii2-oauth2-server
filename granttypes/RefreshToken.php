@@ -8,12 +8,13 @@
 namespace conquer\oauth2\granttypes;
 
 use conquer\oauth2\models\AccessToken;
+use conquer\oauth2\BaseModel;
 
 /**
  *
  * @author Andrey Borodulin
  */
-class RefreshToken extends GrantTypeAbstract
+class RefreshToken extends BaseModel
 {
     private $_refreshToken;
     

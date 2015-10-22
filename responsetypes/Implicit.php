@@ -8,13 +8,23 @@
 namespace conquer\oauth2\responsetypes;
 
 use conquer\oauth2\models\AccessToken;
+use conquer\oauth2\BaseModel;
 
 /**
  * @link https://tools.ietf.org/html/rfc6749#section-4.2.1
  * @author Andrey Borodulin
  */
-class Implicit extends ResponseTypeAbstract
+class Implicit extends BaseModel
 {
+    /**
+     * Access Token lifetime
+     * 1 hour by default
+     * @var integer
+     */
+    public $accessTokenLifetime = 3600;
+    
+
+    
     /**
      * Value MUST be set to "token"
      * @var string
@@ -49,6 +59,7 @@ class Implicit extends ResponseTypeAbstract
     {
         return [
             [['client_id', 'response_type'], 'required'],
+            ['response_type', 'required', 'requiredValue' => 'token'],
             [['client_id'], 'string', 'max' => 80],
             [['state'], 'string', 'max' => 255],
             [['redirect_uri'], 'url'],

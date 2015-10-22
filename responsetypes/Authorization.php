@@ -8,12 +8,13 @@
 namespace conquer\oauth2\responsetypes;
 
 use conquer\oauth2\models\AuthorizationCode;
+use conquer\oauth2\BaseModel;
 
 /**
  * @link https://tools.ietf.org/html/rfc6749#section-4.1.1
  * @author Andrey Borodulin
  */
-class Authorization extends ResponseTypeAbstract
+class Authorization extends BaseModel
 {
     /**
      * Value MUST be set to "code".
@@ -49,6 +50,7 @@ class Authorization extends ResponseTypeAbstract
     {
         return [
             [['response_type', 'client_id'], 'required'],
+            ['response_type', 'required', 'requiredValue' => 'code'],
             [['client_id'], 'string', 'max' => 80],
             [['state'], 'string', 'max' => 255],
             [['redirect_uri'], 'url'],
