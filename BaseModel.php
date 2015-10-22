@@ -3,6 +3,7 @@
 namespace conquer\oauth2;
 
 use yii\helpers\ArrayHelper;
+use conquer\oauth2\models\Client;
 
 abstract class BaseModel extends \yii\base\Model
 {
@@ -43,8 +44,7 @@ abstract class BaseModel extends \yii\base\Model
             'client_secret' => 'PHP_AUTH_PW',
         ];
         
-        $attributes = array_flip($this->safeAttributes());
-        foreach ($attributes as $attribute) {
+        foreach ($this->safeAttributes() as $attribute) {
             $this->$attribute = self::getRequestValue($attribute, ArrayHelper::getValue($headers, $attribute));
         }
     }

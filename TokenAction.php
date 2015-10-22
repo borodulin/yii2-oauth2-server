@@ -17,7 +17,7 @@ use yii\web\Response;
 class TokenAction extends \yii\base\Action
 {
     
-    public static $grantTypes = [
+    public $grantTypes = [
             'authorization_code' => 'conquer\oauth2\granttypes\Authorization',
             'refresh_token' => 'conquer\oauth2\granttypes\RefreshToken',
 //         'client_credentials' => 'conquer\oauth2\granttypes\ClientCredentials',

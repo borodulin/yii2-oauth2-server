@@ -26,11 +26,13 @@ class Authorization extends BaseModel
      * @var string
      */
     public $grant_type;
+    
     /**
      * The authorization code received from the authorization server.
      * @var string
      */
     public $code;
+    
     /**
      * REQUIRED, if the "redirect_uri" parameter was included in the
      * authorization request as described in Section 4.1.1, and their
@@ -39,11 +41,19 @@ class Authorization extends BaseModel
      * @var string
      */
     public $redirect_uri;
+    
     /**
      * 
      * @var string
      */
     public $client_id;
+    
+    /**
+     * Access Token Scope
+     * @link https://tools.ietf.org/html/rfc6749#section-3.3
+     * @var string
+     */
+    public $scope;
     
     public function rules()
     {

@@ -8,7 +8,6 @@
 namespace conquer\oauth2;
 
 use yii\web\Session;
-use conquer\oauth2\responsetypes\ResponseTypeAbstract;
 
 /**
  * 
