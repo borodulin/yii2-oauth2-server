@@ -78,7 +78,11 @@ class AuthController extends \yii\web\Controller
     {
         $model = new LoginForm();
         if ($model->load(\Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
+            if ($this->isOauthRequest) {
+                $this->finishAuthorization();
+            } else {
+                return $this->goBack();
+            }
         } else {
             return $this->render('index', [
                 'model' => $model,
@@ -104,7 +108,9 @@ class AuthController extends \yii\web\Controller
          * If user is logged on, redirects to oauth client with success,
          * or redirects error with Access Denied
          */
-        $this->finishAuthorization();
+        if ($this->isOauthRequest) {
+            $this->finishAuthorization();
+        }
     }
     
 }
