@@ -21,13 +21,7 @@ class Module extends \yii\base\Module implements \yii\base\BootstrapInterface
      */
     public function bootstrap($app)
     {
-        if ($app instanceof \yii\web\Application) {
-            $app->getUrlManager()->addRules([
-                    $this->id => $this->id . '/default/index',
-                    $this->id . '/<id:\w+>' => $this->id . '/default/view',
-                    $this->id . '/<controller:[\w\-]+>/<action:[\w\-]+>' => $this->id . '/<controller>/<action>',
-            ], false);
-        } elseif ($app instanceof \yii\console\Application) {
+        if ($app instanceof \yii\console\Application) {
             $app->controllerMap[$this->id] = [
                    'class' => Oauth2Controller::className(),
             ];
