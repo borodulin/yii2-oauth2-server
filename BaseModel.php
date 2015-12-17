@@ -125,7 +125,7 @@ abstract class BaseModel extends \yii\base\Model
     
     public function validateScope($attribute, $params)
     {
-        if (!$this->checkSets($this->$attribute, $this->client->scopes)) {
+        if (!$this->checkSets($this->$attribute, $this->client->scope)) {
             $this->errorRedirect('The requested scope is invalid, unknown, or malformed.', Exception::INVALID_SCOPE);
         }
     }
