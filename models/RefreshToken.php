@@ -77,7 +77,7 @@ class RefreshToken extends \yii\db\ActiveRecord
         } else {
             \Yii::error(__CLASS__. ' validation error:'. VarDumper::dumpAsString($refreshToken->errors));
         }
-        throw new Exception('Unable to create refresh token', Exception::INTERNAL_ERROR);
+        throw new Exception('Unable to create refresh token', Exception::SERVER_ERROR);
     }
     
     /**
