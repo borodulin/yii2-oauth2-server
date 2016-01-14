@@ -67,6 +67,7 @@ class Authorization extends BaseModel
             'user_id' => \Yii::$app->user->id,
             'expires' => $this->authCodeLifetime+time(),
             'scope' => $this->scope,
+            'redirect_uri' => $this->redirect_uri
         ]);
     
         $query = [
