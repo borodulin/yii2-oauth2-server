@@ -82,7 +82,7 @@ class AuthorizationCode extends \yii\db\ActiveRecord
         } else {
             \Yii::error(__CLASS__.' validation error: '.VarDumper::dumpAsString($authCode->errors));
         }
-        throw new Exception('Unable to create authorization code', Exception::INTERNAL_ERROR);
+        throw new Exception('Unable to create authorization code', Exception::SERVER_ERROR);
     }
     
     /**

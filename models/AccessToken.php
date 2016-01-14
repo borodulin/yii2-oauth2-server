@@ -78,7 +78,7 @@ class AccessToken extends \yii\db\ActiveRecord
         } else {
             \Yii::error(__CLASS__. ' validation error:'. VarDumper::dumpAsString($accessToken->errors));
         }
-        throw new Exception('Unable to create access token', Exception::INTERNAL_ERROR);
+        throw new Exception('Unable to create access token', Exception::SERVER_ERROR);
     }
     
     /**

@@ -1,3 +1,6 @@
 /.settings/
 /.buildpath
 /.project
+/.idea
+/vendor
+/.gitignore
