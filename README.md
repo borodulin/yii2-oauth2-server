@@ -117,7 +117,7 @@ class AuthController extends \yii\web\Controller
 ```
 Api controller sample
 ```php
-class ApiController extends \yii\web\Controller
+class ApiController extends \yii\rest\Controller
 {
     public function behaviors()
     {
@@ -129,12 +129,6 @@ class ApiController extends \yii\web\Controller
                 'class' => \conquer\oauth2\TokenAuth::className(),
             ],
         ];
-    }
-    public function beforeAction($action)
-    {
-        $this->enableCsrfValidation = false;
-        \Yii::$app->response->format = Response::FORMAT_JSON;
-        return parent::beforeAction($action);
     }
     /**
      * Returns username and email
