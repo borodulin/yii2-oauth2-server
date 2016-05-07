@@ -69,18 +69,18 @@ class AccessToken extends \yii\db\ActiveRecord
     public static function createAccessToken(array $attributes)
     {
         static::deleteAll(['<', 'expires', time()]);
-        
+
         $attributes['access_token'] = \Yii::$app->security->generateRandomString(40);
         $accessToken = new static($attributes);
 
         if ($accessToken->save()) {
             return $accessToken;
         } else {
-            \Yii::error(__CLASS__. ' validation error:'. VarDumper::dumpAsString($accessToken->errors));
+            \Yii::error(__CLASS__ . ' validation error:' . VarDumper::dumpAsString($accessToken->errors));
         }
         throw new Exception('Unable to create access token', Exception::SERVER_ERROR);
     }
-    
+
     /**
      * @return \yii\db\ActiveQuery
      */

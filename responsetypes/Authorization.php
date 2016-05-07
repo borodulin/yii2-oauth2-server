@@ -37,7 +37,7 @@ class Authorization extends BaseModel
      * Access Token Scope
      * @link https://tools.ietf.org/html/rfc6749#section-3.3
      * @var string
-     */ 
+     */
     public $scope;
     /**
      * Cross-Site Request Forgery
@@ -59,21 +59,21 @@ class Authorization extends BaseModel
             [['scope'], 'validateScope'],
         ];
     }
-    
+
     public function getResponseData()
     {
         $authCode = AuthorizationCode::createAuthorizationCode([
             'client_id' => $this->client_id,
             'user_id' => \Yii::$app->user->id,
-            'expires' => $this->authCodeLifetime+time(),
+            'expires' => $this->authCodeLifetime + time(),
             'scope' => $this->scope,
             'redirect_uri' => $this->redirect_uri
         ]);
-    
+
         $query = [
             'code' => $authCode->authorization_code,
         ];
-    
+
         if (isset($this->state)) {
             $query['state'] = $this->state;
         }
@@ -82,8 +82,8 @@ class Authorization extends BaseModel
             'query' => http_build_query($query),
         ];
     }
-    
-    
+
+
 }
 
 

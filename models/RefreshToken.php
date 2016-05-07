@@ -60,7 +60,7 @@ class RefreshToken extends \yii\db\ActiveRecord
     }
 
     /**
-     * 
+     *
      * @param array $attributes
      * @throws Exception
      * @return \conquer\oauth2\models\RefreshToken
@@ -75,11 +75,11 @@ class RefreshToken extends \yii\db\ActiveRecord
         if ($refreshToken->save()) {
             return $refreshToken;
         } else {
-            \Yii::error(__CLASS__. ' validation error:'. VarDumper::dumpAsString($refreshToken->errors));
+            \Yii::error(__CLASS__ . ' validation error:' . VarDumper::dumpAsString($refreshToken->errors));
         }
         throw new Exception('Unable to create refresh token', Exception::SERVER_ERROR);
     }
-    
+
     /**
      * @return \yii\db\ActiveQuery
      */

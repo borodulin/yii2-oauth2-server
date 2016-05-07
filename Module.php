@@ -8,6 +8,7 @@
 namespace conquer\oauth2;
 
 use conquer\oauth2\console\Oauth2Controller;
+
 /**
  * @author Andrey Borodulin
  */
@@ -15,7 +16,7 @@ class Module extends \yii\base\Module implements \yii\base\BootstrapInterface
 {
 
     public $behaviors;
-    
+
     /**
      * @inheritdoc
      */
@@ -23,11 +24,11 @@ class Module extends \yii\base\Module implements \yii\base\BootstrapInterface
     {
         if ($app instanceof \yii\console\Application) {
             $app->controllerMap[$this->id] = [
-                   'class' => Oauth2Controller::className(),
+                'class' => Oauth2Controller::className(),
             ];
         }
     }
-    
+
     /**
      * @inheritdoc
      */

@@ -14,25 +14,25 @@ use conquer\oauth2\Exception;
 use conquer\oauth2\BaseModel;
 
 /**
- * @link https://tools.ietf.org/html/rfc6749#section-4.1.3 
+ * @link https://tools.ietf.org/html/rfc6749#section-4.1.3
  * @author Andrey Borodulin
  */
 class Authorization extends BaseModel
 {
     private $_authCode;
-    
+
     /**
      * Value MUST be set to "authorization_code".
      * @var string
      */
     public $grant_type;
-    
+
     /**
      * The authorization code received from the authorization server.
      * @var string
      */
     public $code;
-    
+
     /**
      * REQUIRED, if the "redirect_uri" parameter was included in the
      * authorization request as described in Section 4.1.1, and their
@@ -41,20 +41,20 @@ class Authorization extends BaseModel
      * @var string
      */
     public $redirect_uri;
-    
+
     /**
-     * 
+     *
      * @var string
      */
     public $client_id;
-    
+
     /**
      * Access Token Scope
      * @link https://tools.ietf.org/html/rfc6749#section-3.3
      * @var string
      */
     public $scope;
-    
+
     public function rules()
     {
         return [
@@ -64,20 +64,20 @@ class Authorization extends BaseModel
             [['redirect_uri'], 'url'],
             [['client_id'], 'validateClient_id'],
             [['code'], 'validateCode'],
-            [['redirect_uri'], 'validateRedirect_uri'],            
+            [['redirect_uri'], 'validateRedirect_uri'],
         ];
     }
-    
+
     public function validateRedirect_uri($attribute, $params)
     {
         $authCode = $this->getAuthCode();
 
-        if ($authCode->redirect_uri && (strcasecmp($this->$attribute, $authCode->redirect_uri)!==0)) {
+        if ($authCode->redirect_uri && (strcasecmp($this->$attribute, $authCode->redirect_uri) !== 0)) {
             $this->errorServer('The redirect URI provided does not match', Exception::REDIRECT_URI_MISMATCH);
         }
         parent::validateRedirect_uri($attribute, $params);
     }
-    
+
     public function getResponseData()
     {
         $authCode = $this->getAuthCode();
@@ -98,10 +98,10 @@ class Authorization extends BaseModel
         /**
          * The client MUST NOT use the authorization code more than once.
          * @link https://tools.ietf.org/html/rfc6749#section-4.1.2
-         */ 
+         */
         $authCode->delete();
 
-        return  [
+        return [
             'access_token' => $acessToken->access_token,
             'expires_in' => $this->accessTokenLifetime,
             'token_type' => $this->tokenType,
@@ -109,12 +109,12 @@ class Authorization extends BaseModel
             'refresh_token' => $refreshToken->refresh_token,
         ];
     }
-    
+
     public function validateCode($attribute, $params)
     {
         $this->getAuthCode();
     }
-    
+
     /**
      *
      * @return \conquer\oauth2\models\AuthorizationCode

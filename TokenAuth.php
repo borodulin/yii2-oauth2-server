@@ -31,7 +31,7 @@ use conquer\oauth2\models\AccessToken;
 class TokenAuth extends \yii\filters\auth\AuthMethod
 {
     private $_accessToken;
-    
+
     /**
      * @var string the HTTP authentication realm
      */
@@ -41,19 +41,19 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
      * @var string the class name of the [[identity]] object.
      */
     public $identityClass;
-    
+
     /**
      * @inheritdoc
      */
     public function authenticate($user, $request, $response)
     {
         $accessToken = $this->getAccessToken();
-        
+
         /* @var $user \yii\web\User */
         $identityClass = is_null($this->identityClass) ? $user->identityClass : $this->identityClass;
-        
+
         $identity = $identityClass::findIdentity($accessToken->user_id);
-        
+
         if (empty($identity)) {
             throw new Exception('User is not found.', Exception::ACCESS_DENIED);
         }
@@ -68,10 +68,10 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
      */
     public function challenge($response)
     {
-        $realm =  empty($this->realm) ? $this->owner->getUniqueId() : $this->realm; 
+        $realm = empty($this->realm) ? $this->owner->getUniqueId() : $this->realm;
         $response->getHeaders()->set('WWW-Authenticate', "Bearer realm=\"{$realm}\"");
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -79,7 +79,7 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
     {
         throw new Exception('You are requesting with an invalid credential.');
     }
-    
+
     /**
      *
      * @throws Exception
@@ -89,12 +89,12 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
     {
         if (is_null($this->_accessToken)) {
             $request = \Yii::$app->request;
-    
+
             $authHeader = $request->getHeaders()->get('Authorization');
-    
+
             $postToken = $request->post('access_token');
             $getToken = $request->get('access_token');
-    
+
             // Check that exactly one method was used
             $methodsCount = isset($authHeader) + isset($postToken) + isset($getToken);
             if ($methodsCount > 1) {
@@ -112,19 +112,19 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
             } else {
                 // POST: Get the token from POST data
                 if ($postToken) {
-                    if(!$request->isPost)
+                    if (!$request->isPost)
                         throw new Exception('When putting the token in the body, the method must be POST.');
-    
+
                     // IETF specifies content-type. NB: Not all webservers populate this _SERVER variable
-                    if($request->contentType != 'application/x-www-form-urlencoded')
+                    if ($request->contentType != 'application/x-www-form-urlencoded')
                         throw new Exception('The content type for POST requests must be "application/x-www-form-urlencoded"');
                     $token = $postToken;
                 } else {
                     $token = $getToken;
                 }
             }
-    
-            if (!$accessToken = AccessToken::findOne(['access_token'=>$token])) {
+
+            if (!$accessToken = AccessToken::findOne(['access_token' => $token])) {
                 throw new Exception('The access token provided is invalid.', Exception::INVALID_GRANT);
             }
             if ($accessToken->expires < time()) {

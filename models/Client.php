@@ -58,7 +58,7 @@ class Client extends \yii\db\ActiveRecord
             \yii\behaviors\BlameableBehavior::className(),
         ];
     }
-    
+
     /**
      * @inheritdoc
      */

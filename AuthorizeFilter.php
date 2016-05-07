@@ -10,9 +10,9 @@ namespace conquer\oauth2;
 use yii\web\Session;
 
 /**
- * 
+ *
  * @author Andrey Borodulin
- * 
+ *
  */
 class AuthorizeFilter extends \yii\base\ActionFilter
 {
@@ -20,29 +20,29 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     private $_responseType;
 
     public $responseTypes = [
-            'token' => 'conquer\oauth2\responsetypes\Implicit',
-            'code' => 'conquer\oauth2\responsetypes\Authorization',
+        'token' => 'conquer\oauth2\responsetypes\Implicit',
+        'code' => 'conquer\oauth2\responsetypes\Authorization',
     ];
-    
+
     /**
-     * 
+     *
      * @var boolean
      */
     public $allowImplicit = true;
-    
+
     public $storeKey = 'ear6kme7or19rnfldtmwsxgzxsrmngqw';
-    
+
     public function init()
     {
         if (!$this->allowImplicit) {
             unset($this->responseTypes['token']);
         }
     }
-    
+
     /**
      * Performs OAuth 2.0 request validation and store granttype object in the session,
      * so, user can go from our authorization server to the third party OAuth provider.
-     * You should call finishAuthorization() in the current controller to finish client authorization 
+     * You should call finishAuthorization() in the current controller to finish client authorization
      * or to stop with Access Denied error message if the user is not logged on.
      */
     public function beforeAction($action)
@@ -55,13 +55,13 @@ class AuthorizeFilter extends \yii\base\ActionFilter
         } else {
             throw new Exception("An unsupported response type was requested.", Exception::UNSUPPORTED_RESPONSE_TYPE);
         }
-        
+
         $this->_responseType->validate();
 
         if ($this->storeKey) {
             \Yii::$app->session->set($this->storeKey, serialize($this->_responseType));
         }
-        
+
         return true;
     }
 
@@ -77,7 +77,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
             $this->finishAuthorization();
         }
     }
-    
+
     /**
      * @throws Exception
      * @return \conquer\oauth2\BaseModel
@@ -93,7 +93,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
         }
         return $this->_responseType;
     }
-    
+
     /**
      * Finish oauth authorization.
      * Builds redirect uri and performs redirect.
@@ -106,15 +106,16 @@ class AuthorizeFilter extends \yii\base\ActionFilter
             $responseType->errorRedirect('The User denied access to your application', Exception::ACCESS_DENIED);
         }
         $parts = $responseType->getResponseData();
-        
+
         $redirectUri = http_build_url($responseType->redirect_uri, $parts, HTTP_URL_JOIN_QUERY | HTTP_URL_STRIP_FRAGMENT);
 
         if (isset($parts['fragment'])) {
-            $redirectUri .= '#'.$parts['fragment'];
+            $redirectUri .= '#' . $parts['fragment'];
         }
-        
+
         \Yii::$app->response->redirect($redirectUri);
     }
+
     /**
      * @return boolean
      */

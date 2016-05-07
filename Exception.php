@@ -11,7 +11,7 @@ use yii\web\Response;
 
 /**
  * @author Andrey Borodulin
- * 
+ *
  */
 class Exception extends \yii\base\UserException
 {
@@ -26,14 +26,13 @@ class Exception extends \yii\base\UserException
     const UNAUTHORIZED_CLIENT = 'unauthorized_client';
     const UNSUPPORTED_GRANT_TYPE = 'unsupported_grant_type';
     const UNSUPPORTED_RESPONSE_TYPE = 'unsupported_response_type';
-    
+
     const NOT_IMPLEMENTED = 'not_implemented';
-    
-        
+
+
     protected $error;
 
-    
-    
+
     /**
      * Constructor.
      * @param string $error_description (optional)

@@ -22,9 +22,8 @@ class Implicit extends BaseModel
      * @var integer
      */
     public $accessTokenLifetime = 3600;
-    
 
-    
+
     /**
      * Value MUST be set to "token"
      * @var string
@@ -54,7 +53,7 @@ class Implicit extends BaseModel
      * @var string
      */
     public $state;
-    
+
     public function rules()
     {
         return [
@@ -66,7 +65,7 @@ class Implicit extends BaseModel
             [['client_id'], 'validateClient_id'],
             [['redirect_uri'], 'validateRedirect_uri'],
             [['scope'], 'validateScope'],
-            
+
         ];
     }
 
@@ -78,14 +77,14 @@ class Implicit extends BaseModel
             'expires' => $this->accessTokenLifetime + time(),
             'scope' => $this->scope,
         ]);
-        
+
         $fragment = [
             'access_token' => $accessToken->access_token,
             'expires_in' => $this->accessTokenLifetime,
             'token_type' => $this->tokenType,
             'scope' => $this->scope,
         ];
-                
+
         if (!empty($this->state)) {
             $fragment['state'] = $this->state;
         }
@@ -93,6 +92,6 @@ class Implicit extends BaseModel
             'fragment' => http_build_query($fragment),
         ];
     }
-    
+
 }
 
