@@ -112,19 +112,20 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
             } else {
                 // POST: Get the token from POST data
                 if ($postToken) {
-                    if (!$request->isPost)
+                    if (! $request->isPost) {
                         throw new Exception('When putting the token in the body, the method must be POST.');
-
+                    }
                     // IETF specifies content-type. NB: Not all webservers populate this _SERVER variable
-                    if ($request->contentType != 'application/x-www-form-urlencoded')
+                    if ($request->contentType != 'application/x-www-form-urlencoded') {
                         throw new Exception('The content type for POST requests must be "application/x-www-form-urlencoded"');
+                    }
                     $token = $postToken;
                 } else {
                     $token = $getToken;
                 }
             }
 
-            if (!$accessToken = AccessToken::findOne(['access_token' => $token])) {
+            if (! $accessToken = AccessToken::findOne(['access_token' => $token])) {
                 throw new Exception('The access token provided is invalid.', Exception::INVALID_GRANT);
             }
             if ($accessToken->expires < time()) {
