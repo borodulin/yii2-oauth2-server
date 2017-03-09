@@ -16,6 +16,10 @@ use yii\web\Response;
  */
 class TokenAction extends \yii\base\Action
 {
+    /** Format of response
+     * @var string
+     */
+    public $format = Response::FORMAT_JSON;
 
     public $grantTypes = [
         'authorization_code' => 'conquer\oauth2\granttypes\Authorization',
@@ -27,7 +31,7 @@ class TokenAction extends \yii\base\Action
 
     public function init()
     {
-        \Yii::$app->response->format = Response::FORMAT_JSON;
+        \Yii::$app->response->format = $this->format;
         $this->controller->enableCsrfValidation = false;
     }
 
