@@ -59,10 +59,14 @@ class UserCredentials extends BaseModel
     public $scope;
 
     /**
-     *
      * @var string
      */
     public $client_id;
+
+    /**
+     * @var string
+     */
+    public $client_secret;
 
     /**
      * @inheritdoc
@@ -74,6 +78,7 @@ class UserCredentials extends BaseModel
             ['grant_type', 'required', 'requiredValue' => 'password'],
             [['client_id'], 'string', 'max' => 80],
             [['client_id'], 'validateClient_id'],
+            [['client_secret'], 'validateClient_secret'],
             [['scope'], 'validateScope'],
             // password is validated by validatePassword()
             ['password', 'validatePassword'],
