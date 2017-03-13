@@ -164,6 +164,30 @@ return [
 ];
 ```
 
+If you want to use Resource Owner Password Credentials Grant, implement `\conquer\oauth2\OAuth2IdentityInterface`
+
+```php
+use conquer\oauth2\OAuth2IdentityInterface;
+
+class User extends ActiveRecord implements IdentityInterface, OAuth2IdentityInterface
+{
+    ...
+    
+    /**
+     * Finds user by username
+     *
+     * @param string $username
+     * @return static|null
+     */
+    public static function findIdentityByUsername($username)
+    {
+        return static::findOne(['username' => $username]);
+    }
+    
+    ...
+}
+```
+
 ## License
 
 **conquer/oauth2** is released under the MIT License. See the bundled `LICENSE` for details.
