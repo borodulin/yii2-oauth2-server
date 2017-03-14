@@ -94,9 +94,9 @@ class UserCredentials extends BaseModel
      */
     public function validatePassword($attribute, $params)
     {
-        if (!$this->hasErrors()) {
+        if (! $this->hasErrors()) {
             $user = $this->getUser();
-            if (!$user || !$user->validatePassword($this->password)) {
+            if (! $user || ! $user->validatePassword($this->password)) {
                 $this->addError($attribute, 'Invalid username or password');
             }
         }
@@ -133,20 +133,21 @@ class UserCredentials extends BaseModel
     }
 
     /**
-     * Finds user by [[phone]]
+     * Finds user by [[username]]
      *
      * @return User|null
      */
     protected function getUser()
     {
-        $identity = \Yii::$app->user->identity;
+        $identityClass = \Yii::$app->user->identityClass;
 
-        if (! $identity instanceof OAuth2IdentityInterface) {
+        $identityObject = \Yii::createObject($identityClass);
+        if (! $identityObject instanceof OAuth2IdentityInterface) {
             $this->errorServer('OAuth2IdentityInterface not implemented');
         }
 
         if ($this->_user === null) {
-            $this->_user = $identity::findIdentityByUsername($this->username);
+            $this->_user = $identityClass::findIdentityByUsername($this->username);
         }
 
         return $this->_user;
