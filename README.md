@@ -226,10 +226,10 @@ class AuthController extends \yii\web\Controller
                 'class' => \highweb\ratelimiter\RateLimiter::className(),
     
                 // The maximum number of allowed requests
-                'rateLimit' => 3,
+                'rateLimit' => 100,
     
                 // The time period for the rates to apply to
-                'timePeriod' => 60,
+                'timePeriod' => 600,
     
                 // Separate rate limiting for guests and authenticated users
                 // Defaults to true
