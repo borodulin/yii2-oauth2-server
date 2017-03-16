@@ -17,7 +17,8 @@
     ],
     "require": {
         "yiisoft/yii2": ">=2.0.4",
-        "jakeasmith/http_build_url": "*"
+        "jakeasmith/http_build_url": "*",
+        "highweb/yii2-ip-ratelimiter": "^1.1"
     },
     "autoload": {
         "psr-4": {

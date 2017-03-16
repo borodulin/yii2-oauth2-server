@@ -164,13 +164,16 @@ return [
 ];
 ```
 
-If you want to use Resource Owner Password Credentials Grant, implement `\conquer\oauth2\OAuth2IdentityInterface`
+If you want to use Resource Owner Password Credentials Grant, implement `\conquer\oauth2\OAuth2IdentityInterface` and increase security issues by add RateLimiter in AuthController
 
 ```php
 use conquer\oauth2\OAuth2IdentityInterface;
+use highweb\ratelimiter\UserRateLimiterTrait;
 
 class User extends ActiveRecord implements IdentityInterface, OAuth2IdentityInterface
 {
+    use UserRateLimiterTrait;
+    
     ...
     
     /**
@@ -197,6 +200,73 @@ class User extends ActiveRecord implements IdentityInterface, OAuth2IdentityInte
     
     ...
 }
+```
+
+```php
+namespace app\controllers;
+
+use app\models\LoginForm;
+
+class AuthController extends \yii\web\Controller
+{
+    public function behaviors()
+    {
+        return [
+            /** 
+             * Checks oauth2 credentions and try to perform OAuth2 authorization on logged user.
+             * AuthorizeFilter uses session to store incoming oauth2 request, so 
+             * you can do additional steps, such as third party oauth authorization (Facebook, Google ...)  
+             */
+            'oauth2Auth' => [
+                'class' => \conquer\oauth2\AuthorizeFilter::className(),
+                'only' => ['index'],
+            ],
+            'rateLimiter' => [
+                // Use class
+                'class' => \highweb\ratelimiter\RateLimiter::className(),
+    
+                // The maximum number of allowed requests
+                'rateLimit' => 3,
+    
+                // The time period for the rates to apply to
+                'timePeriod' => 60,
+    
+                // Separate rate limiting for guests and authenticated users
+                // Defaults to true
+                // - false: use one set of rates, whether you are authenticated or not
+                // - true: use separate rates for guests and authenticated users
+                'separateRates' => false,
+    
+                // Whether to return HTTP headers containing the current rate limiting information
+                'enableRateLimitHeaders' => false,
+    
+                // apply filter only for token action
+                'only' => ['token']
+            ]
+        ];
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function actions()
+    {
+        return [
+            /**
+             * Returns an access token.
+             */
+            'token' => [
+                'class' => \conquer\oauth2\TokenAction::classname(),
+                'format' => Response::FORMAT_XML,
+                // enable password credentials
+                'grantTypes' => [
+                    'authorization_code' => 'conquer\oauth2\granttypes\Authorization',
+                    'refresh_token' => 'conquer\oauth2\granttypes\RefreshToken',
+                    'password' => 'conquer\oauth2\granttypes\UserCredentials',
+                ]
+            ],
+        ];
+    }
 ```
 
 ## License
