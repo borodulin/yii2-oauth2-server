@@ -164,6 +164,56 @@ return [
 ];
 ```
 
+If you want to use Resource Owner Password Credentials Grant, 
+implement `\conquer\oauth2\OAuth2IdentityInterface`.
+
+```php
+use conquer\oauth2\OAuth2IdentityInterface;
+
+class User extends ActiveRecord implements IdentityInterface, OAuth2IdentityInterface
+{
+    ...
+    
+    /**
+     * Finds user by username
+     *
+     * @param string $username
+     * @return static|null
+     */
+    public static function findIdentityByUsername($username)
+    {
+        return static::findOne(['username' => $username]);
+    }
+    
+    /**
+     * Validates password
+     *
+     * @param string $password password to validate
+     * @return bool if password provided is valid for current user
+     */
+    public function validatePassword($password)
+    {
+        return Yii::$app->security->validatePassword($password, $this->password_hash);
+    }
+    
+    ...
+}
+```
+
+### Warning
+
+As official documentation says:
+
+> Since this access token request utilizes the resource owner's
+  password, the authorization server MUST protect the endpoint against
+  brute force attacks (e.g., using rate-limitation or generating
+  alerts).
+  
+It's strongly recommended to rate limits on token endpoint.
+Fortunately, Yii2 have instruments to do this.
+
+For further information see [Yii2 Ratelimiter](http://www.yiiframework.com/doc-2.0/yii-filters-ratelimiter.html)
+
 ## License
 
 **conquer/oauth2** is released under the MIT License. See the bundled `LICENSE` for details.
