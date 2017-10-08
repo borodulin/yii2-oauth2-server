@@ -8,6 +8,8 @@
 namespace conquer\oauth2\models;
 
 use conquer\oauth2\Exception;
+use Yii;
+use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "{{%oauth2_refresh_token}}".
@@ -19,7 +21,6 @@ use conquer\oauth2\Exception;
  * @property string $scope
  *
  * @property Client $client
- * @property User $user
  */
 class RefreshToken extends \yii\db\ActiveRecord
 {
@@ -69,13 +70,13 @@ class RefreshToken extends \yii\db\ActiveRecord
     {
         static::deleteAll(['<', 'expires', time()]);
 
-        $attributes['refresh_token'] = \Yii::$app->security->generateRandomString(40);
+        $attributes['refresh_token'] = Yii::$app->security->generateRandomString(40);
         $refreshToken = new static($attributes);
 
         if ($refreshToken->save()) {
             return $refreshToken;
         } else {
-            \Yii::error(__CLASS__ . ' validation error:' . VarDumper::dumpAsString($refreshToken->errors));
+            Yii::error(__CLASS__ . ' validation error:' . VarDumper::dumpAsString($refreshToken->errors));
         }
         throw new Exception('Unable to create refresh token', Exception::SERVER_ERROR);
     }
@@ -91,8 +92,8 @@ class RefreshToken extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getUser()
-    {
-        return $this->hasOne(User::className(), ['user_id' => 'user_id']);
-    }
+//    public function getUser()
+//    {
+//        return $this->hasOne(User::className(), ['user_id' => 'user_id']);
+//    }
 }

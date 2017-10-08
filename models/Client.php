@@ -7,8 +7,6 @@
 
 namespace conquer\oauth2\models;
 
-use Yii;
-
 /**
  * This is the model class for table "oauth2_client".
  *
@@ -42,7 +40,6 @@ class Client extends \yii\db\ActiveRecord
         return [
             [['client_id', 'client_secret', 'redirect_uri'], 'required'],
             [['scope'], 'string'],
-            [['created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
             [['client_id', 'client_secret', 'grant_type'], 'string', 'max' => 80],
             [['redirect_uri'], 'string', 'max' => 2000]
         ];

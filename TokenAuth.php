@@ -7,7 +7,6 @@
 
 namespace conquer\oauth2;
 
-use conquer\oauth2\Exception;
 use conquer\oauth2\models\AccessToken;
 
 /**
@@ -116,7 +115,7 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
                         throw new Exception('When putting the token in the body, the method must be POST.');
                     }
                     // IETF specifies content-type. NB: Not all webservers populate this _SERVER variable
-                    if ($request->contentType != 'application/x-www-form-urlencoded') {
+                    if (strpos($request->contentType,'application/x-www-form-urlencoded') != 0) {
                         throw new Exception('The content type for POST requests must be "application/x-www-form-urlencoded"');
                     }
                     $token = $postToken;
