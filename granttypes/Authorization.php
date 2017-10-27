@@ -7,11 +7,11 @@
 
 namespace conquer\oauth2\granttypes;
 
-use conquer\oauth2\models\AccessToken;
-use conquer\oauth2\models\RefreshToken;
-use conquer\oauth2\models\AuthorizationCode;
-use conquer\oauth2\Exception;
 use conquer\oauth2\BaseModel;
+use conquer\oauth2\Exception;
+use conquer\oauth2\models\AccessToken;
+use conquer\oauth2\models\AuthorizationCode;
+use conquer\oauth2\models\RefreshToken;
 
 /**
  * @link https://tools.ietf.org/html/rfc6749#section-4.1.3
@@ -68,14 +68,14 @@ class Authorization extends BaseModel
         ];
     }
 
-    public function validateRedirect_uri($attribute, $params)
+    public function validateRedirect_uri($attribute)
     {
         $authCode = $this->getAuthCode();
 
         if ($authCode->redirect_uri && (strcasecmp($this->$attribute, $authCode->redirect_uri) !== 0)) {
             $this->errorServer('The redirect URI provided does not match', Exception::REDIRECT_URI_MISMATCH);
         }
-        parent::validateRedirect_uri($attribute, $params);
+        parent::validateRedirect_uri($attribute);
     }
 
     public function getResponseData()
@@ -110,7 +110,7 @@ class Authorization extends BaseModel
         ];
     }
 
-    public function validateCode($attribute, $params)
+    public function validateCode()
     {
         $this->getAuthCode();
     }

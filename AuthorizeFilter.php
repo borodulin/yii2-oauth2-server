@@ -6,15 +6,16 @@
  */
 
 namespace conquer\oauth2;
-
-use yii\web\Session;
+use conquer\oauth2\responsetypes\Authorization;
+use Yii;
+use yii\base\ActionFilter;
 
 /**
  *
  * @author Andrey Borodulin
  *
  */
-class AuthorizeFilter extends \yii\base\ActionFilter
+class AuthorizeFilter extends ActionFilter
 {
 
     private $_responseType;
@@ -44,6 +45,9 @@ class AuthorizeFilter extends \yii\base\ActionFilter
      * so, user can go from our authorization server to the third party OAuth provider.
      * You should call finishAuthorization() in the current controller to finish client authorization
      * or to stop with Access Denied error message if the user is not logged on.
+     * @param \yii\base\Action $action
+     * @return bool
+     * @throws Exception
      */
     public function beforeAction($action)
     {
@@ -51,7 +55,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
             throw new Exception('Invalid or missing response type');
         }
         if (isset($this->responseTypes[$responseType])) {
-            $this->_responseType = \Yii::createObject($this->responseTypes[$responseType]);
+            $this->_responseType = Yii::createObject($this->responseTypes[$responseType]);
         } else {
             throw new Exception("An unsupported response type was requested.", Exception::UNSUPPORTED_RESPONSE_TYPE);
         }
@@ -59,7 +63,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
         $this->_responseType->validate();
 
         if ($this->storeKey) {
-            \Yii::$app->session->set($this->storeKey, serialize($this->_responseType));
+            Yii::$app->session->set($this->storeKey, serialize($this->_responseType));
         }
 
         return true;
@@ -68,14 +72,18 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     /**
      * If user is logged on, do oauth login immediatly,
      * continue authorization in the another case
+     * @param \yii\base\Action $action
+     * @param mixed $result
+     * @return mixed|null
      */
     public function afterAction($action, $result)
     {
-        if (\Yii::$app->user->isGuest) {
+        if (Yii::$app->user->isGuest) {
             return $result;
         } else {
             $this->finishAuthorization();
         }
+        return null;
     }
 
     /**
@@ -85,8 +93,8 @@ class AuthorizeFilter extends \yii\base\ActionFilter
     protected function getResponseType()
     {
         if (empty($this->_responseType) && $this->storeKey) {
-            if (\Yii::$app->session->has($this->storeKey)) {
-                $this->_responseType = unserialize(\Yii::$app->session->get($this->storeKey));
+            if (Yii::$app->session->has($this->storeKey)) {
+                $this->_responseType = unserialize(Yii::$app->session->get($this->storeKey));
             } else {
                 throw new Exception('Invalid server state or the User Session has expired', Exception::SERVER_ERROR);
             }
@@ -101,8 +109,9 @@ class AuthorizeFilter extends \yii\base\ActionFilter
      */
     public function finishAuthorization()
     {
+        /** @var Authorization $responseType */
         $responseType = $this->getResponseType();
-        if (\Yii::$app->user->isGuest) {
+        if (Yii::$app->user->isGuest) {
             $responseType->errorRedirect('The User denied access to your application', Exception::ACCESS_DENIED);
         }
         $parts = $responseType->getResponseData();
@@ -113,7 +122,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
             $redirectUri .= '#' . $parts['fragment'];
         }
 
-        \Yii::$app->response->redirect($redirectUri);
+        Yii::$app->response->redirect($redirectUri);
     }
 
     /**
@@ -121,7 +130,7 @@ class AuthorizeFilter extends \yii\base\ActionFilter
      */
     public function getIsOauthRequest()
     {
-        return !empty($this->storeKey) && \Yii::$app->session->has($this->storeKey);
+        return !empty($this->storeKey) && Yii::$app->session->has($this->storeKey);
     }
 }
 

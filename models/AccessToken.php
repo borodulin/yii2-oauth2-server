@@ -21,9 +21,9 @@ use yii\db\ActiveRecord;
  * @property string $scope
  *
  * @property Client $client
- * @property User $user
+ * @property ActiveRecord $user
  */
-class AccessToken extends \yii\db\ActiveRecord
+class AccessToken extends ActiveRecord
 {
     /**
      * @inheritdoc
@@ -98,5 +98,6 @@ class AccessToken extends \yii\db\ActiveRecord
         if ($identity instanceof ActiveRecord) {
             return $this->hasOne(get_class($identity), ['user_id' => $identity->primaryKey()]);
         }
+        return null;
     }
 }

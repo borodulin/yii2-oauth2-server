@@ -8,11 +8,12 @@
 namespace conquer\oauth2;
 
 use conquer\oauth2\console\Oauth2Controller;
+use yii\base\BootstrapInterface;
 
 /**
  * @author Andrey Borodulin
  */
-class Module extends \yii\base\Module implements \yii\base\BootstrapInterface
+class Module extends \yii\base\Module implements BootstrapInterface
 {
 
     public $behaviors;

@@ -11,6 +11,8 @@ use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\models\RefreshToken;
 use conquer\oauth2\BaseModel;
 use conquer\oauth2\OAuth2IdentityInterface;
+use Yii;
+use yii\web\IdentityInterface;
 
 /**
  * For example, the client makes the following HTTP request using
@@ -88,15 +90,14 @@ class UserCredentials extends BaseModel
     /**
      * Validates the password.
      * This method serves as the inline validation for password.
-     *
      * @param string $attribute the attribute currently being validated
-     * @param array $params the additional name-value pairs given in the rule
      */
-    public function validatePassword($attribute, $params)
+    public function validatePassword($attribute)
     {
         if (! $this->hasErrors()) {
+            /** @var OAuth2IdentityInterface $user */
             $user = $this->getUser();
-            if (! $user || ! $user->validatePassword($this->password)) {
+            if (!$user || !$user->validatePassword($this->password)) {
                 $this->addError($attribute, 'Invalid username or password');
             }
         }
@@ -107,18 +108,19 @@ class UserCredentials extends BaseModel
      */
     public function getResponseData()
     {
+        /** @var IdentityInterface $identity */
         $identity = $this->getUser();
 
         $accessToken = AccessToken::createAccessToken([
             'client_id' => $this->client_id,
-            'user_id' => $identity->id,
+            'user_id' => $identity->getId(),
             'expires' => $this->accessTokenLifetime + time(),
             'scope' => $this->scope,
         ]);
 
         $refreshToken = RefreshToken::createRefreshToken([
             'client_id' => $this->client_id,
-            'user_id' => $identity->id,
+            'user_id' => $identity->getId(),
             'expires' => $this->refreshTokenLifetime + time(),
             'scope' => $this->scope,
         ]);
@@ -135,15 +137,16 @@ class UserCredentials extends BaseModel
     /**
      * Finds user by [[username]]
      *
-     * @return User|null
+     * @return IdentityInterface|null
      */
     protected function getUser()
     {
-        $identityClass = \Yii::$app->user->identityClass;
+        /** @var OAuth2IdentityInterface $identityClass */
+        $identityClass = Yii::$app->user->identityClass;
 
-        $identityObject = \Yii::createObject($identityClass);
+        $identityObject = Yii::createObject($identityClass);
         if (! $identityObject instanceof OAuth2IdentityInterface) {
-            $this->errorServer('OAuth2IdentityInterface not implemented');
+            $this->errorServer('OAuth2IdentityInterface is not implemented');
         }
 
         if ($this->_user === null) {

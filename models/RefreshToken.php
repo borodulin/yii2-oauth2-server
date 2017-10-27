@@ -9,6 +9,7 @@ namespace conquer\oauth2\models;
 
 use conquer\oauth2\Exception;
 use Yii;
+use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
 
 /**
@@ -22,7 +23,7 @@ use yii\helpers\VarDumper;
  *
  * @property Client $client
  */
-class RefreshToken extends \yii\db\ActiveRecord
+class RefreshToken extends ActiveRecord
 {
     /**
      * @inheritdoc
@@ -92,8 +93,12 @@ class RefreshToken extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-//    public function getUser()
-//    {
-//        return $this->hasOne(User::className(), ['user_id' => 'user_id']);
-//    }
+    public function getUser()
+    {
+        $identity = isset(Yii::$app->user->identity) ? Yii::$app->user->identity : null;
+        if ($identity instanceof ActiveRecord) {
+            return $this->hasOne(get_class($identity), ['user_id' => $identity->primaryKey()]);
+        }
+        return null;
+    }
 }

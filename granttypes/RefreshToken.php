@@ -85,7 +85,7 @@ class RefreshToken extends BaseModel
         ];
     }
 
-    public function validateRefresh_token($attribute, $params)
+    public function validateRefresh_token()
     {
         $this->getRefreshToken();
     }

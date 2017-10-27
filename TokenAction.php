@@ -7,14 +7,14 @@
 
 namespace conquer\oauth2;
 
+use Yii;
+use yii\base\Action;
 use yii\web\Response;
 
 /**
- *
  * @author Andrey Borodulin
- *
  */
-class TokenAction extends \yii\base\Action
+class TokenAction extends Action
 {
     /** Format of response
      * @var string
@@ -31,7 +31,7 @@ class TokenAction extends \yii\base\Action
 
     public function init()
     {
-        \Yii::$app->response->format = $this->format;
+        Yii::$app->response->format = $this->format;
         $this->controller->enableCsrfValidation = false;
     }
 
@@ -41,13 +41,13 @@ class TokenAction extends \yii\base\Action
             throw new Exception('The grant type was not specified in the request');
         }
         if (isset($this->grantTypes[$grantType])) {
-            $grantModel = \Yii::createObject($this->grantTypes[$grantType]);
+            $grantModel = Yii::createObject($this->grantTypes[$grantType]);
         } else {
             throw new Exception("An unsupported grant type was requested", Exception::UNSUPPORTED_GRANT_TYPE);
         }
 
         $grantModel->validate();
 
-        \Yii::$app->response->data = $grantModel->getResponseData();
+        Yii::$app->response->data = $grantModel->getResponseData();
     }
 }

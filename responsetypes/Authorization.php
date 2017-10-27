@@ -46,6 +46,9 @@ class Authorization extends BaseModel
      */
     public $state;
 
+    /**
+     * @return array
+     */
     public function rules()
     {
         return [
@@ -60,6 +63,9 @@ class Authorization extends BaseModel
         ];
     }
 
+    /**
+     * @return array
+     */
     public function getResponseData()
     {
         $authCode = AuthorizationCode::createAuthorizationCode([

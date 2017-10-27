@@ -7,13 +7,12 @@
 
 namespace conquer\oauth2;
 
-use yii\web\Response;
+use yii\base\UserException;
 
 /**
  * @author Andrey Borodulin
- *
  */
-class Exception extends \yii\base\UserException
+class Exception extends UserException
 {
     const ACCESS_DENIED = 'access_denied';
     const INVALID_CLIENT = 'invalid_client';
@@ -37,7 +36,6 @@ class Exception extends \yii\base\UserException
      * Constructor.
      * @param string $error_description (optional)
      * @param string $error A single error code
-     * @param string $name error name
      */
     public function __construct($error_description = null, $error = self::INVALID_REQUEST)
     {

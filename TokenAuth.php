@@ -8,6 +8,10 @@
 namespace conquer\oauth2;
 
 use conquer\oauth2\models\AccessToken;
+use Yii;
+use yii\base\Controller;
+use yii\filters\auth\AuthMethod;
+use yii\web\IdentityInterface;
 
 /**
  * TokenAuth is an action filter that supports the authentication method based on the OAuth2 Access Token.
@@ -27,7 +31,7 @@ use conquer\oauth2\models\AccessToken;
  *
  * @author Andrey Borodulin
  */
-class TokenAuth extends \yii\filters\auth\AuthMethod
+class TokenAuth extends AuthMethod
 {
     private $_accessToken;
 
@@ -42,13 +46,17 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
     public $identityClass;
 
     /**
-     * @inheritdoc
+     * @param \yii\web\User $user
+     * @param \yii\web\Request $request
+     * @param \yii\web\Response $response
+     * @return mixed
+     * @throws Exception
      */
     public function authenticate($user, $request, $response)
     {
         $accessToken = $this->getAccessToken();
 
-        /* @var $user \yii\web\User */
+        /** @var IdentityInterface $identityClass */
         $identityClass = is_null($this->identityClass) ? $user->identityClass : $this->identityClass;
 
         $identity = $identityClass::findIdentity($accessToken->user_id);
@@ -67,7 +75,9 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
      */
     public function challenge($response)
     {
-        $realm = empty($this->realm) ? $this->owner->getUniqueId() : $this->realm;
+        /** @var Controller $owner */
+        $owner = $this->owner;
+        $realm = empty($this->realm) ? $owner->getUniqueId() : $this->realm;
         $response->getHeaders()->set('WWW-Authenticate', "Bearer realm=\"{$realm}\"");
     }
 
@@ -87,7 +97,7 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
     protected function getAccessToken()
     {
         if (is_null($this->_accessToken)) {
-            $request = \Yii::$app->request;
+            $request = Yii::$app->request;
 
             $authHeader = $request->getHeaders()->get('Authorization');
 
@@ -115,7 +125,7 @@ class TokenAuth extends \yii\filters\auth\AuthMethod
                         throw new Exception('When putting the token in the body, the method must be POST.');
                     }
                     // IETF specifies content-type. NB: Not all webservers populate this _SERVER variable
-                    if (strpos($request->contentType,'application/x-www-form-urlencoded') != 0) {
+                    if (strpos($request->contentType,'application/x-www-form-urlencoded') !== 0) {
                         throw new Exception('The content type for POST requests must be "application/x-www-form-urlencoded"');
                     }
                     $token = $postToken;

@@ -2,10 +2,14 @@
 
 namespace conquer\oauth2;
 
+use yii\base\Model;
 use yii\helpers\ArrayHelper;
 use conquer\oauth2\models\Client;
 
-abstract class BaseModel extends \yii\base\Model
+/**
+ * @property Client $client
+ */
+abstract class BaseModel extends Model
 {
     protected $_client;
 
@@ -49,14 +53,14 @@ abstract class BaseModel extends \yii\base\Model
         }
     }
 
-    public function addError($attribute, $error = "")
+    public function addError($attribute, $error = "", $type = Exception::INVALID_REQUEST)
     {
-        throw new Exception($error, Exception::INVALID_REQUEST);
+        throw new Exception($error, $type);
     }
 
     public function errorServer($error, $type = Exception::INVALID_REQUEST)
     {
-        throw new Exception($error, Exception::INVALID_REQUEST);
+        throw new Exception($error, $type);
     }
 
     public function errorRedirect($error, $type = Exception::INVALID_REQUEST)
@@ -101,19 +105,19 @@ abstract class BaseModel extends \yii\base\Model
         return $this->_client;
     }
 
-    public function validateClient_id($attribute, $params)
+    public function validateClient_id()
     {
         $this->getClient();
     }
 
-    public function validateClient_secret($attribute, $params)
+    public function validateClient_secret($attribute)
     {
         if (!\Yii::$app->security->compareString($this->getClient()->client_secret, $this->$attribute)) {
             $this->addError($attribute, 'The client credentials are invalid', Exception::UNAUTHORIZED_CLIENT);
         }
     }
 
-    public function validateRedirect_uri($attribute, $params)
+    public function validateRedirect_uri($attribute)
     {
         if (!empty($this->$attribute)) {
             $clientRedirectUri = $this->getClient()->redirect_uri;
@@ -123,7 +127,7 @@ abstract class BaseModel extends \yii\base\Model
         }
     }
 
-    public function validateScope($attribute, $params)
+    public function validateScope($attribute)
     {
         if (!$this->checkSets($this->$attribute, $this->client->scope)) {
             $this->errorRedirect('The requested scope is invalid, unknown, or malformed.', Exception::INVALID_SCOPE);

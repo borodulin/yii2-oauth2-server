@@ -23,30 +23,33 @@ class Implicit extends BaseModel
      */
     public $accessTokenLifetime = 3600;
 
-
     /**
      * Value MUST be set to "token"
      * @var string
      */
     public $response_type;
+
     /**
      * The client identifier as described in Section 2.2.
      * @link https://tools.ietf.org/html/rfc6749#section-2.2
      * @var string
      */
     public $client_id;
+
     /**
      * As described in Section 3.1.2.
      * @link https://tools.ietf.org/html/rfc6749#section-3.1.2
      * @var string
      */
     public $redirect_uri;
+
     /**
      * The scope of the access request as described by Section 3.3.
      * @link https://tools.ietf.org/html/rfc6749#section-3.3
      * @var string
      */
     public $scope;
+
     /**
      * The parameter SHOULD be used for preventing cross-site request forgery as described in Section 10.12.
      * @link https://tools.ietf.org/html/rfc6749#section-10.12
@@ -54,6 +57,9 @@ class Implicit extends BaseModel
      */
     public $state;
 
+    /**
+     * @return array
+     */
     public function rules()
     {
         return [
@@ -69,6 +75,9 @@ class Implicit extends BaseModel
         ];
     }
 
+    /**
+     * @return array
+     */
     public function getResponseData()
     {
         $accessToken = AccessToken::createAccessToken([

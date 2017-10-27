@@ -9,6 +9,7 @@ namespace conquer\oauth2\models;
 
 use Yii;
 use conquer\oauth2\Exception;
+use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
 
 /**
@@ -22,9 +23,9 @@ use yii\helpers\VarDumper;
  * @property string $scope
  *
  * @property Client $client
- * @property User $user
+ * @property ActiveRecord $user
  */
-class AuthorizationCode extends \yii\db\ActiveRecord
+class AuthorizationCode extends ActiveRecord
 {
     /**
      * @inheritdoc
@@ -98,6 +99,10 @@ class AuthorizationCode extends \yii\db\ActiveRecord
      */
     public function getUser()
     {
-        return $this->hasOne(User::className(), ['user_id' => 'user_id']);
+        $identity = isset(Yii::$app->user->identity) ? Yii::$app->user->identity : null;
+        if ($identity instanceof ActiveRecord) {
+            return $this->hasOne(get_class($identity), ['user_id' => $identity->primaryKey()]);
+        }
+        return null;
     }
 }

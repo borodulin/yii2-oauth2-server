@@ -7,15 +7,12 @@
 
 namespace conquer\oauth2;
 
-
-use yii\web\Response;
+use Yii;
 
 /**
  *
  * @see http://tools.ietf.org/html/draft-ietf-oauth-v2-20#section-4.1
- *
  * @author Andrey Borodulin
- *
  */
 class RedirectException extends Exception
 {
@@ -36,12 +33,11 @@ class RedirectException extends Exception
         if ($error_description) {
             $query['error_description'] = $error_description;
         }
-        $request = \Yii::$app->request;
 
         if ($state) {
             $query['state'] = $state;
         }
-        \Yii::$app->response->redirect(http_build_url($redirect_uri, [
+        Yii::$app->response->redirect(http_build_url($redirect_uri, [
             'query' => http_build_query($query)
         ], HTTP_URL_REPLACE | HTTP_URL_JOIN_QUERY));
     }

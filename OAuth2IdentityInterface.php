@@ -18,14 +18,13 @@ interface OAuth2IdentityInterface
 {
     /**
      * Find idenity by username
-     * @param $username current username
+     * @param string $username current username
      * @return IdentityInterface
      */
     public static function findIdentityByUsername($username);
 
     /**
      * Validates password
-     *
      * @param string $password password to validate
      * @return bool if password provided is valid for current user
      */
