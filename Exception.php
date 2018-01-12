@@ -7,12 +7,12 @@
 
 namespace conquer\oauth2;
 
-use yii\base\UserException;
+use yii\web\HttpException;
 
 /**
  * @author Andrey Borodulin
  */
-class Exception extends UserException
+class Exception extends HttpException
 {
     const ACCESS_DENIED = 'access_denied';
     const INVALID_CLIENT = 'invalid_client';
@@ -28,9 +28,7 @@ class Exception extends UserException
 
     const NOT_IMPLEMENTED = 'not_implemented';
 
-
     protected $error;
-
 
     /**
      * Constructor.
@@ -40,7 +38,7 @@ class Exception extends UserException
     public function __construct($error_description = null, $error = self::INVALID_REQUEST)
     {
         $this->error = $error;
-        parent::__construct($error_description, 0, null);
+        parent::__construct(400, $error_description, $code = 0);
     }
 
     /**

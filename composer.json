@@ -15,9 +15,11 @@
             "email": "borodulin@gmail.com"
         }
     ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
         "yiisoft/yii2": ">=2.0.4",
-        "jakeasmith/http_build_url": "*"
+        "jakeasmith/http_build_url": ">=1.0.1"
     },
     "autoload": {
         "psr-4": {
