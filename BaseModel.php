@@ -53,7 +53,7 @@ abstract class BaseModel extends Model
         }
     }
 
-    public function addError($attribute, $error = "", $type = Exception::INVALID_REQUEST)
+    public function addError($attribute, $error = '', $type = Exception::INVALID_REQUEST)
     {
         throw new Exception($error, $type);
     }
@@ -73,7 +73,7 @@ abstract class BaseModel extends Model
         }
     }
 
-    abstract function getResponseData();
+    abstract public function getResponseData();
 
     public static function getRequestValue($param, $header = null)
     {
@@ -105,19 +105,19 @@ abstract class BaseModel extends Model
         return $this->_client;
     }
 
-    public function validateClient_id()
+    public function validateClientId()
     {
         $this->getClient();
     }
 
-    public function validateClient_secret($attribute)
+    public function validateClientSecret($attribute)
     {
         if (!\Yii::$app->security->compareString($this->getClient()->client_secret, $this->$attribute)) {
             $this->addError($attribute, 'The client credentials are invalid', Exception::UNAUTHORIZED_CLIENT);
         }
     }
 
-    public function validateRedirect_uri($attribute)
+    public function validateRedirectUri($attribute)
     {
         if (!empty($this->$attribute)) {
             $clientRedirectUri = $this->getClient()->redirect_uri;
@@ -151,5 +151,4 @@ abstract class BaseModel extends Model
         }
         return (count(array_diff($requiredSet, $availableSet)) == 0);
     }
-
 }

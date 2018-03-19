@@ -23,12 +23,18 @@
     },
     "autoload": {
         "psr-4": {
-        	"conquer\\oauth2\\": ""
+            "conquer\\oauth2\\": ""
         }
     },
     "extra": {
         "branch-alias": {
             "dev-master": "1.5.0-dev"
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ]
 }

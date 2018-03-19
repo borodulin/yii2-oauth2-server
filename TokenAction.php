@@ -43,7 +43,7 @@ class TokenAction extends Action
         if (isset($this->grantTypes[$grantType])) {
             $grantModel = Yii::createObject($this->grantTypes[$grantType]);
         } else {
-            throw new Exception("An unsupported grant type was requested", Exception::UNSUPPORTED_GRANT_TYPE);
+            throw new Exception('An unsupported grant type was requested', Exception::UNSUPPORTED_GRANT_TYPE);
         }
 
         $grantModel->validate();

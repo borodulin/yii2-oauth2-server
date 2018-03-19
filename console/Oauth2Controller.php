@@ -19,7 +19,6 @@ class Oauth2Controller extends Controller
 {
     public function actionIndex()
     {
-
     }
 
     public function actionClear()

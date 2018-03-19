@@ -50,9 +50,9 @@ class RefreshToken extends BaseModel
             [['client_id', 'grant_type', 'client_secret', 'refresh_token'], 'required'],
             [['client_id', 'client_secret'], 'string', 'max' => 80],
             [['refresh_token'], 'string', 'max' => 40],
-            [['client_id'], 'validateClient_id'],
-            [['client_secret'], 'validateClient_secret'],
-            [['refresh_token'], 'validateRefresh_token'],
+            [['client_id'], 'validateClientId'],
+            [['client_secret'], 'validateClientSecret'],
+            [['refresh_token'], 'validateRefreshToken'],
         ];
     }
 
@@ -85,13 +85,12 @@ class RefreshToken extends BaseModel
         ];
     }
 
-    public function validateRefresh_token()
+    public function validateRefreshToken()
     {
         $this->getRefreshToken();
     }
 
     /**
-     *
      * @return \conquer\oauth2\models\RefreshToken
      */
     public function getRefreshToken()
