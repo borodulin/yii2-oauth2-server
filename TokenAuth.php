@@ -11,7 +11,7 @@ use conquer\oauth2\models\AccessToken;
 use Yii;
 use yii\base\Controller;
 use yii\filters\auth\AuthMethod;
-use yii\web\HttpException;
+use yii\web\UnauthorizedHttpException;
 use yii\web\IdentityInterface;
 
 /**
@@ -136,10 +136,10 @@ class TokenAuth extends AuthMethod
             }
 
             if (!$accessToken = AccessToken::findOne(['access_token' => $token])) {
-                throw new HttpException(401, 'The access token provided is invalid.');
+                throw new UnauthorizedHttpException('The access token provided is invalid.');
             }
             if ($accessToken->expires < time()) {
-                throw new HttpException(401, 'The access token provided has expired.');
+                throw new UnauthorizedHttpException('The access token provided has expired.');
             }
             $this->_accessToken = $accessToken;
         }
