@@ -1,0 +1,12 @@
+language: php
+php:
+  - '5.6'
+  - '7.0'
+  - '7.1'
+  - '7.2'
+
+install:
+    - composer install --no-interaction
+
+script:
+    - vendor/bin/phpcs --standard=vendor/yiisoft/yii2-coding-standards/Yii2 --extensions=php --ignore=vendor,granttypes/RefreshToken.php .

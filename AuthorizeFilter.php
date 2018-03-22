@@ -6,6 +6,7 @@
  */
 
 namespace conquer\oauth2;
+
 use conquer\oauth2\responsetypes\Authorization;
 use Yii;
 use yii\base\ActionFilter;
@@ -17,7 +18,6 @@ use yii\base\ActionFilter;
  */
 class AuthorizeFilter extends ActionFilter
 {
-
     private $_responseType;
 
     public $responseTypes = [
@@ -57,7 +57,7 @@ class AuthorizeFilter extends ActionFilter
         if (isset($this->responseTypes[$responseType])) {
             $this->_responseType = Yii::createObject($this->responseTypes[$responseType]);
         } else {
-            throw new Exception("An unsupported response type was requested.", Exception::UNSUPPORTED_RESPONSE_TYPE);
+            throw new Exception('An unsupported response type was requested.', Exception::UNSUPPORTED_RESPONSE_TYPE);
         }
 
         $this->_responseType->validate();
@@ -133,4 +133,3 @@ class AuthorizeFilter extends ActionFilter
         return !empty($this->storeKey) && Yii::$app->session->has($this->storeKey);
     }
 }
-

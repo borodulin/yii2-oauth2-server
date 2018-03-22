@@ -57,8 +57,8 @@ class Authorization extends BaseModel
             [['client_id'], 'string', 'max' => 80],
             [['state'], 'string', 'max' => 255],
             [['redirect_uri'], 'url'],
-            [['client_id'], 'validateClient_id'],
-            [['redirect_uri'], 'validateRedirect_uri'],
+            [['client_id'], 'validateClientId'],
+            [['redirect_uri'], 'validateRedirectUri'],
             [['scope'], 'validateScope'],
         ];
     }
@@ -88,8 +88,4 @@ class Authorization extends BaseModel
             'query' => http_build_query($query),
         ];
     }
-
-
 }
-
-

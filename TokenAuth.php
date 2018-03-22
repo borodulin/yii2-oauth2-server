@@ -114,7 +114,7 @@ class TokenAuth extends AuthMethod
             }
             // HEADER: Get the access token from the header
             if ($authHeader) {
-                if (preg_match("/^Bearer\\s+(.*?)$/", $authHeader, $matches)) {
+                if (preg_match('/^Bearer\\s+(.*?)$/', $authHeader, $matches)) {
                     $token = $matches[1];
                 } else {
                     throw new Exception('Malformed auth header.');
@@ -126,7 +126,7 @@ class TokenAuth extends AuthMethod
                         throw new Exception('When putting the token in the body, the method must be POST.');
                     }
                     // IETF specifies content-type. NB: Not all webservers populate this _SERVER variable
-                    if (strpos($request->contentType,'application/x-www-form-urlencoded') !== 0) {
+                    if (strpos($request->contentType, 'application/x-www-form-urlencoded') !== 0) {
                         throw new Exception('The content type for POST requests must be "application/x-www-form-urlencoded"');
                     }
                     $token = $postToken;

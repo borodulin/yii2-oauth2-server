@@ -7,7 +7,6 @@
 
 namespace conquer\oauth2\granttypes;
 
-
 use conquer\oauth2\BaseModel;
 
 /**

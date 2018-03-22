@@ -79,8 +79,8 @@ class UserCredentials extends BaseModel
             [['grant_type', 'client_id', 'username', 'password'], 'required'],
             ['grant_type', 'required', 'requiredValue' => 'password'],
             [['client_id'], 'string', 'max' => 80],
-            [['client_id'], 'validateClient_id'],
-            [['client_secret'], 'validateClient_secret'],
+            [['client_id'], 'validateClientId'],
+            [['client_secret'], 'validateClientSecret'],
             [['scope'], 'validateScope'],
             // password is validated by validatePassword()
             ['password', 'validatePassword'],

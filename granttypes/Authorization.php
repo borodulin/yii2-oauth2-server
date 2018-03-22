@@ -62,20 +62,20 @@ class Authorization extends BaseModel
             [['client_id'], 'string', 'max' => 80],
             [['code'], 'string', 'max' => 40],
             [['redirect_uri'], 'url'],
-            [['client_id'], 'validateClient_id'],
+            [['client_id'], 'validateClientId'],
             [['code'], 'validateCode'],
-            [['redirect_uri'], 'validateRedirect_uri'],
+            [['redirect_uri'], 'validateRedirectUri'],
         ];
     }
 
-    public function validateRedirect_uri($attribute)
+    public function validateRedirectUri($attribute)
     {
         $authCode = $this->getAuthCode();
 
         if ($authCode->redirect_uri && (strcasecmp($this->$attribute, $authCode->redirect_uri) !== 0)) {
             $this->errorServer('The redirect URI provided does not match', Exception::REDIRECT_URI_MISMATCH);
         }
-        parent::validateRedirect_uri($attribute);
+        parent::validateRedirectUri($attribute);
     }
 
     public function getResponseData()
