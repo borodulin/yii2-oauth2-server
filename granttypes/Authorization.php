@@ -19,6 +19,9 @@ use conquer\oauth2\models\RefreshToken;
  */
 class Authorization extends BaseModel
 {
+    /**
+     * @var AuthorizationCode
+     */
     private $_authCode;
 
     /**
@@ -68,6 +71,11 @@ class Authorization extends BaseModel
         ];
     }
 
+    /**
+     * @param $attribute
+     * @throws Exception
+     * @throws \conquer\oauth2\RedirectException
+     */
     public function validateRedirectUri($attribute)
     {
         $authCode = $this->getAuthCode();
@@ -78,6 +86,15 @@ class Authorization extends BaseModel
         parent::validateRedirectUri($attribute);
     }
 
+    /**
+     * @return array
+     * @throws Exception
+     * @throws \Exception
+     * @throws \Throwable
+     * @throws \conquer\oauth2\RedirectException
+     * @throws \yii\base\Exception
+     * @throws \yii\db\StaleObjectException
+     */
     public function getResponseData()
     {
         $authCode = $this->getAuthCode();
@@ -110,14 +127,19 @@ class Authorization extends BaseModel
         ];
     }
 
+    /**
+     * @throws Exception
+     * @throws \conquer\oauth2\RedirectException
+     */
     public function validateCode()
     {
         $this->getAuthCode();
     }
 
     /**
-     *
-     * @return \conquer\oauth2\models\AuthorizationCode
+     * @return AuthorizationCode
+     * @throws Exception
+     * @throws \conquer\oauth2\RedirectException
      */
     public function getAuthCode()
     {

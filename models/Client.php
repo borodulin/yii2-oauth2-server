@@ -7,6 +7,9 @@
 
 namespace conquer\oauth2\models;
 
+use yii\behaviors\BlameableBehavior;
+use yii\behaviors\TimestampBehavior;
+
 /**
  * This is the model class for table "oauth2_client".
  *
@@ -51,8 +54,8 @@ class Client extends \yii\db\ActiveRecord
     public function behaviors()
     {
         return [
-            \yii\behaviors\TimestampBehavior::className(),
-            \yii\behaviors\BlameableBehavior::className(),
+            TimestampBehavior::className(),
+            BlameableBehavior::className(),
         ];
     }
 

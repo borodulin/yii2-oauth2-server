@@ -11,6 +11,7 @@ use conquer\oauth2\models\AccessToken;
 use Yii;
 use yii\base\Controller;
 use yii\filters\auth\AuthMethod;
+use yii\web\Response;
 use yii\web\UnauthorizedHttpException;
 use yii\web\IdentityInterface;
 
@@ -34,6 +35,9 @@ use yii\web\IdentityInterface;
  */
 class TokenAuth extends AuthMethod
 {
+    /**
+     * @var AccessToken
+     */
     private $_accessToken;
 
     /**
@@ -52,6 +56,7 @@ class TokenAuth extends AuthMethod
      * @param \yii\web\Response $response
      * @return mixed
      * @throws Exception
+     * @throws UnauthorizedHttpException
      */
     public function authenticate($user, $request, $response)
     {
@@ -72,7 +77,7 @@ class TokenAuth extends AuthMethod
     }
 
     /**
-     * @inheritdoc
+     * @param Response $response
      */
     public function challenge($response)
     {
@@ -91,9 +96,9 @@ class TokenAuth extends AuthMethod
     }
 
     /**
-     *
+     * @return AccessToken
      * @throws Exception
-     * @return \conquer\oauth2\models\AccessToken
+     * @throws UnauthorizedHttpException
      */
     protected function getAccessToken()
     {

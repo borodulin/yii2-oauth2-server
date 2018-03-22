@@ -69,19 +69,20 @@ class AuthorizationCode extends ActiveRecord
      *
      * @param array $params
      * @throws Exception
-     * @return \conquer\oauth2\models\AuthorizationCode
+     * @return AuthorizationCode
+     * @throws \yii\base\Exception
      */
     public static function createAuthorizationCode(array $params)
     {
         static::deleteAll(['<', 'expires', time()]);
 
-        $params['authorization_code'] = \Yii::$app->security->generateRandomString(40);
+        $params['authorization_code'] = Yii::$app->security->generateRandomString(40);
         $authCode = new static($params);
 
         if ($authCode->save()) {
             return $authCode;
         } else {
-            \Yii::error(__CLASS__ . ' validation error: ' . VarDumper::dumpAsString($authCode->errors));
+            Yii::error(__CLASS__ . ' validation error: ' . VarDumper::dumpAsString($authCode->errors));
         }
         throw new Exception('Unable to create authorization code', Exception::SERVER_ERROR);
     }

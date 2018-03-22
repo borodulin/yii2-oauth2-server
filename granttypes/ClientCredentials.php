@@ -15,4 +15,8 @@ use conquer\oauth2\BaseModel;
 class ClientCredentials extends BaseModel
 {
 
+    public function getResponseData()
+    {
+        // TODO: Implement getResponseData() method.
+    }
 }

@@ -66,6 +66,7 @@ class RefreshToken extends ActiveRecord
      * @param array $attributes
      * @throws Exception
      * @return \conquer\oauth2\models\RefreshToken
+     * @throws \yii\base\Exception
      */
     public static function createRefreshToken(array $attributes)
     {

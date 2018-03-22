@@ -11,11 +11,15 @@ use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\BaseModel;
 
 /**
- *
+ * Class RefreshToken
+ * @package conquer\oauth2\granttypes
  * @author Andrey Borodulin
  */
 class RefreshToken extends BaseModel
 {
+    /**
+     * @var \conquer\oauth2\models\RefreshToken
+     */
     private $_refreshToken;
 
     /**
@@ -56,6 +60,14 @@ class RefreshToken extends BaseModel
         ];
     }
 
+    /**
+     * @return array
+     * @throws \Exception
+     * @throws \Throwable
+     * @throws \conquer\oauth2\Exception
+     * @throws \yii\base\Exception
+     * @throws \yii\db\StaleObjectException
+     */
     public function getResponseData()
     {
         $refreshToken = $this->getRefreshToken();
@@ -85,6 +97,9 @@ class RefreshToken extends BaseModel
         ];
     }
 
+    /**
+     * @throws \conquer\oauth2\Exception
+     */
     public function validateRefreshToken()
     {
         $this->getRefreshToken();
@@ -92,6 +107,7 @@ class RefreshToken extends BaseModel
 
     /**
      * @return \conquer\oauth2\models\RefreshToken
+     * @throws \conquer\oauth2\Exception
      */
     public function getRefreshToken()
     {
@@ -106,6 +122,9 @@ class RefreshToken extends BaseModel
         return $this->_refreshToken;
     }
 
+    /**
+     * @return array|mixed|string
+     */
     public function getRefresh_token()
     {
         return $this->getRequestValue('refresh_token');

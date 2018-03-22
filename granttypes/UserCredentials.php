@@ -91,6 +91,8 @@ class UserCredentials extends BaseModel
      * Validates the password.
      * This method serves as the inline validation for password.
      * @param string $attribute the attribute currently being validated
+     * @throws \conquer\oauth2\Exception
+     * @throws \yii\base\InvalidConfigException
      */
     public function validatePassword($attribute)
     {
@@ -136,8 +138,9 @@ class UserCredentials extends BaseModel
 
     /**
      * Finds user by [[username]]
-     *
      * @return IdentityInterface|null
+     * @throws \yii\base\InvalidConfigException
+     * @throws \conquer\oauth2\Exception
      */
     protected function getUser()
     {

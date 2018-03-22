@@ -77,6 +77,8 @@ class Implicit extends BaseModel
 
     /**
      * @return array
+     * @throws \conquer\oauth2\Exception
+     * @throws \yii\base\Exception
      */
     public function getResponseData()
     {

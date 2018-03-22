@@ -63,8 +63,9 @@ class AccessToken extends ActiveRecord
 
     /**
      * @param array $attributes
+     * @return static
      * @throws Exception
-     * @return \conquer\oauth2\models\AccessToken
+     * @throws \yii\base\Exception
      */
     public static function createAccessToken(array $attributes)
     {
