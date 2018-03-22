@@ -1,6 +1,8 @@
 Yii2 OAuth 2.0 Server
 =================
 
+[![Build Status](https://travis-ci.org/borodulin/yii2-oauth2-server.svg?branch=master)](https://travis-ci.org/borodulin/yii2-oauth2-server)
+
 ## Description
 
 This extension provides simple implementation of [Oauth 2.0](http://tools.ietf.org/wg/oauth/draft-ietf-oauth-v2/) specification using Yii2 framework.
