@@ -22,8 +22,8 @@ class TokenAction extends Action
     public $format = Response::FORMAT_JSON;
 
     public $grantTypes = [
-        'authorization_code' => 'conquer\oauth2\granttypes\Authorization',
-        'refresh_token' => 'conquer\oauth2\granttypes\RefreshToken',
+        'authorization_code' => 'conquer\oauth2\granttypes\AuthorizationGrant',
+        'refresh_token' => 'conquer\oauth2\granttypes\RefreshTokenGrant',
 //         'client_credentials' => 'conquer\oauth2\granttypes\ClientCredentials',
 //         'password' => 'conquer\oauth2\granttypes\UserCredentials',
 //         'urn:ietf:params:oauth:grant-type:jwt-bearer' => 'conquer\oauth2\granttypes\JwtBearer',
@@ -35,6 +35,10 @@ class TokenAction extends Action
         $this->controller->enableCsrfValidation = false;
     }
 
+    /**
+     * @throws Exception
+     * @throws \yii\base\InvalidConfigException
+     */
     public function run()
     {
         if (!$grantType = BaseModel::getRequestValue('grant_type')) {

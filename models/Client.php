@@ -1,14 +1,15 @@
 <?php
 /**
  * @link https://github.com/borodulin/yii2-oauth2-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
  * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
 namespace conquer\oauth2\models;
 
+use conquer\oauth2\OAuth2;
 use yii\behaviors\BlameableBehavior;
 use yii\behaviors\TimestampBehavior;
+use yii\db\ActiveRecord;
 
 /**
  * This is the model class for table "oauth2_client".
@@ -24,39 +25,26 @@ use yii\behaviors\TimestampBehavior;
  * @property AccessToken[] $accessTokens
  * @property AuthorizationCode[] $authorizationCodes
  * @property RefreshToken[] $refreshTokens
+ *
+ * @author Andrey Borodulin
  */
-class Client extends \yii\db\ActiveRecord
+class Client extends ActiveRecord
 {
     /**
-     * @inheritdoc
+     * @throws \yii\base\InvalidConfigException
      */
     public static function tableName()
     {
-        return '{{%oauth2_client}}';
+        return OAuth2::instance()->clientTable;
     }
 
     /**
-     * @inheritdoc
+     * @return string|\yii\db\Connection
+     * @throws \yii\base\InvalidConfigException
      */
-    public function rules()
+    public static function getDb()
     {
-        return [
-            [['client_id', 'client_secret', 'redirect_uri'], 'required'],
-            [['scope'], 'string'],
-            [['client_id', 'client_secret', 'grant_type'], 'string', 'max' => 80],
-            [['redirect_uri'], 'string', 'max' => 2000]
-        ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function behaviors()
-    {
-        return [
-            TimestampBehavior::className(),
-            BlameableBehavior::className(),
-        ];
+        return OAuth2::instance()->db;
     }
 
     /**
@@ -74,11 +62,22 @@ class Client extends \yii\db\ActiveRecord
     }
 
     /**
+     * @return array
+     */
+    public function behaviors()
+    {
+        return [
+            TimestampBehavior::class,
+            BlameableBehavior::class,
+        ];
+    }
+
+    /**
      * @return \yii\db\ActiveQuery
      */
     public function getAccessTokens()
     {
-        return $this->hasMany(AccessToken::className(), ['client_id' => 'client_id']);
+        return $this->hasMany(AccessToken::class, ['client_id' => 'client_id']);
     }
 
     /**
@@ -86,7 +85,7 @@ class Client extends \yii\db\ActiveRecord
      */
     public function getAuthorizationCodes()
     {
-        return $this->hasMany(AuthorizationCode::className(), ['client_id' => 'client_id']);
+        return $this->hasMany(AuthorizationCode::class, ['client_id' => 'client_id']);
     }
 
     /**
@@ -94,6 +93,6 @@ class Client extends \yii\db\ActiveRecord
      */
     public function getRefreshTokens()
     {
-        return $this->hasMany(RefreshToken::className(), ['client_id' => 'client_id']);
+        return $this->hasMany(RefreshToken::class, ['client_id' => 'client_id']);
     }
 }

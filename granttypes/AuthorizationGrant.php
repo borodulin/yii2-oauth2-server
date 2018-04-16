@@ -1,7 +1,6 @@
 <?php
 /**
  * @link https://github.com/borodulin/yii2-oauth2-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
  * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
@@ -12,12 +11,13 @@ use conquer\oauth2\Exception;
 use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\models\AuthorizationCode;
 use conquer\oauth2\models\RefreshToken;
+use conquer\oauth2\OAuth2;
 
 /**
  * @link https://tools.ietf.org/html/rfc6749#section-4.1.3
  * @author Andrey Borodulin
  */
-class Authorization extends BaseModel
+class AuthorizationGrant extends BaseModel
 {
     /**
      * @var AuthorizationCode
@@ -61,7 +61,8 @@ class Authorization extends BaseModel
     public function rules()
     {
         return [
-            [['client_id', 'grant_type', 'code'], 'required'],
+            [['grant_type'], 'required', 'requiredValue' => 'authorization_code', 'message' => 'Invalid grant type'],
+            [['client_id', 'code'], 'required'],
             [['client_id'], 'string', 'max' => 80],
             [['code'], 'string', 'max' => 40],
             [['redirect_uri'], 'url'],
@@ -99,19 +100,10 @@ class Authorization extends BaseModel
     {
         $authCode = $this->getAuthCode();
 
-        $acessToken = AccessToken::createAccessToken([
-            'client_id' => $this->client_id,
-            'user_id' => $authCode->user_id,
-            'expires' => $this->accessTokenLifetime + time(),
-            'scope' => $authCode->scope,
-        ]);
+        $acessToken = AccessToken::createAccessToken($this->client_id, $authCode->user_id, $authCode->scope);
 
-        $refreshToken = RefreshToken::createRefreshToken([
-            'client_id' => $this->client_id,
-            'user_id' => $authCode->user_id,
-            'expires' => $this->refreshTokenLifetime + time(),
-            'scope' => $authCode->scope,
-        ]);
+        $refreshToken = RefreshToken::createRefreshToken($this->client_id, $authCode->user_id, $authCode->scope);
+
         /**
          * The client MUST NOT use the authorization code more than once.
          * @link https://tools.ietf.org/html/rfc6749#section-4.1.2
@@ -120,7 +112,7 @@ class Authorization extends BaseModel
 
         return [
             'access_token' => $acessToken->access_token,
-            'expires_in' => $this->accessTokenLifetime,
+            'expires_in' => OAuth2::instance()->accessTokenLifetime,
             'token_type' => $this->tokenType,
             'scope' => $this->scope,
             'refresh_token' => $refreshToken->refresh_token,

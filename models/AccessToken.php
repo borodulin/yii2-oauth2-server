@@ -1,14 +1,13 @@
 <?php
 /**
  * @link https://github.com/borodulin/yii2-oauth2-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
  * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
 namespace conquer\oauth2\models;
 
-use conquer\oauth2\Exception;
-use yii\helpers\VarDumper;
+use conquer\oauth2\OAuth2;
+use Yii;
 use yii\db\ActiveRecord;
 
 /**
@@ -21,65 +20,49 @@ use yii\db\ActiveRecord;
  * @property string $scope
  *
  * @property Client $client
- * @property ActiveRecord $user
+ *
+ * @author Andrey Borodulin
  */
 class AccessToken extends ActiveRecord
 {
     /**
-     * @inheritdoc
+     * @throws \yii\base\InvalidConfigException
      */
     public static function tableName()
     {
-        return '{{%oauth2_access_token}}';
+        return OAuth2::instance()->accessTokenTable;
     }
 
     /**
-     * @inheritdoc
+     * @return string|\yii\db\Connection
+     * @throws \yii\base\InvalidConfigException
      */
-    public function rules()
+    public static function getDb()
     {
-        return [
-            [['access_token', 'client_id', 'user_id', 'expires'], 'required'],
-            [['user_id', 'expires'], 'integer'],
-            [['scope'], 'string'],
-            [['access_token'], 'string', 'max' => 40],
-            [['client_id'], 'string', 'max' => 80]
-        ];
+        return OAuth2::instance()->db;
     }
 
     /**
-     * @inheritdoc
-     */
-    public function attributeLabels()
-    {
-        return [
-            'access_token' => 'Access Token',
-            'client_id' => 'Client ID',
-            'user_id' => 'User ID',
-            'expires' => 'Expires',
-            'scope' => 'Scopes',
-        ];
-    }
-
-    /**
-     * @param array $attributes
+     * @param $clientId
+     * @param $userId
+     * @param $scope
      * @return static
-     * @throws Exception
      * @throws \yii\base\Exception
+     * @throws \yii\base\InvalidConfigException
      */
-    public static function createAccessToken(array $attributes)
+    public static function createAccessToken($clientId, $userId, $scope)
     {
-        static::deleteAll(['<', 'expires', time()]);
-
-        $attributes['access_token'] = \Yii::$app->security->generateRandomString(40);
-        $accessToken = new static($attributes);
-
-        if ($accessToken->save()) {
-            return $accessToken;
-        } else {
-            \Yii::error(__CLASS__ . ' validation error:' . VarDumper::dumpAsString($accessToken->errors));
+        if (OAuth2::instance()->clearOldTokens) {
+            static::deleteAll(['<', 'expires', time()]);
         }
-        throw new Exception('Unable to create access token', Exception::SERVER_ERROR);
+        $accessToken = new static();
+        $accessToken->access_token = Yii::$app->security->generateRandomString(40);
+        $accessToken->expires = time() + OAuth2::instance()->accessTokenLifetime;
+        $accessToken->client_id = $clientId;
+        $accessToken->user_id = $userId;
+        $accessToken->scope = $scope;
+        $accessToken->save(false);
+        return $accessToken;
     }
 
     /**
@@ -87,18 +70,6 @@ class AccessToken extends ActiveRecord
      */
     public function getClient()
     {
-        return $this->hasOne(Client::className(), ['client_id' => 'client_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUser()
-    {
-        $identity = isset(\Yii::$app->user->identity) ? \Yii::$app->user->identity : null;
-        if ($identity instanceof ActiveRecord) {
-            return $this->hasOne(get_class($identity), ['user_id' => $identity->primaryKey()]);
-        }
-        return null;
+        return $this->hasOne(Client::class, ['client_id' => 'client_id']);
     }
 }

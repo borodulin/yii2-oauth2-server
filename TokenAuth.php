@@ -1,7 +1,6 @@
 <?php
 /**
  * @link https://github.com/borodulin/yii2-oauth2-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
  * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
@@ -51,6 +50,16 @@ class TokenAuth extends AuthMethod
     public $identityClass;
 
     /**
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function init()
+    {
+        if ($this->identityClass === null) {
+            $this->identityClass = OAuth2::instance()->identityClass;
+        }
+    }
+
+    /**
      * @param \yii\web\User $user
      * @param \yii\web\Request $request
      * @param \yii\web\Response $response
@@ -89,6 +98,7 @@ class TokenAuth extends AuthMethod
 
     /**
      * @inheritdoc
+     * @throws Exception
      */
     public function handleFailure($response)
     {

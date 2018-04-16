@@ -9,8 +9,11 @@ namespace conquer\oauth2\responsetypes;
 
 use conquer\oauth2\models\AuthorizationCode;
 use conquer\oauth2\BaseModel;
+use Yii;
 
 /**
+ * Class Authorization
+ * @package conquer\oauth2\responsetypes
  * @link https://tools.ietf.org/html/rfc6749#section-4.1.1
  * @author Andrey Borodulin
  */
@@ -70,13 +73,7 @@ class Authorization extends BaseModel
      */
     public function getResponseData()
     {
-        $authCode = AuthorizationCode::createAuthorizationCode([
-            'client_id' => $this->client_id,
-            'user_id' => \Yii::$app->user->id,
-            'expires' => $this->authCodeLifetime + time(),
-            'scope' => $this->scope,
-            'redirect_uri' => $this->redirect_uri
-        ]);
+        $authCode = AuthorizationCode::createAuthorizationCode($this->client_id, Yii::$app->user->id, $this->scope);
 
         $query = [
             'code' => $authCode->authorization_code,

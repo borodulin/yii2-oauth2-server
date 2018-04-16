@@ -1,7 +1,6 @@
 <?php
 /**
  * @link https://github.com/borodulin/yii2-oauth2-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
  * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
@@ -13,12 +12,15 @@ use conquer\oauth2\models\RefreshToken;
 use conquer\oauth2\models\AccessToken;
 
 /**
+ * Class Oauth2Controller
+ * @package conquer\oauth2\console
  * @author Andrey Borodulin
  */
 class Oauth2Controller extends Controller
 {
     public function actionIndex()
     {
+        echo "Use clear action to delete old tokens";
     }
 
     public function actionClear()

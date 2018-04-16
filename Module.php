@@ -1,7 +1,6 @@
 <?php
 /**
  * @link https://github.com/borodulin/yii2-oauth2-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
  * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
@@ -11,6 +10,8 @@ use conquer\oauth2\console\Oauth2Controller;
 use yii\base\BootstrapInterface;
 
 /**
+ * Class Module
+ * @package conquer\oauth2
  * @author Andrey Borodulin
  */
 class Module extends \yii\base\Module implements BootstrapInterface
@@ -25,7 +26,7 @@ class Module extends \yii\base\Module implements BootstrapInterface
     {
         if ($app instanceof \yii\console\Application) {
             $app->controllerMap[$this->id] = [
-                'class' => Oauth2Controller::className(),
+                'class' => Oauth2Controller::class,
             ];
         }
     }

@@ -48,6 +48,7 @@ class AuthorizeFilter extends ActionFilter
      * @param \yii\base\Action $action
      * @return bool
      * @throws Exception
+     * @throws \yii\base\InvalidConfigException
      */
     public function beforeAction($action)
     {
@@ -75,6 +76,8 @@ class AuthorizeFilter extends ActionFilter
      * @param \yii\base\Action $action
      * @param mixed $result
      * @return mixed|null
+     * @throws Exception
+     * @throws \yii\base\Exception
      */
     public function afterAction($action, $result)
     {
@@ -106,6 +109,8 @@ class AuthorizeFilter extends ActionFilter
      * Finish oauth authorization.
      * Builds redirect uri and performs redirect.
      * If user is not logged on, redirect contains the Access Denied Error
+     * @throws Exception
+     * @throws \yii\base\Exception
      */
     public function finishAuthorization()
     {

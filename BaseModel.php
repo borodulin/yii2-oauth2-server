@@ -19,27 +19,6 @@ abstract class BaseModel extends Model
      */
     public $tokenType = 'bearer';
 
-    /**
-     * Authorization Code lifetime
-     * 30 seconds by default
-     * @var integer
-     */
-    public $authCodeLifetime = 30;
-
-    /**
-     * Access Token lifetime
-     * 1 hour by default
-     * @var integer
-     */
-    public $accessTokenLifetime = 3600;
-
-    /**
-     * Refresh Token lifetime
-     * 2 weeks by default
-     * @var integer
-     */
-    public $refreshTokenLifetime = 1209600;
-
 
     public function init()
     {
@@ -91,6 +70,7 @@ abstract class BaseModel extends Model
     /**
      *
      * @return \conquer\oauth2\models\Client
+     * @throws Exception
      */
     public function getClient()
     {

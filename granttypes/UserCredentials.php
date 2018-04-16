@@ -1,7 +1,6 @@
 <?php
 /**
  * @link https://github.com/borodulin/yii2-oauth2-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
  * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
@@ -10,6 +9,7 @@ namespace conquer\oauth2\granttypes;
 use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\models\RefreshToken;
 use conquer\oauth2\BaseModel;
+use conquer\oauth2\OAuth2;
 use conquer\oauth2\OAuth2IdentityInterface;
 use Yii;
 use yii\web\IdentityInterface;
@@ -96,40 +96,33 @@ class UserCredentials extends BaseModel
      */
     public function validatePassword($attribute)
     {
-        if (! $this->hasErrors()) {
+        if (!$this->hasErrors()) {
             /** @var OAuth2IdentityInterface $user */
             $user = $this->getUser();
-            if (!$user || !$user->validatePassword($this->password)) {
+            if (!($user && $user->validatePassword($this->password))) {
                 $this->addError($attribute, 'Invalid username or password');
             }
         }
     }
 
     /**
-     * @inheritdoc
+     * @return array
+     * @throws \conquer\oauth2\Exception
+     * @throws \yii\base\Exception
+     * @throws \yii\base\InvalidConfigException
      */
     public function getResponseData()
     {
         /** @var IdentityInterface $identity */
         $identity = $this->getUser();
 
-        $accessToken = AccessToken::createAccessToken([
-            'client_id' => $this->client_id,
-            'user_id' => $identity->getId(),
-            'expires' => $this->accessTokenLifetime + time(),
-            'scope' => $this->scope,
-        ]);
+        $accessToken = AccessToken::createAccessToken($this->client_id, $identity->getId(), $this->scope);
 
-        $refreshToken = RefreshToken::createRefreshToken([
-            'client_id' => $this->client_id,
-            'user_id' => $identity->getId(),
-            'expires' => $this->refreshTokenLifetime + time(),
-            'scope' => $this->scope,
-        ]);
+        $refreshToken = RefreshToken::createRefreshToken($this->client_id, $identity->getId(), $this->scope);
 
         return [
             'access_token' => $accessToken->access_token,
-            'expires_in' => $this->accessTokenLifetime,
+            'expires_in' => OAuth2::instance()->accessTokenLifetime,
             'token_type' => $this->tokenType,
             'scope' => $this->scope,
             'refresh_token' => $refreshToken->refresh_token,
@@ -145,7 +138,7 @@ class UserCredentials extends BaseModel
     protected function getUser()
     {
         /** @var OAuth2IdentityInterface $identityClass */
-        $identityClass = Yii::$app->user->identityClass;
+        $identityClass = OAuth2::instance()->identityClass;
 
         $identityObject = Yii::createObject($identityClass);
         if (! $identityObject instanceof OAuth2IdentityInterface) {

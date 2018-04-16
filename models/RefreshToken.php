@@ -1,16 +1,14 @@
 <?php
 /**
  * @link https://github.com/borodulin/yii2-oauth2-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
  * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
 namespace conquer\oauth2\models;
 
-use conquer\oauth2\Exception;
+use conquer\oauth2\OAuth2;
 use Yii;
 use yii\db\ActiveRecord;
-use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "{{%oauth2_refresh_token}}".
@@ -22,65 +20,49 @@ use yii\helpers\VarDumper;
  * @property string $scope
  *
  * @property Client $client
+ *
+ * @author Andrey Borodulin
  */
 class RefreshToken extends ActiveRecord
 {
     /**
-     * @inheritdoc
+     * @throws \yii\base\InvalidConfigException
      */
     public static function tableName()
     {
-        return '{{%oauth2_refresh_token}}';
+        return OAuth2::instance()->refreshTokenTable;
     }
 
     /**
-     * @inheritdoc
+     * @return string|\yii\db\Connection
+     * @throws \yii\base\InvalidConfigException
      */
-    public function rules()
+    public static function getDb()
     {
-        return [
-            [['refresh_token', 'client_id', 'user_id', 'expires'], 'required'],
-            [['user_id', 'expires'], 'integer'],
-            [['scope'], 'string'],
-            [['refresh_token'], 'string', 'max' => 40],
-            [['client_id'], 'string', 'max' => 80]
-        ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function attributeLabels()
-    {
-        return [
-            'refresh_token' => 'Refresh Token',
-            'client_id' => 'Client ID',
-            'user_id' => 'User ID',
-            'expires' => 'Expires',
-            'scope' => 'Scope',
-        ];
+        return OAuth2::instance()->db;
     }
 
     /**
      *
-     * @param array $attributes
-     * @throws Exception
+     * @param $clientId
+     * @param $userId
+     * @param $scope
      * @return \conquer\oauth2\models\RefreshToken
      * @throws \yii\base\Exception
+     * @throws \yii\base\InvalidConfigException
      */
-    public static function createRefreshToken(array $attributes)
+    public static function createRefreshToken($clientId, $userId, $scope)
     {
-        static::deleteAll(['<', 'expires', time()]);
-
-        $attributes['refresh_token'] = Yii::$app->security->generateRandomString(40);
-        $refreshToken = new static($attributes);
-
-        if ($refreshToken->save()) {
-            return $refreshToken;
-        } else {
-            Yii::error(__CLASS__ . ' validation error:' . VarDumper::dumpAsString($refreshToken->errors));
+        if (OAuth2::instance()->clearOldTokens) {
+            static::deleteAll(['<', 'expires', time()]);
         }
-        throw new Exception('Unable to create refresh token', Exception::SERVER_ERROR);
+        $refreshToken = new static();
+        $refreshToken->refresh_token = Yii::$app->security->generateRandomString(40);
+        $refreshToken->client_id = $clientId;
+        $refreshToken->user_id = $userId;
+        $refreshToken->scope = $scope;
+        $refreshToken->save(false);
+        return $refreshToken;
     }
 
     /**
@@ -88,18 +70,6 @@ class RefreshToken extends ActiveRecord
      */
     public function getClient()
     {
-        return $this->hasOne(Client::className(), ['client_id' => 'client_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUser()
-    {
-        $identity = isset(Yii::$app->user->identity) ? Yii::$app->user->identity : null;
-        if ($identity instanceof ActiveRecord) {
-            return $this->hasOne(get_class($identity), ['user_id' => $identity->primaryKey()]);
-        }
-        return null;
+        return $this->hasOne(Client::class, ['client_id' => 'client_id']);
     }
 }
