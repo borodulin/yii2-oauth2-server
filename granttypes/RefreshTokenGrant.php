@@ -24,11 +24,6 @@ class RefreshTokenGrant extends BaseModel
     private $_refreshToken;
 
     /**
-     * Value MUST be set to "refresh_token".
-     * @var string
-     */
-    public $grant_type;
-    /**
      * The refresh token issued to the client.
      * @var string
      */
@@ -52,7 +47,7 @@ class RefreshTokenGrant extends BaseModel
     public function rules()
     {
         return [
-            [['client_id', 'grant_type', 'client_secret', 'refresh_token'], 'required'],
+            [['client_id', 'client_secret', 'refresh_token'], 'required'],
             [['client_id', 'client_secret'], 'string', 'max' => 80],
             [['refresh_token'], 'string', 'max' => 40],
             [['client_id'], 'validateClientId'],
@@ -82,7 +77,7 @@ class RefreshTokenGrant extends BaseModel
         return [
             'access_token' => $accessToken->access_token,
             'expires_in' => OAuth2::instance()->refreshTokenLifetime,
-            'token_type' => $this->tokenType,
+            'token_type' => OAuth2::instance()->tokenType,
             'scope' => $refreshToken->scope,
             'refresh_token' => $refreshToken->refresh_token,
         ];

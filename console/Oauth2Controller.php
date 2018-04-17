@@ -20,7 +20,7 @@ class Oauth2Controller extends Controller
 {
     public function actionIndex()
     {
-        echo "Use clear action to delete old tokens";
+        echo 'Use clear action to delete old tokens';
     }
 
     public function actionClear()

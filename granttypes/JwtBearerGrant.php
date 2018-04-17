@@ -9,9 +9,12 @@ namespace conquer\oauth2\granttypes;
 use conquer\oauth2\BaseModel;
 
 /**
+ *
+ * @link http://tools.ietf.org/html/draft-ietf-oauth-jwt-bearer-04#section-4
+ *
  * @author Andrey Borodulin
  */
-class ClientCredentials extends BaseModel
+class JwtBearerGrant extends BaseModel
 {
 
     public function getResponseData()

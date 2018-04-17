@@ -31,15 +31,9 @@ use yii\web\IdentityInterface;
  * @link https://tools.ietf.org/html/rfc6749#section-4.3
  * @author Dmitry Fedorenko
  */
-class UserCredentials extends BaseModel
+class UserCredentialsGrant extends BaseModel
 {
     private $_user;
-
-    /**
-     * Value MUST be set to "password"
-     * @var string
-     */
-    public $grant_type;
 
     /**
      * The resource owner username.
@@ -76,8 +70,7 @@ class UserCredentials extends BaseModel
     public function rules()
     {
         return [
-            [['grant_type', 'client_id', 'username', 'password'], 'required'],
-            ['grant_type', 'required', 'requiredValue' => 'password'],
+            [['client_id', 'username', 'password'], 'required'],
             [['client_id'], 'string', 'max' => 80],
             [['client_id'], 'validateClientId'],
             [['client_secret'], 'validateClientSecret'],
@@ -123,7 +116,7 @@ class UserCredentials extends BaseModel
         return [
             'access_token' => $accessToken->access_token,
             'expires_in' => OAuth2::instance()->accessTokenLifetime,
-            'token_type' => $this->tokenType,
+            'token_type' => OAuth2::instance()->tokenType,
             'scope' => $this->scope,
             'refresh_token' => $refreshToken->refresh_token,
         ];

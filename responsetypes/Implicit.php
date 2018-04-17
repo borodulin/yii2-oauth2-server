@@ -9,6 +9,8 @@ namespace conquer\oauth2\responsetypes;
 
 use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\BaseModel;
+use conquer\oauth2\OAuth2;
+use Yii;
 
 /**
  * @link https://tools.ietf.org/html/rfc6749#section-4.2.1
@@ -16,13 +18,6 @@ use conquer\oauth2\BaseModel;
  */
 class Implicit extends BaseModel
 {
-    /**
-     * Access Token lifetime
-     * 1 hour by default
-     * @var integer
-     */
-    public $accessTokenLifetime = 3600;
-
     /**
      * Value MUST be set to "token"
      * @var string
@@ -82,17 +77,12 @@ class Implicit extends BaseModel
      */
     public function getResponseData()
     {
-        $accessToken = AccessToken::createAccessToken([
-            'client_id' => $this->client_id,
-            'user_id' => \Yii::$app->user->id,
-            'expires' => $this->accessTokenLifetime + time(),
-            'scope' => $this->scope,
-        ]);
+        $accessToken = AccessToken::createAccessToken($this->client_id, Yii::$app->user->id, $this->scope);
 
         $fragment = [
             'access_token' => $accessToken->access_token,
-            'expires_in' => $this->accessTokenLifetime,
-            'token_type' => $this->tokenType,
+            'expires_in' => OAuth2::instance()->accessTokenLifetime,
+            'token_type' => OAuth2::instance()->tokenType,
             'scope' => $this->scope,
         ];
 

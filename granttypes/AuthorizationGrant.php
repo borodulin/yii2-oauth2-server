@@ -25,12 +25,6 @@ class AuthorizationGrant extends BaseModel
     private $_authCode;
 
     /**
-     * Value MUST be set to "authorization_code".
-     * @var string
-     */
-    public $grant_type;
-
-    /**
      * The authorization code received from the authorization server.
      * @var string
      */
@@ -61,7 +55,6 @@ class AuthorizationGrant extends BaseModel
     public function rules()
     {
         return [
-            [['grant_type'], 'required', 'requiredValue' => 'authorization_code', 'message' => 'Invalid grant type'],
             [['client_id', 'code'], 'required'],
             [['client_id'], 'string', 'max' => 80],
             [['code'], 'string', 'max' => 40],
@@ -100,7 +93,7 @@ class AuthorizationGrant extends BaseModel
     {
         $authCode = $this->getAuthCode();
 
-        $acessToken = AccessToken::createAccessToken($this->client_id, $authCode->user_id, $authCode->scope);
+        $accessToken = AccessToken::createAccessToken($this->client_id, $authCode->user_id, $authCode->scope);
 
         $refreshToken = RefreshToken::createRefreshToken($this->client_id, $authCode->user_id, $authCode->scope);
 
@@ -111,9 +104,9 @@ class AuthorizationGrant extends BaseModel
         $authCode->delete();
 
         return [
-            'access_token' => $acessToken->access_token,
+            'access_token' => $accessToken->access_token,
             'expires_in' => OAuth2::instance()->accessTokenLifetime,
-            'token_type' => $this->tokenType,
+            'token_type' => OAuth2::instance()->tokenType,
             'scope' => $this->scope,
             'refresh_token' => $refreshToken->refresh_token,
         ];
@@ -136,9 +129,6 @@ class AuthorizationGrant extends BaseModel
     public function getAuthCode()
     {
         if (is_null($this->_authCode)) {
-            if (empty($this->code)) {
-                $this->errorRedirect('Authorization code is missing.', Exception::INVALID_REQUEST);
-            }
             if (!$this->_authCode = AuthorizationCode::findOne(['authorization_code' => $this->code])) {
                 $this->errorRedirect('The authorization code is not found or has been expired.', Exception::INVALID_CLIENT);
             }
