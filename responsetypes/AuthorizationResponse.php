@@ -8,71 +8,61 @@ namespace conquer\oauth2\responsetypes;
 
 use conquer\oauth2\models\AuthorizationCode;
 use conquer\oauth2\services\ClientService;
+use conquer\oauth2\services\RequestService;
+use JsonSerializable;
 use Yii;
+use yii\web\ServerErrorHttpException;
 
 /**
  * Class AuthorizationResponse
  * @package conquer\oauth2\responsetypes
  * @author Andrey Borodulin
  */
-class AuthorizationResponse implements ResponseTypeInterface
+class AuthorizationResponse implements ResponseTypeInterface, JsonSerializable
 {
-    /**
-     * Value MUST be set to "code".
-     * @var string
-     */
-    public $response_type;
-    /**
-     * Client Identifier
-     * @link https://tools.ietf.org/html/rfc6749#section-2.2
-     * @var string
-     */
-    public $client_id;
-    /**
-     * Redirection Endpoint
-     * @link https://tools.ietf.org/html/rfc6749#section-3.1.2
-     * @var string
-     */
-    public $redirect_uri;
-    /**
-     * Access Token Scope
-     * @link https://tools.ietf.org/html/rfc6749#section-3.3
-     * @var string
-     */
-    public $scope;
-    /**
-     * Cross-Site Request Forgery
-     * @link https://tools.ietf.org/html/rfc6749#section-10.12
-     * @var string
-     */
-    public $state;
     /**
      * @var ClientService
      */
     private $_clientService;
 
     /**
-     * @return array
+     * @var RequestService
      */
-    public function rules()
-    {
-        return [
-            [['response_type', 'client_id'], 'required'],
-            ['response_type', 'required', 'requiredValue' => 'code'],
-            [['client_id'], 'string', 'max' => 80],
-            [['state'], 'string', 'max' => 255],
-            [['redirect_uri'], 'url'],
-            [['client_id'], 'validateClientId'],
-            [['redirect_uri'], 'validateRedirectUri'],
-            [['scope'], 'validateScope'],
-        ];
-    }
+    private $_requestService;
 
-    public function __construct(ClientService $clientService)
+    private $_redirectUri;
+    private $_state;
+    private $_clientId;
+    private $_scope;
+
+
+    /**
+     * AuthorizationResponse constructor.
+     * @param ClientService $clientService
+     * @param RequestService $requestService
+     * @param array $params
+     */
+    public function __construct(ClientService $clientService, RequestService $requestService, $params = [])
     {
         $this->_clientService = $clientService;
+        $this->_requestService = $requestService;
+        $this->_redirectUri = isset($params['redirect_uri']) ? $params['redirect_uri'] : null;
+        $this->_state = isset($params['state']) ? $params['state'] : null;
+        $this->_scope = isset($params['scope']) ? $params['scope'] : null;
+        $this->_clientId = isset($params['client_id']) ? $params['client_id'] : null;
     }
 
+    public function validate()
+    {
+        $this->_state = $this->_requestService->getState();
+
+        $this->_clientService->validateRedirectUri();
+        $this->_clientService->validateScope();
+
+        $this->_clientId = $this->_clientService->client->client_id;
+
+        $this->_scope = $this->_requestService->getParam('scope');
+    }
 
     /**
      * @return array
@@ -81,21 +71,43 @@ class AuthorizationResponse implements ResponseTypeInterface
      */
     public function getResponseData()
     {
-        $this->_clientService->validateRedirectUri();
-        $this->_clientService->validateScope();
-
-        $authCode = AuthorizationCode::create($this->_clientService->client->client_id, Yii::$app->user->id, $this->scope);
+        if (!isset($this->_clientId)) {
+            throw new ServerErrorHttpException('Invalid call');
+        }
+        $authCode = AuthorizationCode::create(
+            $this->_clientId,
+            Yii::$app->user->id,
+            $this->_scope,
+            $this->_redirectUri
+        );
 
         $query = [
             'code' => $authCode->authorization_code,
         ];
 
-        if (isset($this->state)) {
-            $query['state'] = $this->state;
+        if ($this->_state) {
+            $query['state'] = $this->_state;
         }
 
         return [
             'query' => http_build_query($query),
+        ];
+    }
+
+    /**
+     * Specify data which should be serialized to JSON
+     * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
+     * @return mixed data which can be serialized by <b>json_encode</b>,
+     * which is a value of any type other than a resource.
+     * @since 5.4.0
+     */
+    public function jsonSerialize()
+    {
+        return [
+            'client_id' => $this->_clientId,
+            'scope' => $this->_scope,
+            'state' => $this->_state,
+            'redirect_uri' => $this->_redirectUri,
         ];
     }
 }

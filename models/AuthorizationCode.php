@@ -48,11 +48,12 @@ class AuthorizationCode extends ActiveRecord
      * @param $clientId
      * @param $userId
      * @param $scope
+     * @param string $redirectUri
      * @return AuthorizationCode
      * @throws \yii\base\Exception
      * @throws \yii\base\InvalidConfigException
      */
-    public static function create($clientId, $userId, $scope)
+    public static function create($clientId, $userId, $scope, $redirectUri = null)
     {
         if (OAuth2::instance()->clearOldTokens) {
             static::deleteAll(['<', 'expires', time()]);
@@ -63,6 +64,7 @@ class AuthorizationCode extends ActiveRecord
         $authCode->client_id = $clientId;
         $authCode->user_id = $userId;
         $authCode->scope = $scope;
+        $authCode->redirect_uri = $redirectUri;
         $authCode->save(false);
         return $authCode;
     }

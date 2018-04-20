@@ -7,6 +7,7 @@
 namespace conquer\oauth2\services;
 
 use conquer\oauth2\OAuth2;
+use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\web\Request;
 
@@ -68,6 +69,15 @@ class RequestService
             return $this->_data[$name];
         }
         return null;
+    }
+
+    public function getState()
+    {
+        $state = $this->getParam('state');
+        if (strlen($state) > 255) {
+            throw new BadRequestHttpException('The state parameter is too long');
+        }
+        return $state;
     }
 
     /**

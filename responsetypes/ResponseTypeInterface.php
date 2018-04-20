@@ -13,6 +13,9 @@ namespace conquer\oauth2\responsetypes;
  */
 interface ResponseTypeInterface
 {
+
+    public function validate();
+
     /**
      * @return array
      */
