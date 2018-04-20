@@ -6,7 +6,6 @@
 
 namespace conquer\oauth2\granttypes;
 
-use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\BaseModel;
 use conquer\oauth2\models\RefreshToken;
 use conquer\oauth2\OAuth2;
@@ -66,20 +65,21 @@ class RefreshTokenGrant extends BaseModel
      */
     public function getResponseData()
     {
-        $refreshToken = $this->getRefreshToken();
+        $oldRefreshToken = $this->getRefreshToken();
 
-        $accessToken = AccessToken::createAccessToken($this->client_id, $refreshToken->user_id, $refreshToken->scope);
+        $accessToken = $oldRefreshToken->createAccessToken();
+        $newRefreshToken = $oldRefreshToken->createRefreshToken();
 
-        $refreshToken->delete();
+        $oldRefreshToken->delete();
 
-        $refreshToken = RefreshToken::createRefreshToken($this->client_id, $refreshToken->user_id, $refreshToken->scope);
+        $oauth2 = OAuth2::instance();
 
         return [
             'access_token' => $accessToken->access_token,
-            'expires_in' => OAuth2::instance()->refreshTokenLifetime,
-            'token_type' => OAuth2::instance()->tokenType,
-            'scope' => $refreshToken->scope,
-            'refresh_token' => $refreshToken->refresh_token,
+            'expires_in' => $oauth2->refreshTokenLifetime,
+            'token_type' => $oauth2->tokenType,
+            'scope' => $newRefreshToken->scope,
+            'refresh_token' => $newRefreshToken->refresh_token,
         ];
     }
 
@@ -103,13 +103,5 @@ class RefreshTokenGrant extends BaseModel
             }
         }
         return $this->_refreshToken;
-    }
-
-    /**
-     * @return array|mixed|string
-     */
-    public function getRefresh_token()
-    {
-        return $this->getRequestValue('refresh_token');
     }
 }

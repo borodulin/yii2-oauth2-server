@@ -6,11 +6,10 @@
 
 namespace conquer\oauth2;
 
-use conquer\oauth2\models\AccessToken;
+use conquer\oauth2\services\AccessTokenService;
 use yii\base\Controller;
 use yii\filters\auth\AuthMethod;
 use yii\web\IdentityInterface;
-use yii\web\MethodNotAllowedHttpException;
 use yii\web\Response;
 use yii\web\UnauthorizedHttpException;
 
@@ -35,28 +34,19 @@ use yii\web\UnauthorizedHttpException;
 class TokenAuth extends AuthMethod
 {
     /**
-     * @var AccessToken
-     */
-    private $_accessToken;
-
-    /**
      * @var string the HTTP authentication realm
      */
     public $realm;
 
     /**
-     * @var string the class name of the [[identity]] object.
+     * @var AccessTokenService
      */
-    public $identityClass;
+    private $accessTokenService;
 
-    /**
-     * @throws \yii\base\InvalidConfigException
-     */
-    public function init()
+    public function __construct(AccessTokenService $accessTokenService, array $config = [])
     {
-        if ($this->identityClass === null) {
-            $this->identityClass = OAuth2::instance()->identityClass;
-        }
+        $this->accessTokenService = $accessTokenService;
+        parent::__construct($config);
     }
 
     /**
@@ -64,20 +54,23 @@ class TokenAuth extends AuthMethod
      * @param \yii\web\Request $request
      * @param \yii\web\Response $response
      * @return mixed
-     * @throws Exception
      * @throws UnauthorizedHttpException
+     * @throws \yii\base\InvalidConfigException
      */
     public function authenticate($user, $request, $response)
     {
-        $accessToken = $this->getAccessToken();
+        $oauth2 = OAuth2::instance();
+        $oauth2->request = $request;
+
+        $accessToken = $this->accessTokenService->accessToken;
 
         /** @var IdentityInterface $identityClass */
-        $identityClass = is_null($this->identityClass) ? $user->identityClass : $this->identityClass;
+        $identityClass = $oauth2->identityClass;
 
         $identity = $identityClass::findIdentity($accessToken->user_id);
 
-        if (empty($identity)) {
-            throw new Exception('User is not found.', Exception::ACCESS_DENIED);
+        if (!$identity) {
+            throw new UnauthorizedHttpException('User is not found.');
         }
 
         $user->setIdentity($identity);
@@ -97,47 +90,11 @@ class TokenAuth extends AuthMethod
     }
 
     /**
-     * @inheritdoc
-     * @throws Exception
+     * @param $response
+     * @throws UnauthorizedHttpException
      */
     public function handleFailure($response)
     {
-        throw new Exception('You are requesting with an invalid credential.');
-    }
-
-    /**
-     * @return AccessToken
-     * @throws Exception
-     * @throws MethodNotAllowedHttpException
-     * @throws UnauthorizedHttpException
-     */
-    protected function getAccessToken()
-    {
-        if (is_null($this->_accessToken)) {
-            $request = $this->request;
-
-            if ($authHeader = $request->getHeaders()->get('Authorization')) {
-                if (preg_match('/^Bearer\\s+(.*?)$/', $authHeader, $matches)) {
-                    $token = $matches[1];
-                } else {
-                    throw new Exception('Malformed auth header.');
-                }
-            } elseif ($request->isPost) {
-                $token = $request->post('access_token');
-            } elseif ($request->isGet) {
-                $token = $request->get('access_token');
-            } else {
-                throw new MethodNotAllowedHttpException();
-            }
-
-            if (!$accessToken = AccessToken::findOne(['access_token' => $token])) {
-                throw new UnauthorizedHttpException('The access token provided is invalid.');
-            }
-            if ($accessToken->expires < time()) {
-                throw new UnauthorizedHttpException('The access token provided has expired.');
-            }
-            $this->_accessToken = $accessToken;
-        }
-        return $this->_accessToken;
+        throw new UnauthorizedHttpException('You are requesting with an invalid credential.');
     }
 }

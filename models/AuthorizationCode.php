@@ -52,7 +52,7 @@ class AuthorizationCode extends ActiveRecord
      * @throws \yii\base\Exception
      * @throws \yii\base\InvalidConfigException
      */
-    public static function createAuthorizationCode($clientId, $userId, $scope)
+    public static function create($clientId, $userId, $scope)
     {
         if (OAuth2::instance()->clearOldTokens) {
             static::deleteAll(['<', 'expires', time()]);
@@ -73,5 +73,25 @@ class AuthorizationCode extends ActiveRecord
     public function getClient()
     {
         return $this->hasOne(Client::class, ['client_id' => 'client_id']);
+    }
+
+    /**
+     * @return AccessToken
+     * @throws \yii\base\Exception
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function createAccessToken()
+    {
+        return AccessToken::create($this->client_id, $this->user_id, $this->scope);
+    }
+
+    /**
+     * @return RefreshToken
+     * @throws \yii\base\Exception
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function createRefreshToken()
+    {
+        return RefreshToken::create($this->client_id, $this->user_id, $this->scope);
     }
 }

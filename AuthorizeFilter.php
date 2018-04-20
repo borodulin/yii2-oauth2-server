@@ -8,36 +8,35 @@
 namespace conquer\oauth2;
 
 use conquer\oauth2\responsetypes\Authorization;
+use conquer\oauth2\services\ResponseTypeService;
 use Yii;
 use yii\base\ActionFilter;
 
 /**
  *
  * @author Andrey Borodulin
- *
  */
 class AuthorizeFilter extends ActionFilter
 {
-    private $_responseType;
-
-    public $responseTypes = [
-        'token' => 'conquer\oauth2\responsetypes\Implicit',
-        'code' => 'conquer\oauth2\responsetypes\Authorization',
-    ];
+    /**
+     * @var ResponseTypeService
+     */
+    private $responseTypeService;
 
     /**
-     *
-     * @var boolean
+     * @var string
      */
-    public $allowImplicit = true;
-
     public $storeKey = 'ear6kme7or19rnfldtmwsxgzxsrmngqw';
 
-    public function init()
+    /**
+     * AuthorizeFilter constructor.
+     * @param ResponseTypeService $responseTypeService
+     * @param array $config
+     */
+    public function __construct(ResponseTypeService $responseTypeService, array $config = [])
     {
-        if (!$this->allowImplicit) {
-            unset($this->responseTypes['token']);
-        }
+        $this->responseTypeService = $responseTypeService;
+        parent::__construct($config);
     }
 
     /**
@@ -52,16 +51,7 @@ class AuthorizeFilter extends ActionFilter
      */
     public function beforeAction($action)
     {
-        if (!$responseType = BaseModel::getRequestValue('response_type')) {
-            throw new Exception('Invalid or missing response type');
-        }
-        if (isset($this->responseTypes[$responseType])) {
-            $this->_responseType = Yii::createObject($this->responseTypes[$responseType]);
-        } else {
-            throw new Exception('An unsupported response type was requested.', Exception::UNSUPPORTED_RESPONSE_TYPE);
-        }
-
-        $this->_responseType->validate();
+        $this->responseTypeService->validate();
 
         if ($this->storeKey) {
             Yii::$app->session->set($this->storeKey, serialize($this->_responseType));

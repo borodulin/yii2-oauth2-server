@@ -1,17 +1,19 @@
 <?php
 /**
  * @link https://github.com/borodulin/yii2-oauth-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
  * @license https://github.com/borodulin/yii2-oauth-server/blob/master/LICENSE
  */
 
 namespace conquer\oauth2;
 
+use conquer\oauth2\services\GrantTypeService;
 use Yii;
 use yii\base\Action;
 use yii\web\Response;
 
 /**
+ * Class TokenAction
+ * @package conquer\oauth2
  * @author Andrey Borodulin
  */
 class TokenAction extends Action
@@ -21,37 +23,26 @@ class TokenAction extends Action
      */
     public $format = Response::FORMAT_JSON;
 
-    public $grantTypes = [
-        'authorization_code' => 'conquer\oauth2\granttypes\AuthorizationGrant',
-        'refresh_token' => 'conquer\oauth2\granttypes\RefreshTokenGrant',
-//         'client_credentials' => 'conquer\oauth2\granttypes\ClientCredentials',
-//         'password' => 'conquer\oauth2\granttypes\UserCredentials',
-//         'urn:ietf:params:oauth:grant-type:jwt-bearer' => 'conquer\oauth2\granttypes\JwtBearer',
-    ];
+    /**
+     * @var GrantTypeService
+     */
+    private $grantService;
 
     public function init()
     {
         Yii::$app->response->format = $this->format;
         $this->controller->enableCsrfValidation = false;
+        $this->grantService = Yii::createObject(GrantTypeService::class);
     }
 
     /**
-     * @throws Exception
+     * @return array
      * @throws \yii\base\InvalidConfigException
+     * @throws \yii\web\ServerErrorHttpException
      */
     public function run()
     {
-        if (!$grantType = BaseModel::getRequestValue('grant_type')) {
-            throw new Exception('The grant type was not specified in the request');
-        }
-        if (isset($this->grantTypes[$grantType])) {
-            $grantModel = Yii::createObject($this->grantTypes[$grantType]);
-        } else {
-            throw new Exception('An unsupported grant type was requested', Exception::UNSUPPORTED_GRANT_TYPE);
-        }
-
-        $grantModel->validate();
-
-        Yii::$app->response->data = $grantModel->getResponseData();
+        return $this->grantService->getResponseData();
+//        Yii::$app->response->data = $this->grantService->getResponseData()
     }
 }

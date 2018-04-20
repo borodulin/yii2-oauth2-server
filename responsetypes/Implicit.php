@@ -1,7 +1,6 @@
 <?php
 /**
  * @link https://github.com/borodulin/yii2-oauth2-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
  * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
@@ -77,7 +76,7 @@ class Implicit extends BaseModel
      */
     public function getResponseData()
     {
-        $accessToken = AccessToken::createAccessToken($this->client_id, Yii::$app->user->id, $this->scope);
+        $accessToken = AccessToken::create($this->client_id, Yii::$app->user->id, $this->scope);
 
         $fragment = [
             'access_token' => $accessToken->access_token,

@@ -10,7 +10,6 @@ use Yii;
 use yii\base\Component;
 use yii\db\Connection;
 use yii\di\Instance;
-use yii\web\MethodNotAllowedHttpException;
 use yii\web\Request;
 use yii\web\User;
 
@@ -21,13 +20,14 @@ use yii\web\User;
  */
 class OAuth2 extends Component
 {
-
     /**
      * @var static
      */
     private static $_instance;
 
     public $db = 'db';
+
+    public $request = 'request';
 
     public $accessTokenTable = '{{%oauth2_access_token}}';
 
@@ -75,12 +75,14 @@ class OAuth2 extends Component
      */
     public $identityClass;
 
+
     /**
      * @throws \yii\base\InvalidConfigException
      */
     public function init()
     {
         $this->db = Instance::ensure($this->db, Connection::class);
+        $this->request = Instance::ensure($this->request, Request::class);
         if ($this->identityClass === null) {
             /** @var User $user */
             if ($user = Yii::$app->get('user', false)) {
@@ -102,30 +104,5 @@ class OAuth2 extends Component
             }
         }
         return self::$_instance;
-    }
-
-    /**
-     * @param Request $request
-     * @return array|mixed
-     * @throws MethodNotAllowedHttpException
-     */
-    public function getRequestData(Request $request)
-    {
-        list($clientId, $clientSecret) = $request->getAuthCredentials();
-
-        if ($request->isPost) {
-            $data = $request->post();
-        } elseif ($request->isGet) {
-            $data = $request->get();
-        } else {
-            throw new MethodNotAllowedHttpException();
-        }
-        if ($clientId) {
-            $data['client_id'] = $clientId;
-        }
-        if ($clientSecret) {
-            $data['client_secret'] = $clientSecret;
-        }
-        return $data;
     }
 }

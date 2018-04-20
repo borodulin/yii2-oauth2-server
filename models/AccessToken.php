@@ -46,11 +46,11 @@ class AccessToken extends ActiveRecord
      * @param $clientId
      * @param $userId
      * @param $scope
-     * @return static
+     * @return AccessToken
      * @throws \yii\base\Exception
      * @throws \yii\base\InvalidConfigException
      */
-    public static function createAccessToken($clientId, $userId, $scope)
+    public static function create($clientId, $userId, $scope)
     {
         if (OAuth2::instance()->clearOldTokens) {
             static::deleteAll(['<', 'expires', time()]);

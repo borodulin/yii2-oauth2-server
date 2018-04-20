@@ -1,23 +1,22 @@
 <?php
 /**
- * @link https://github.com/borodulin/yii2-oauth2-server
- * @copyright Copyright (c) 2015 Andrey Borodulin
- * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
+ * Created by PhpStorm.
+ * User: borodulin
+ * Date: 19.04.18
+ * Time: 19:17
  */
 
 namespace conquer\oauth2\responsetypes;
 
 use conquer\oauth2\models\AuthorizationCode;
-use conquer\oauth2\BaseModel;
+use conquer\oauth2\services\ClientService;
 use Yii;
 
 /**
- * Class Authorization
+ * Class AuthorizationResponse
  * @package conquer\oauth2\responsetypes
- * @link https://tools.ietf.org/html/rfc6749#section-4.1.1
- * @author Andrey Borodulin
  */
-class Authorization extends BaseModel
+class AuthorizationResponse implements ResponseTypeInterface
 {
     /**
      * Value MUST be set to "code".
@@ -48,6 +47,10 @@ class Authorization extends BaseModel
      * @var string
      */
     public $state;
+    /**
+     * @var ClientService
+     */
+    private $clientService;
 
     /**
      * @return array
@@ -66,6 +69,10 @@ class Authorization extends BaseModel
         ];
     }
 
+    public function __construct(ClientService $clientService)
+    {
+        $this->clientService = $clientService;
+    }
 
 
     /**
@@ -75,7 +82,10 @@ class Authorization extends BaseModel
      */
     public function getResponseData()
     {
-        $authCode = AuthorizationCode::create($this->client_id, Yii::$app->user->id, $this->scope);
+        $this->clientService->validateRedirectUri();
+        $this->clientService->validateScope();
+
+        $authCode = AuthorizationCode::create($this->clientService->client->client_id, Yii::$app->user->id, $this->scope);
 
         $query = [
             'code' => $authCode->authorization_code,
