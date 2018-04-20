@@ -5,6 +5,7 @@
  */
 
 namespace conquer\oauth2\services;
+
 use conquer\oauth2\granttypes\AuthorizationGrant;
 use conquer\oauth2\granttypes\ClientCredentialsGrant;
 use conquer\oauth2\granttypes\GrantInterface;
@@ -38,17 +39,17 @@ class GrantTypeService
     /**
      * @var ClientService
      */
-    private $clientService;
+    private $_clientService;
 
     /**
      * @var RequestService
      */
-    private $requestService;
+    private $_requestService;
 
     public function __construct(ClientService $clientService, RequestService $requestService)
     {
-        $this->clientService = $clientService;
-        $this->requestService = $requestService;
+        $this->_clientService = $clientService;
+        $this->_requestService = $requestService;
     }
 
     /**
@@ -58,8 +59,8 @@ class GrantTypeService
      */
     public function getResponseData()
     {
-        $this->clientService->validateGrantType();
-        $grantType = $this->requestService->getParam('grant_type');
+        $this->_clientService->validateGrantType();
+        $grantType = $this->_requestService->getParam('grant_type');
 
         if (isset(self::$grantTypeMap[$grantType])) {
             $className = self::$grantTypeMap[$grantType];
@@ -69,5 +70,4 @@ class GrantTypeService
         }
         throw new ServerErrorHttpException('Invalid grant type');
     }
-
 }

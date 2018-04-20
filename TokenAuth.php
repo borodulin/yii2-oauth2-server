@@ -41,11 +41,11 @@ class TokenAuth extends AuthMethod
     /**
      * @var AccessTokenService
      */
-    private $accessTokenService;
+    private $_accessTokenService;
 
     public function __construct(AccessTokenService $accessTokenService, array $config = [])
     {
-        $this->accessTokenService = $accessTokenService;
+        $this->_accessTokenService = $accessTokenService;
         parent::__construct($config);
     }
 
@@ -62,7 +62,7 @@ class TokenAuth extends AuthMethod
         $oauth2 = OAuth2::instance();
         $oauth2->request = $request;
 
-        $accessToken = $this->accessTokenService->accessToken;
+        $accessToken = $this->_accessTokenService->accessToken;
 
         /** @var IdentityInterface $identityClass */
         $identityClass = $oauth2->identityClass;

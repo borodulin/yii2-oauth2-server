@@ -17,13 +17,14 @@ use conquer\oauth2\models\AuthorizationCode;
 class AuthorizationCodeService
 {
     /**
+     * @var RequestService
+     */
+    private $_requestService;
+
+    /**
      * @var AuthorizationCode
      */
     public $authorizationCode;
-    /**
-     * @var RequestService
-     */
-    private $requestService;
 
     /**
      * ClientService constructor.
@@ -36,13 +37,13 @@ class AuthorizationCodeService
         if (!$this->authorizationCode) {
 //            $this->errorRedirect('The authorization code is not found or has been expired.', Exception::INVALID_CLIENT);
         }
-        $this->requestService = $requestService;
+        $this->_requestService = $requestService;
     }
 
     public function validateRedirectUri()
     {
         if ($this->authorizationCode->redirect_uri) {
-            $redirectUri = $this->requestService->getParam('redirect_uri');
+            $redirectUri = $this->_requestService->getParam('redirect_uri');
             if ((strcasecmp($redirectUri, $this->authorizationCode->redirect_uri) !== 0)) {
                 throw new Exception('The redirect URI provided does not match', Exception::REDIRECT_URI_MISMATCH);
             }

@@ -20,7 +20,7 @@ class AuthorizationGrant implements GrantInterface
     /**
      * @var ClientService
      */
-    private $clientService;
+    private $_clientService;
 //
 //    /**
 //     * The authorization code received from the authorization server.
@@ -47,19 +47,18 @@ class AuthorizationGrant implements GrantInterface
     /**
      * @var AuthorizationCodeService
      */
-    private $codeService;
-
-
+    private $_codeService;
+    
     /**
      * AuthorizationGrant constructor.
      * @param ClientService $clientService
      * @param AuthorizationCodeService $codeService
+     * @throws \yii\base\InvalidConfigException
      */
     public function __construct(ClientService $clientService, AuthorizationCodeService $codeService)
     {
-        $this->clientService = $clientService;
-        $this->codeService = $codeService;
-        $this->oauth2 = OAuth2::instance();
+        $this->_clientService = $clientService;
+        $this->_codeService = $codeService;
     }
 
     /**
@@ -73,10 +72,10 @@ class AuthorizationGrant implements GrantInterface
      */
     public function getResponseData()
     {
-        $this->codeService->validateRedirectUri();
-        $this->clientService->validateRedirectUri();
+        $this->_codeService->validateRedirectUri();
+        $this->_clientService->validateRedirectUri();
 
-        $authCode = $this->codeService->authorizationCode;
+        $authCode = $this->_codeService->authorizationCode;
 
         $accessToken = $authCode->createAccessToken();
 
@@ -88,10 +87,12 @@ class AuthorizationGrant implements GrantInterface
          */
         $authCode->delete();
 
+        $oauth2 = OAuth2::instance();
+        
         return [
             'access_token' => $accessToken->access_token,
-            'expires_in' => OAuth2::instance()->accessTokenLifetime,
-            'token_type' => OAuth2::instance()->tokenType,
+            'expires_in' => $oauth2->accessTokenLifetime,
+            'token_type' => $oauth2->tokenType,
             'scope' => $authCode->scope,
             'refresh_token' => $refreshToken->refresh_token,
         ];

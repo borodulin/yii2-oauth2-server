@@ -11,6 +11,7 @@ use yii\base\Model;
 /**
  * Class ResponseType
  * @package conquer\oauth2\responsetypes
+ * @author Andrey Borodulin
  */
 class ResponseType extends Model
 {

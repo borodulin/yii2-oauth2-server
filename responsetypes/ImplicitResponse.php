@@ -1,14 +1,16 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: borodulin
- * Date: 19.04.18
- * Time: 19:17
+ * @link https://github.com/borodulin/yii2-oauth2-server
+ * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
 namespace conquer\oauth2\responsetypes;
 
-
+/**
+ * Class ImplicitResponse
+ * @package conquer\oauth2\responsetypes
+ * @author Andrey Borodulin
+ */
 class ImplicitResponse implements ResponseTypeInterface
 {
 

@@ -28,7 +28,7 @@ class ClientService
     /**
      * @var
      */
-    private $requestService;
+    private $_requestService;
 
     /**
      * ClientService constructor.
@@ -37,7 +37,7 @@ class ClientService
      */
     public function __construct(RequestService $requestService)
     {
-        $this->requestService = $requestService;
+        $this->_requestService = $requestService;
         if (!$this->client = Client::findOne(['client_id' => $requestService->getClientId()])) {
             throw new BadRequestHttpException('Unknown client');
         }
@@ -49,9 +49,9 @@ class ClientService
      */
     public function validateScope()
     {
-        $state = $this->requestService->getParam('state');
-        $scope = $this->requestService->getParam('scope');
-        $redirectUri = $this->requestService->getParam('redirect_uri');
+        $state = $this->_requestService->getParam('state');
+        $scope = $this->_requestService->getParam('scope');
+        $redirectUri = $this->_requestService->getParam('redirect_uri');
         if (!$this->checkSets($scope, $this->client->scope)) {
             $redirectUri = isset($redirectUri) ? $redirectUri : $this->client->redirect_uri;
             if ($redirectUri) {
@@ -67,7 +67,7 @@ class ClientService
      */
     public function validateRedirectUri()
     {
-        $redirectUri = $this->requestService->getParam('redirect_uri');
+        $redirectUri = $this->_requestService->getParam('redirect_uri');
         $clientRedirectUri = $this->client->redirect_uri;
         if (strncasecmp($redirectUri, $clientRedirectUri, strlen($clientRedirectUri)) !== 0) {
             throw new BadRequestHttpException('The redirect URI provided is missing or does not match');
@@ -80,7 +80,7 @@ class ClientService
      */
     public function validateClientSecret()
     {
-        $clientSecret = $this->requestService->getClientSecret();
+        $clientSecret = $this->_requestService->getClientSecret();
         if (!Yii::$app->security->compareString($this->client->client_secret, $clientSecret)) {
             throw new Exception('The client credentials are invalid', Exception::UNAUTHORIZED_CLIENT);
         }
@@ -88,7 +88,6 @@ class ClientService
 
     public function validateGrantType()
     {
-
     }
 
     /**

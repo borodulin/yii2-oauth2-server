@@ -1,9 +1,7 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: borodulin
- * Date: 19.04.18
- * Time: 19:17
+ * @link https://github.com/borodulin/yii2-oauth2-server
+ * @license https://github.com/borodulin/yii2-oauth2-server/blob/master/LICENSE
  */
 
 namespace conquer\oauth2\responsetypes;
@@ -15,6 +13,7 @@ use Yii;
 /**
  * Class AuthorizationResponse
  * @package conquer\oauth2\responsetypes
+ * @author Andrey Borodulin
  */
 class AuthorizationResponse implements ResponseTypeInterface
 {
@@ -50,7 +49,7 @@ class AuthorizationResponse implements ResponseTypeInterface
     /**
      * @var ClientService
      */
-    private $clientService;
+    private $_clientService;
 
     /**
      * @return array
@@ -71,7 +70,7 @@ class AuthorizationResponse implements ResponseTypeInterface
 
     public function __construct(ClientService $clientService)
     {
-        $this->clientService = $clientService;
+        $this->_clientService = $clientService;
     }
 
 
@@ -82,10 +81,10 @@ class AuthorizationResponse implements ResponseTypeInterface
      */
     public function getResponseData()
     {
-        $this->clientService->validateRedirectUri();
-        $this->clientService->validateScope();
+        $this->_clientService->validateRedirectUri();
+        $this->_clientService->validateScope();
 
-        $authCode = AuthorizationCode::create($this->clientService->client->client_id, Yii::$app->user->id, $this->scope);
+        $authCode = AuthorizationCode::create($this->_clientService->client->client_id, Yii::$app->user->id, $this->scope);
 
         $query = [
             'code' => $authCode->authorization_code,

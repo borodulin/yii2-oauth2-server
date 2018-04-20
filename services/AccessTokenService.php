@@ -5,6 +5,7 @@
  */
 
 namespace conquer\oauth2\services;
+
 use conquer\oauth2\models\AccessToken;
 use yii\web\BadRequestHttpException;
 use yii\web\UnauthorizedHttpException;

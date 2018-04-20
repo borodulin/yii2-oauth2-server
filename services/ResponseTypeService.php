@@ -30,7 +30,7 @@ class ResponseTypeService
     /**
      * @var RequestService
      */
-    private $requestService;
+    private $_requestService;
 
     /**
      * ResponseTypeService constructor.
@@ -38,12 +38,11 @@ class ResponseTypeService
      */
     public function __construct(RequestService $requestService)
     {
-        $this->requestService = $requestService;
+        $this->_requestService = $requestService;
     }
 
     public function validate()
     {
-
     }
 
     /**
@@ -53,7 +52,7 @@ class ResponseTypeService
      */
     public function getResponseData()
     {
-        $responseType = $this->requestService->getParam('response_type');
+        $responseType = $this->_requestService->getParam('response_type');
         if (isset(self::$responseTypeMap[$responseType])) {
             $className = self::$responseTypeMap[$responseType];
             /** @var ResponseTypeInterface $response */

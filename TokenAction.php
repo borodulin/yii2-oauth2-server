@@ -26,13 +26,13 @@ class TokenAction extends Action
     /**
      * @var GrantTypeService
      */
-    private $grantService;
+    private $_grantService;
 
     public function init()
     {
         Yii::$app->response->format = $this->format;
         $this->controller->enableCsrfValidation = false;
-        $this->grantService = Yii::createObject(GrantTypeService::class);
+        $this->_grantService = Yii::createObject(GrantTypeService::class);
     }
 
     /**
@@ -42,7 +42,7 @@ class TokenAction extends Action
      */
     public function run()
     {
-        return $this->grantService->getResponseData();
+        return $this->_grantService->getResponseData();
 //        Yii::$app->response->data = $this->grantService->getResponseData()
     }
 }

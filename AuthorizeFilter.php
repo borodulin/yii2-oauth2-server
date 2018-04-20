@@ -21,7 +21,7 @@ class AuthorizeFilter extends ActionFilter
     /**
      * @var ResponseTypeService
      */
-    private $responseTypeService;
+    private $_responseTypeService;
 
     /**
      * @var string
@@ -35,7 +35,7 @@ class AuthorizeFilter extends ActionFilter
      */
     public function __construct(ResponseTypeService $responseTypeService, array $config = [])
     {
-        $this->responseTypeService = $responseTypeService;
+        $this->_responseTypeService = $responseTypeService;
         parent::__construct($config);
     }
 
@@ -51,7 +51,7 @@ class AuthorizeFilter extends ActionFilter
      */
     public function beforeAction($action)
     {
-        $this->responseTypeService->validate();
+        $this->_responseTypeService->validate();
 
         if ($this->storeKey) {
             Yii::$app->session->set($this->storeKey, serialize($this->_responseType));

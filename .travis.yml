@@ -6,7 +6,7 @@ php:
   - '7.2'
 
 install:
-    - composer install --no-interaction
+  - composer install --no-interaction
 
 script:
-    - vendor/bin/phpcs --standard=vendor/yiisoft/yii2-coding-standards/Yii2 --extensions=php --ignore=vendor,granttypes/RefreshToken.php .
+  - vendor/bin/phpcs --standard=vendor/yiisoft/yii2-coding-standards/Yii2 --extensions=php --ignore=vendor .
