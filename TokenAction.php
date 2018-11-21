@@ -24,7 +24,7 @@ class TokenAction extends Action
     public $grantTypes = [
         'authorization_code' => 'conquer\oauth2\granttypes\Authorization',
         'refresh_token' => 'conquer\oauth2\granttypes\RefreshToken',
-//         'client_credentials' => 'conquer\oauth2\granttypes\ClientCredentials',
+        'client_credentials' => 'conquer\oauth2\granttypes\ClientCredentials',
 //         'password' => 'conquer\oauth2\granttypes\UserCredentials',
 //         'urn:ietf:params:oauth:grant-type:jwt-bearer' => 'conquer\oauth2\granttypes\JwtBearer',
     ];

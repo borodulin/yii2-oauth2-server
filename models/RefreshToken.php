@@ -39,7 +39,7 @@ class RefreshToken extends ActiveRecord
     public function rules()
     {
         return [
-            [['refresh_token', 'client_id', 'user_id', 'expires'], 'required'],
+            [['refresh_token', 'client_id', 'expires'], 'required'],
             [['user_id', 'expires'], 'integer'],
             [['scope'], 'string'],
             [['refresh_token'], 'string', 'max' => 40],

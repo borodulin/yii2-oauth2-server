@@ -39,7 +39,7 @@ class AccessToken extends ActiveRecord
     public function rules()
     {
         return [
-            [['access_token', 'client_id', 'user_id', 'expires'], 'required'],
+            [['access_token', 'client_id', 'expires'], 'required'],
             [['user_id', 'expires'], 'integer'],
             [['scope'], 'string'],
             [['access_token'], 'string', 'max' => 40],
