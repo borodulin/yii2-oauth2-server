@@ -68,7 +68,7 @@ class TokenAuth extends AuthMethod
         $accessToken = $this->getAccessToken();
 
         if (!$this->checkScopes($this->scopes, $accessToken->scope)) {
-            throw new UnauthorizedHttpException;
+            throw new UnauthorizedHttpException('The access token does not have required scopes.');
         }
 
         /** @var IdentityInterface $identityClass */
