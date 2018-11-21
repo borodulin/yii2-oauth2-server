@@ -51,6 +51,11 @@ class TokenAuth extends AuthMethod
     public $identityClass;
 
     /**
+     * @var array scopes that need to be on token.
+     */
+    public $scopes = [];
+
+    /**
      * @param \yii\web\User $user
      * @param \yii\web\Request $request
      * @param \yii\web\Response $response
@@ -61,6 +66,10 @@ class TokenAuth extends AuthMethod
     public function authenticate($user, $request, $response)
     {
         $accessToken = $this->getAccessToken();
+
+        if (!$this->checkScopes($this->scopes, $accessToken->scope)) {
+            throw new UnauthorizedHttpException;
+        }
 
         /** @var IdentityInterface $identityClass */
         $identityClass = is_null($this->identityClass) ? $user->identityClass : $this->identityClass;
@@ -74,6 +83,24 @@ class TokenAuth extends AuthMethod
         $user->setIdentity($identity);
 
         return $identity;
+    }
+
+    /**
+     * Checks if everything in required set is contained in available set.
+     *
+     * @param string|array $requiredSet
+     * @param string|array $availableSet
+     * @return boolean
+     */
+    protected function checkScopes($requiredSet, $availableSet)
+    {
+        if (!is_array($requiredSet)) {
+            $requiredSet = explode(' ', trim($requiredSet));
+        }
+        if (!is_array($availableSet)) {
+            $availableSet = explode(' ', trim($availableSet));
+        }
+        return (count(array_diff($requiredSet, $availableSet)) == 0);
     }
 
     /**
