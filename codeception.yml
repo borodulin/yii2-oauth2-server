@@ -1,0 +1,17 @@
+namespace: tests
+actor_suffix: Tester
+settings:
+  shuffle: true
+  lint: true
+  bootstrap: _bootstrap.php
+  colors: true
+  memory_limit: 1024M
+paths:
+  tests: tests
+  output: tests/_output
+  support: tests/_support
+  data: tests/_data
+coverage:
+  enabled: true
+  include:
+  - src/*

@@ -1,0 +1,6 @@
+suite_namespace: tests\unit
+actor: UnitTester
+bootstrap: false
+modules:
+  enabled:
+  - Asserts
