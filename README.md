@@ -24,7 +24,7 @@ or add
 
 to the ```require``` section of your `composer.json` file.
 
-Migrations are available from [migrations](./migrations).
+Migrations are available from [migrations](./migrations) folder.
 
 To add migrations to your application, edit the console config file to configure
 [a namespaced migration](http://www.yiiframework.com/doc-2.0/guide-db-migrations.html#namespaced-migrations):
