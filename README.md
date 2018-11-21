@@ -24,9 +24,29 @@ or add
 
 to the ```require``` section of your `composer.json` file.
 
-To create database tables run migration command
+Migrations are available from [migrations](./migrations) folder.
+
+To add migrations to your application, edit the console config file to configure
+[a namespaced migration](http://www.yiiframework.com/doc-2.0/guide-db-migrations.html#namespaced-migrations):
+
+```php
+'controllerMap' => [
+    // ...
+    'migrate' => [
+        'class' => 'yii\console\controllers\MigrateController',
+        'migrationPath' => null,
+        'migrationNamespaces' => [
+            // ...
+            'conquer\oauth2\migrations',
+        ],
+    ],
+],
 ```
-$ yii migrate --migrationPath=@conquer/oauth2/migrations
+
+Then issue the `migrate/up` command:
+
+```sh
+yii migrate/up
 ```
 
 ## Usage
