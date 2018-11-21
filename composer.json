@@ -22,6 +22,7 @@
         "jakeasmith/http_build_url": ">=1.0.1"
     },
     "require-dev": {
+        "codeception/codeception": "^2.5",
         "yiisoft/yii2-coding-standards": "~2.0.3"
     },
     "autoload": {
@@ -29,9 +30,12 @@
             "conquer\\oauth2\\": "src"
         }
     },
+    "config": {
+        "sort-packages": true
+    },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.5.0-dev"
+            "dev-master": "1.7.0-dev"
         }
     },
     "repositories": [
