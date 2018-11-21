@@ -26,7 +26,7 @@
     },
     "autoload": {
         "psr-4": {
-            "conquer\\oauth2\\": ""
+            "conquer\\oauth2\\": "src"
         }
     },
     "extra": {
