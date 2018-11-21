@@ -122,6 +122,7 @@ class RefreshToken extends BaseModel
         return $this->_refreshToken;
     }
 
+    // phpcs:disable PSR1.Methods.CamelCapsMethodName
     /**
      * @return array|mixed|string
      */
@@ -129,4 +130,5 @@ class RefreshToken extends BaseModel
     {
         return $this->getRequestValue('refresh_token');
     }
+    // phpcs:enable
 }
