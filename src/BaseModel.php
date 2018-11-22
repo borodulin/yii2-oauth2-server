@@ -2,15 +2,20 @@
 
 namespace conquer\oauth2;
 
+use conquer\oauth2\models\Client;
+use Yii;
 use yii\base\Model;
 use yii\helpers\ArrayHelper;
-use conquer\oauth2\models\Client;
+use yii\web\Request;
 
 /**
  * @property Client $client
  */
 abstract class BaseModel extends Model
 {
+    /**
+     * @var Client
+     */
     protected $_client;
 
     /**
@@ -40,9 +45,12 @@ abstract class BaseModel extends Model
      */
     public $refreshTokenLifetime = 1209600;
 
-
+    /**
+     * @inheritdoc
+     */
     public function init()
     {
+        parent::init();
         $headers = [
             'client_id' => 'PHP_AUTH_USER',
             'client_secret' => 'PHP_AUTH_PW',
@@ -75,11 +83,10 @@ abstract class BaseModel extends Model
 
     abstract public function getResponseData();
 
-    public static function getRequestValue($param, $header = null)
+    public static function getRequestValue($param, $header = null, Request $request = null)
     {
-        static $request;
         if (is_null($request)) {
-            $request = \Yii::$app->request;
+            $request = Yii::$app->request;
         }
         if ($header && ($result = $request->headers->get($header))) {
             return $result;
@@ -89,8 +96,7 @@ abstract class BaseModel extends Model
     }
 
     /**
-     *
-     * @return \conquer\oauth2\models\Client
+     * @return Client
      */
     public function getClient()
     {
@@ -112,7 +118,7 @@ abstract class BaseModel extends Model
 
     public function validateClientSecret($attribute)
     {
-        if (!\Yii::$app->security->compareString($this->getClient()->client_secret, $this->$attribute)) {
+        if (!Yii::$app->security->compareString($this->getClient()->client_secret, $this->$attribute)) {
             $this->addError($attribute, 'The client credentials are invalid', Exception::UNAUTHORIZED_CLIENT);
         }
     }

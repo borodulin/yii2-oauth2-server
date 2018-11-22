@@ -18,12 +18,12 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "yiisoft/yii2": ">=2.0.4",
+        "yiisoft/yii2": "^2.0",
         "jakeasmith/http_build_url": ">=1.0.1"
     },
     "require-dev": {
         "codeception/codeception": "^2.5",
-        "yiisoft/yii2-coding-standards": "~2.0.3"
+        "yiisoft/yii2-coding-standards": "^2.0"
     },
     "autoload": {
         "psr-4": {
