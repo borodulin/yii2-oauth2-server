@@ -9,7 +9,6 @@ namespace conquer\oauth2\granttypes;
 
 use conquer\oauth2\BaseModel;
 use conquer\oauth2\models\AccessToken;
-use conquer\oauth2\models\RefreshToken;
 
 /**
  * @author Andrey Borodulin
@@ -65,18 +64,11 @@ class ClientCredentials extends BaseModel
             'scope' => $this->scope,
         ]);
 
-        $refreshToken = RefreshToken::createRefreshToken([
-            'client_id' => $this->client_id,
-            'expires' => $this->refreshTokenLifetime + time(),
-            'scope' => $this->scope,
-        ]);
-
         return [
             'access_token' => $accessToken->access_token,
             'expires_in' => $this->accessTokenLifetime,
             'token_type' => $this->tokenType,
             'scope' => $this->scope,
-            'refresh_token' => $refreshToken->refresh_token,
         ];
     }
 }
