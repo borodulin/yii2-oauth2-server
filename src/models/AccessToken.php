@@ -8,8 +8,9 @@
 namespace conquer\oauth2\models;
 
 use conquer\oauth2\Exception;
-use yii\helpers\VarDumper;
+use Yii;
 use yii\db\ActiveRecord;
+use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "oauth_access_token".
@@ -71,15 +72,15 @@ class AccessToken extends ActiveRecord
     {
         static::deleteAll(['<', 'expires', time()]);
 
-        $attributes['access_token'] = \Yii::$app->security->generateRandomString(40);
+        $attributes['access_token'] = Yii::$app->security->generateRandomString(40);
         $accessToken = new static($attributes);
 
         if ($accessToken->save()) {
             return $accessToken;
         } else {
-            \Yii::error(__CLASS__ . ' validation error:' . VarDumper::dumpAsString($accessToken->errors));
+            Yii::error(__CLASS__ . ' validation error:' . VarDumper::dumpAsString($accessToken->errors));
         }
-        throw new Exception('Unable to create access token', Exception::SERVER_ERROR);
+        throw new Exception(Yii::t('oauth2', 'Unable to create access token.'), Exception::SERVER_ERROR);
     }
 
     /**
@@ -87,7 +88,7 @@ class AccessToken extends ActiveRecord
      */
     public function getClient()
     {
-        return $this->hasOne(Client::className(), ['client_id' => 'client_id']);
+        return $this->hasOne(Client::class, ['client_id' => 'client_id']);
     }
 
     /**
@@ -95,7 +96,7 @@ class AccessToken extends ActiveRecord
      */
     public function getUser()
     {
-        $identity = isset(\Yii::$app->user->identity) ? \Yii::$app->user->identity : null;
+        $identity = isset(Yii::$app->user->identity) ? Yii::$app->user->identity : null;
         if ($identity instanceof ActiveRecord) {
             return $this->hasOne(get_class($identity), ['user_id' => $identity->primaryKey()]);
         }

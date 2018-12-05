@@ -7,9 +7,9 @@
 
 namespace conquer\oauth2\granttypes;
 
+use conquer\oauth2\BaseModel;
 use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\models\RefreshToken;
-use conquer\oauth2\BaseModel;
 use conquer\oauth2\OAuth2IdentityInterface;
 use Yii;
 use yii\web\IdentityInterface;
@@ -100,7 +100,7 @@ class UserCredentials extends BaseModel
             /** @var OAuth2IdentityInterface $user */
             $user = $this->getUser();
             if (!$user || !$user->validatePassword($this->password)) {
-                $this->addError($attribute, 'Invalid username or password');
+                $this->addError($attribute, Yii::t('oauth2', 'Invalid username or password.'));
             }
         }
     }
@@ -149,7 +149,7 @@ class UserCredentials extends BaseModel
 
         $identityObject = Yii::createObject($identityClass);
         if (! $identityObject instanceof OAuth2IdentityInterface) {
-            $this->errorServer('OAuth2IdentityInterface is not implemented');
+            $this->errorServer(Yii::t('oauth2', 'OAuth2IdentityInterface is not implemented.'));
         }
 
         if ($this->_user === null) {

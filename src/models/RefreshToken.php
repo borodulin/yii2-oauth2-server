@@ -80,7 +80,7 @@ class RefreshToken extends ActiveRecord
         } else {
             Yii::error(__CLASS__ . ' validation error:' . VarDumper::dumpAsString($refreshToken->errors));
         }
-        throw new Exception('Unable to create refresh token', Exception::SERVER_ERROR);
+        throw new Exception(Yii::t('oauth2', 'Unable to create refresh token.'), Exception::SERVER_ERROR);
     }
 
     /**
@@ -88,7 +88,7 @@ class RefreshToken extends ActiveRecord
      */
     public function getClient()
     {
-        return $this->hasOne(Client::className(), ['client_id' => 'client_id']);
+        return $this->hasOne(Client::class, ['client_id' => 'client_id']);
     }
 
     /**

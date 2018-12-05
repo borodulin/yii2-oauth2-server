@@ -1,3 +1,7 @@
+1.8.0
+-----
+- Enh: Internationalization support
+
 1.7.0
 -----
 - Bug #37: Fixed `conquer\oauth2\TokenAuth` behavior when multiple Authorization headers are present

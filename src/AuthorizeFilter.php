@@ -52,12 +52,12 @@ class AuthorizeFilter extends ActionFilter
     public function beforeAction($action)
     {
         if (!$responseType = BaseModel::getRequestValue('response_type')) {
-            throw new Exception('Invalid or missing response type');
+            throw new Exception(Yii::t('oauth2', 'Invalid or missing response type.'));
         }
         if (isset($this->responseTypes[$responseType])) {
             $this->_responseType = Yii::createObject($this->responseTypes[$responseType]);
         } else {
-            throw new Exception('An unsupported response type was requested.', Exception::UNSUPPORTED_RESPONSE_TYPE);
+            throw new Exception(Yii::t('oauth2', 'An unsupported response type was requested.'), Exception::UNSUPPORTED_RESPONSE_TYPE);
         }
 
         $this->_responseType->validate();
@@ -96,7 +96,7 @@ class AuthorizeFilter extends ActionFilter
             if (Yii::$app->session->has($this->storeKey)) {
                 $this->_responseType = unserialize(Yii::$app->session->get($this->storeKey));
             } else {
-                throw new Exception('Invalid server state or the User Session has expired', Exception::SERVER_ERROR);
+                throw new Exception(Yii::t('oauth2', 'Invalid server state or the User Session has expired.'), Exception::SERVER_ERROR);
             }
         }
         return $this->_responseType;
@@ -112,7 +112,7 @@ class AuthorizeFilter extends ActionFilter
         /** @var Authorization $responseType */
         $responseType = $this->getResponseType();
         if (Yii::$app->user->isGuest) {
-            $responseType->errorRedirect('The User denied access to your application', Exception::ACCESS_DENIED);
+            $responseType->errorRedirect(Yii::t('oauth2', 'The User denied access to your application.'), Exception::ACCESS_DENIED);
         }
         $parts = $responseType->getResponseData();
 

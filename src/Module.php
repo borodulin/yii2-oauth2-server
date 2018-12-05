@@ -25,7 +25,7 @@ class Module extends \yii\base\Module implements BootstrapInterface
     {
         if ($app instanceof \yii\console\Application) {
             $app->controllerMap[$this->id] = [
-                'class' => Oauth2Controller::className(),
+                'class' => Oauth2Controller::class,
             ];
         }
     }
