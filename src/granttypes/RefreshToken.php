@@ -7,8 +7,9 @@
 
 namespace conquer\oauth2\granttypes;
 
-use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\BaseModel;
+use conquer\oauth2\models\AccessToken;
+use Yii;
 
 /**
  * Class RefreshToken
@@ -113,10 +114,10 @@ class RefreshToken extends BaseModel
     {
         if (is_null($this->_refreshToken)) {
             if (empty($this->refresh_token)) {
-                $this->errorServer('The request is missing "refresh_token" parameter');
+                $this->errorServer(Yii::t('conquer/oauth2', 'The request is missing "refresh_token" parameter.'));
             }
             if (!$this->_refreshToken = \conquer\oauth2\models\RefreshToken::findOne(['refresh_token' => $this->refresh_token])) {
-                $this->errorServer('The Refresh Token is invalid');
+                $this->errorServer(Yii::t('conquer/oauth2', 'The Refresh Token is invalid.'));
             }
         }
         return $this->_refreshToken;

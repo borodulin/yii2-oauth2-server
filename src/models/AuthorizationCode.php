@@ -7,8 +7,8 @@
 
 namespace conquer\oauth2\models;
 
-use Yii;
 use conquer\oauth2\Exception;
+use Yii;
 use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;
 
@@ -84,7 +84,7 @@ class AuthorizationCode extends ActiveRecord
         } else {
             Yii::error(__CLASS__ . ' validation error: ' . VarDumper::dumpAsString($authCode->errors));
         }
-        throw new Exception('Unable to create authorization code', Exception::SERVER_ERROR);
+        throw new Exception(Yii::t('conquer/oauth2', 'Unable to create authorization code.'), Exception::SERVER_ERROR);
     }
 
     /**
@@ -92,7 +92,7 @@ class AuthorizationCode extends ActiveRecord
      */
     public function getClient()
     {
-        return $this->hasOne(Client::className(), ['client_id' => 'client_id']);
+        return $this->hasOne(Client::class, ['client_id' => 'client_id']);
     }
 
     /**

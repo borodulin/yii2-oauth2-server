@@ -7,6 +7,7 @@
 
 namespace conquer\oauth2\models;
 
+use Yii;
 use yii\behaviors\BlameableBehavior;
 use yii\behaviors\TimestampBehavior;
 
@@ -54,8 +55,8 @@ class Client extends \yii\db\ActiveRecord
     public function behaviors()
     {
         return [
-            TimestampBehavior::className(),
-            BlameableBehavior::className(),
+            TimestampBehavior::class,
+            BlameableBehavior::class,
         ];
     }
 
@@ -65,11 +66,11 @@ class Client extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'client_id' => 'Unique client identifier',
-            'client_secret' => 'Client secret',
-            'redirect_uri' => 'Redirect URI used for Authorization Grant',
-            'grant_type' => 'Space-delimited list of grant types permitted, null = all',
-            'scope' => 'Space-delimited list of approved scopes',
+            'client_id' => Yii::t('conquer/oauth2', 'Unique client identifier'),
+            'client_secret' => Yii::t('conquer/oauth2', 'Client secret'),
+            'redirect_uri' => Yii::t('conquer/oauth2', 'Redirect URI used for Authorization Grant'),
+            'grant_type' => Yii::t('conquer/oauth2', 'Space-delimited list of grant types permitted, null = all'),
+            'scope' => Yii::t('conquer/oauth2', 'Space-delimited list of approved scopes'),
         ];
     }
 
@@ -78,7 +79,7 @@ class Client extends \yii\db\ActiveRecord
      */
     public function getAccessTokens()
     {
-        return $this->hasMany(AccessToken::className(), ['client_id' => 'client_id']);
+        return $this->hasMany(AccessToken::class, ['client_id' => 'client_id']);
     }
 
     /**
@@ -86,7 +87,7 @@ class Client extends \yii\db\ActiveRecord
      */
     public function getAuthorizationCodes()
     {
-        return $this->hasMany(AuthorizationCode::className(), ['client_id' => 'client_id']);
+        return $this->hasMany(AuthorizationCode::class, ['client_id' => 'client_id']);
     }
 
     /**
@@ -94,6 +95,6 @@ class Client extends \yii\db\ActiveRecord
      */
     public function getRefreshTokens()
     {
-        return $this->hasMany(RefreshToken::className(), ['client_id' => 'client_id']);
+        return $this->hasMany(RefreshToken::class, ['client_id' => 'client_id']);
     }
 }
