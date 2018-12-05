@@ -46,9 +46,9 @@ class AccessTokenExtractor
         // Check that exactly one method was used
         $methodsCount = isset($headerToken) + isset($postToken) + isset($getToken);
         if ($methodsCount > 1) {
-            throw new Exception(Yii::t('oauth2', 'Only one method may be used to authenticate at a time (Auth header, POST or GET).'));
+            throw new Exception(Yii::t('conquer/oauth2', 'Only one method may be used to authenticate at a time (Auth header, POST or GET).'));
         } elseif ($methodsCount === 0) {
-            throw new Exception(Yii::t('oauth2', 'The access token was not found.'));
+            throw new Exception(Yii::t('conquer/oauth2', 'The access token was not found.'));
         }
 
         // HEADER: Get the access token from the header
@@ -59,11 +59,11 @@ class AccessTokenExtractor
         // POST: Get the token from POST data
         if ($postToken) {
             if (!$this->_request->isPost) {
-                throw new Exception(Yii::t('oauth2', 'When putting the token in the body, the method must be POST.'));
+                throw new Exception(Yii::t('conquer/oauth2', 'When putting the token in the body, the method must be POST.'));
             }
             // IETF specifies content-type. NB: Not all webservers populate this _SERVER variable
             if (strpos($this->_request->contentType, 'application/x-www-form-urlencoded') !== 0) {
-                throw new Exception(Yii::t('oauth2', 'The content type for POST requests must be "application/x-www-form-urlencoded".'));
+                throw new Exception(Yii::t('conquer/oauth2', 'The content type for POST requests must be "application/x-www-form-urlencoded".'));
             }
             return $postToken;
         }

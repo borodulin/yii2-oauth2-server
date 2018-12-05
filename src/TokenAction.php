@@ -38,12 +38,12 @@ class TokenAction extends Action
     public function run()
     {
         if (!$grantType = BaseModel::getRequestValue('grant_type')) {
-            throw new Exception(Yii::t('oauth2', 'The grant type was not specified in the request.'));
+            throw new Exception(Yii::t('conquer/oauth2', 'The grant type was not specified in the request.'));
         }
         if (isset($this->grantTypes[$grantType])) {
             $grantModel = Yii::createObject($this->grantTypes[$grantType]);
         } else {
-            throw new Exception(Yii::t('oauth2', 'An unsupported grant type was requested.'), Exception::UNSUPPORTED_GRANT_TYPE);
+            throw new Exception(Yii::t('conquer/oauth2', 'An unsupported grant type was requested.'), Exception::UNSUPPORTED_GRANT_TYPE);
         }
 
         $grantModel->validate();

@@ -55,7 +55,7 @@ You also need to specify message translation source for this package:
 'components' => [
     'i18n' => [
         'translations' => [
-            'oauth2' => [
+            'conquer/oauth2' => [
                 'class' => \yii\i18n\PhpMessageSource::class,
                 'basePath' => '@conquer/oauth2/messages',
             ],

@@ -84,7 +84,7 @@ class AuthorizationCode extends ActiveRecord
         } else {
             Yii::error(__CLASS__ . ' validation error: ' . VarDumper::dumpAsString($authCode->errors));
         }
-        throw new Exception(Yii::t('oauth2', 'Unable to create authorization code.'), Exception::SERVER_ERROR);
+        throw new Exception(Yii::t('conquer/oauth2', 'Unable to create authorization code.'), Exception::SERVER_ERROR);
     }
 
     /**

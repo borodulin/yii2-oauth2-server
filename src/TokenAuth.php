@@ -69,7 +69,7 @@ class TokenAuth extends AuthMethod
         $accessToken = $this->getAccessToken();
 
         if (!$this->checkScopes($this->scopes, $accessToken->scope)) {
-            throw new UnauthorizedHttpException(Yii::t('oauth2', 'The access token does not have required scopes.'));
+            throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'The access token does not have required scopes.'));
         }
 
         /** @var IdentityInterface $identityClass */
@@ -78,7 +78,7 @@ class TokenAuth extends AuthMethod
         $identity = $identityClass::findIdentity($accessToken->user_id);
 
         if (empty($identity)) {
-            throw new Exception(Yii::t('oauth2', 'User is not found.'), Exception::ACCESS_DENIED);
+            throw new Exception(Yii::t('conquer/oauth2', 'User is not found.'), Exception::ACCESS_DENIED);
         }
 
         $user->setIdentity($identity);
@@ -120,7 +120,7 @@ class TokenAuth extends AuthMethod
      */
     public function handleFailure($response)
     {
-        throw new Exception(Yii::t('oauth2', 'You are requesting with an invalid credential.'));
+        throw new Exception(Yii::t('conquer/oauth2', 'You are requesting with an invalid credential.'));
     }
 
     /**
@@ -134,10 +134,10 @@ class TokenAuth extends AuthMethod
             $tokenExtractor = Yii::createObject(AccessTokenExtractor::class);
 
             if (!$accessToken = AccessToken::findOne(['access_token' => $tokenExtractor->extract()])) {
-                throw new UnauthorizedHttpException(Yii::t('oauth2', 'The access token provided is invalid.'));
+                throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'The access token provided is invalid.'));
             }
             if ($accessToken->expires < time()) {
-                throw new UnauthorizedHttpException(Yii::t('oauth2', 'The access token provided has expired.'));
+                throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'The access token provided has expired.'));
             }
             $this->_accessToken = $accessToken;
         }
