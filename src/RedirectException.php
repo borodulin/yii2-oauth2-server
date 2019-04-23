@@ -39,6 +39,6 @@ class RedirectException extends Exception
         }
         Yii::$app->response->redirect(http_build_url($redirect_uri, [
             'query' => http_build_query($query)
-        ], HTTP_URL_REPLACE | HTTP_URL_JOIN_QUERY));
+        ], HTTP_URL_JOIN_QUERY));
     }
 }
