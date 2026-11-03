@@ -76,11 +76,12 @@ class UserCredentials extends BaseModel
     public function rules()
     {
         return [
-            [['grant_type', 'client_id', 'username', 'password'], 'required'],
+            [['grant_type', 'client_id', 'client_secret', 'username', 'password'], 'required'],
             ['grant_type', 'required', 'requiredValue' => 'password'],
             [['client_id'], 'string', 'max' => 80],
             [['client_id'], 'validateClientId'],
             [['client_secret'], 'validateClientSecret'],
+            [['grant_type'], 'validateGrantType'],
             [['scope'], 'validateScope'],
             // password is validated by validatePassword()
             ['password', 'validatePassword'],
@@ -157,5 +158,10 @@ class UserCredentials extends BaseModel
         }
 
         return $this->_user;
+    }
+
+    public function validateGrantType()
+    {
+        $this->checkGrantType('password');
     }
 }

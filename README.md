@@ -62,6 +62,25 @@ You also need to specify message translation source for this package:
 ],
 ```
 
+## Upgrading to 2.0
+
+Version 2.0 fixes several security issues and makes the server follow RFC 6749 / OAuth 2.0 Security BCP more strictly:
+
+1. Run the new migration (`yii migrate/up`) — it adds PKCE columns to `oauth2_authorization_code`.
+2. `redirect_uri` sent by clients must be **exactly equal** to a registered URI. Register every callback URI
+   of a client in `oauth2_client.redirect_uri`, separated by whitespace.
+3. The `authorization_code` grant requires `client_secret`. Public clients (SPA, mobile) must use
+   PKCE instead: send `code_challenge` (+ `code_challenge_method=S256`) to the authorization endpoint
+   and `code_verifier` to the token endpoint.
+4. If `oauth2_client.grant_type` is filled, only the listed grant types are allowed for the client.
+5. The implicit grant is disabled by default. Set `'allowImplicit' => true` on `AuthorizeFilter` if you still need it.
+
+### User consent
+
+`AuthorizeFilter` finishes the authorization as soon as the user is logged in. If your server serves third-party
+clients, show a consent page first: override `AuthorizeFilter::afterAction()` (or call
+`finishAuthorization()` yourself) only after the user has approved the requested scopes.
+
 ## Usage
 
 OAuth 2.0 Authorization usage 

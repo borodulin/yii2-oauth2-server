@@ -51,6 +51,10 @@ class AccessTokenExtractor
             throw new Exception(Yii::t('conquer/oauth2', 'The access token was not found.'));
         }
 
+        if (!is_string($headerToken ?? $postToken ?? $getToken)) {
+            throw new Exception(Yii::t('conquer/oauth2', 'The access token was not found.'));
+        }
+
         // HEADER: Get the access token from the header
         if ($headerToken) {
             return $headerToken;

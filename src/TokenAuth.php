@@ -120,7 +120,7 @@ class TokenAuth extends AuthMethod
      */
     public function handleFailure($response)
     {
-        throw new Exception(Yii::t('conquer/oauth2', 'You are requesting with an invalid credential.'));
+        throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'You are requesting with an invalid credential.'));
     }
 
     /**

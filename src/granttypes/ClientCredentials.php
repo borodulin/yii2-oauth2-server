@@ -46,9 +46,10 @@ class ClientCredentials extends BaseModel
         return [
             [['grant_type', 'client_id', 'client_secret'], 'required'],
             ['grant_type', 'required', 'requiredValue' => 'client_credentials'],
-            [['client_id'], 'string', 'max' => 80],
+            [['client_id', 'client_secret'], 'string', 'max' => 80],
             [['client_id'], 'validateClientId'],
             [['client_secret'], 'validateClientSecret'],
+            [['grant_type'], 'validateGrantType'],
             [['scope'], 'validateScope'],
         ];
     }
@@ -70,5 +71,10 @@ class ClientCredentials extends BaseModel
             'token_type' => $this->tokenType,
             'scope' => $this->scope,
         ];
+    }
+
+    public function validateGrantType()
+    {
+        $this->checkGrantType('client_credentials');
     }
 }

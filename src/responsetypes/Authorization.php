@@ -47,6 +47,18 @@ class Authorization extends BaseModel
     public $state;
 
     /**
+     * PKCE code challenge (RFC 7636)
+     * @var string
+     */
+    public $code_challenge;
+
+    /**
+     * PKCE code challenge method: "S256" or "plain" (default)
+     * @var string
+     */
+    public $code_challenge_method;
+
+    /**
      * @return array
      */
     public function rules()
@@ -58,7 +70,9 @@ class Authorization extends BaseModel
             [['state'], 'string', 'max' => 255],
             [['redirect_uri'], 'url'],
             [['client_id'], 'validateClientId'],
-            [['redirect_uri'], 'validateRedirectUri'],
+            [['redirect_uri'], 'validateAuthorizationRedirectUri', 'skipOnEmpty' => false],
+            [['code_challenge'], 'string', 'min' => 43, 'max' => 128],
+            [['code_challenge_method'], 'in', 'range' => ['S256', 'plain']],
             [['scope'], 'validateScope'],
         ];
     }
@@ -75,7 +89,10 @@ class Authorization extends BaseModel
             'user_id' => \Yii::$app->user->id,
             'expires' => $this->authCodeLifetime + time(),
             'scope' => $this->scope,
-            'redirect_uri' => $this->redirect_uri
+            // redirect_uri is bound to the code only when it was included in the request (RFC 6749, 4.1.3)
+            'redirect_uri' => $this->_redirectUriFromClient ? '' : (string)$this->redirect_uri,
+            'code_challenge' => $this->code_challenge,
+            'code_challenge_method' => $this->code_challenge ? ($this->code_challenge_method ?: 'plain') : null,
         ]);
 
         $query = [

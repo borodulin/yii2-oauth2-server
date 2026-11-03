@@ -37,7 +37,7 @@ class TokenAction extends Action
 
     public function run()
     {
-        if (!$grantType = BaseModel::getRequestValue('grant_type')) {
+        if (!($grantType = BaseModel::getRequestValue('grant_type')) || !is_string($grantType)) {
             throw new Exception(Yii::t('conquer/oauth2', 'The grant type was not specified in the request.'));
         }
         if (isset($this->grantTypes[$grantType])) {

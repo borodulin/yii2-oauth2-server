@@ -29,7 +29,7 @@ class AuthorizeFilter extends ActionFilter
      *
      * @var boolean
      */
-    public $allowImplicit = true;
+    public $allowImplicit = false;
 
     public $storeKey = 'ear6kme7or19rnfldtmwsxgzxsrmngqw';
 
@@ -51,7 +51,7 @@ class AuthorizeFilter extends ActionFilter
      */
     public function beforeAction($action)
     {
-        if (!$responseType = BaseModel::getRequestValue('response_type')) {
+        if (!($responseType = BaseModel::getRequestValue('response_type')) || !is_string($responseType)) {
             throw new Exception(Yii::t('conquer/oauth2', 'Invalid or missing response type.'));
         }
         if (isset($this->responseTypes[$responseType])) {

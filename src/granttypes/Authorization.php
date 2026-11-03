@@ -15,7 +15,14 @@ use conquer\oauth2\models\RefreshToken;
 use Yii;
 
 /**
+ * Authorization code grant.
+ *
+ * The client authenticates either with its client_secret (confidential clients)
+ * or with a PKCE code_verifier when the authorization request contained a code_challenge
+ * (public clients, RFC 7636).
+ *
  * @link https://tools.ietf.org/html/rfc6749#section-4.1.3
+ * @link https://tools.ietf.org/html/rfc7636
  * @author Andrey Borodulin
  */
 class Authorization extends BaseModel
@@ -38,63 +45,95 @@ class Authorization extends BaseModel
     public $code;
 
     /**
-     * REQUIRED, if the "redirect_uri" parameter was included in the
-     * authorization request as described in Section 4.1.1, and their
-     * values MUST be identical.
-     * @link https://tools.ietf.org/html/rfc6749#section-4.1.1
+     * REQUIRED, if the "redirect_uri" parameter was included in the authorization request,
+     * and their values MUST be identical.
      * @var string
      */
     public $redirect_uri;
 
     /**
-     *
      * @var string
      */
     public $client_id;
 
     /**
-     * Access Token Scope
-     * @link https://tools.ietf.org/html/rfc6749#section-3.3
+     * Required unless the code was issued with a PKCE code_challenge.
      * @var string
      */
-    public $scope;
+    public $client_secret;
+
+    /**
+     * PKCE code verifier.
+     * @var string
+     */
+    public $code_verifier;
 
     public function rules()
     {
         return [
             [['client_id', 'grant_type', 'code'], 'required'],
-            [['client_id'], 'string', 'max' => 80],
+            ['grant_type', 'required', 'requiredValue' => 'authorization_code'],
+            [['client_id', 'client_secret'], 'string', 'max' => 80],
             [['code'], 'string', 'max' => 40],
-            [['redirect_uri'], 'url'],
+            [['code_verifier'], 'string', 'min' => 43, 'max' => 128],
+            [['redirect_uri'], 'string'],
             [['client_id'], 'validateClientId'],
-            [['code'], 'validateCode'],
-            [['redirect_uri'], 'validateRedirectUri'],
+            [['code'], 'validateCode', 'skipOnEmpty' => false],
         ];
     }
 
     /**
-     * @param $attribute
-     * @throws Exception
-     * @throws \conquer\oauth2\RedirectException
+     * Validates the code, its owner, lifetime, redirect URI and client authentication.
      */
-    public function validateRedirectUri($attribute)
+    public function validateCode()
     {
         $authCode = $this->getAuthCode();
+        $this->checkGrantType('authorization_code');
 
-        if ($authCode->redirect_uri && (strcasecmp($this->$attribute, $authCode->redirect_uri) !== 0)) {
-            $this->errorServer(Yii::t('conquer/oauth2', 'The redirect URI provided does not match.'), Exception::REDIRECT_URI_MISMATCH);
+        if ($authCode->client_id !== $this->client_id) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'The authorization code was issued to another client.'), Exception::INVALID_GRANT);
         }
-        parent::validateRedirectUri($attribute);
+        if ($authCode->expires < time()) {
+            $authCode->delete();
+            $this->errorServer(Yii::t('conquer/oauth2', 'The authorization code is not found or has been expired.'), Exception::INVALID_GRANT);
+        }
+        if (!empty($authCode->redirect_uri) && $this->redirect_uri !== $authCode->redirect_uri) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'The redirect URI provided does not match.'), Exception::INVALID_GRANT);
+        }
+
+        if (!empty($authCode->code_challenge)) {
+            if (!$this->verifyCodeChallenge($authCode->code_challenge, $authCode->code_challenge_method)) {
+                $this->errorServer(Yii::t('conquer/oauth2', 'The code verifier is invalid.'), Exception::INVALID_GRANT);
+            }
+            if ($this->client_secret !== null && $this->client_secret !== '') {
+                $this->validateClientSecret('client_secret');
+            }
+        } else {
+            $this->validateClientSecret('client_secret');
+        }
+    }
+
+    /**
+     * @param string $challenge
+     * @param string|null $method
+     * @return bool
+     */
+    protected function verifyCodeChallenge($challenge, $method)
+    {
+        if (!is_string($this->code_verifier) || $this->code_verifier === '') {
+            return false;
+        }
+        if ($method === 'S256') {
+            $computed = rtrim(strtr(base64_encode(hash('sha256', $this->code_verifier, true)), '+/', '-_'), '=');
+        } else {
+            $computed = $this->code_verifier;
+        }
+        return Yii::$app->security->compareString($challenge, $computed);
     }
 
     /**
      * @return array
      * @throws Exception
-     * @throws \Exception
-     * @throws \Throwable
-     * @throws \conquer\oauth2\RedirectException
-     * @throws \yii\base\Exception
-     * @throws \yii\db\StaleObjectException
      */
     public function getResponseData()
     {
@@ -123,33 +162,23 @@ class Authorization extends BaseModel
             'access_token' => $acessToken->access_token,
             'expires_in' => $this->accessTokenLifetime,
             'token_type' => $this->tokenType,
-            'scope' => $this->scope,
+            'scope' => $authCode->scope,
             'refresh_token' => $refreshToken->refresh_token,
         ];
     }
 
     /**
-     * @throws Exception
-     * @throws \conquer\oauth2\RedirectException
-     */
-    public function validateCode()
-    {
-        $this->getAuthCode();
-    }
-
-    /**
      * @return AuthorizationCode
      * @throws Exception
-     * @throws \conquer\oauth2\RedirectException
      */
     public function getAuthCode()
     {
         if (is_null($this->_authCode)) {
-            if (empty($this->code)) {
-                $this->errorRedirect(Yii::t('conquer/oauth2', 'Authorization code is missing.'), Exception::INVALID_REQUEST);
+            if (empty($this->code) || !is_string($this->code)) {
+                $this->errorServer(Yii::t('conquer/oauth2', 'Authorization code is missing.'), Exception::INVALID_REQUEST);
             }
             if (!$this->_authCode = AuthorizationCode::findOne(['authorization_code' => $this->code])) {
-                $this->errorRedirect(Yii::t('conquer/oauth2', 'The authorization code is not found or has been expired.'), Exception::INVALID_CLIENT);
+                $this->errorServer(Yii::t('conquer/oauth2', 'The authorization code is not found or has been expired.'), Exception::INVALID_GRANT);
             }
         }
         return $this->_authCode;

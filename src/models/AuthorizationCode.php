@@ -21,6 +21,8 @@ use yii\helpers\VarDumper;
  * @property string $redirect_uri
  * @property integer $expires
  * @property string $scope
+ * @property string|null $code_challenge
+ * @property string|null $code_challenge_method
  *
  * @property Client $client
  * @property ActiveRecord $user
@@ -46,7 +48,9 @@ class AuthorizationCode extends ActiveRecord
             [['scope'], 'string'],
             [['authorization_code'], 'string', 'max' => 40],
             [['client_id'], 'string', 'max' => 80],
-            [['redirect_uri'], 'url'],
+            [['redirect_uri'], 'string'],
+            [['code_challenge'], 'string', 'max' => 128],
+            [['code_challenge_method'], 'string', 'max' => 10],
         ];
     }
 
@@ -100,9 +104,11 @@ class AuthorizationCode extends ActiveRecord
      */
     public function getUser()
     {
-        $identity = isset(Yii::$app->user->identity) ? Yii::$app->user->identity : null;
-        if ($identity instanceof ActiveRecord) {
-            return $this->hasOne(get_class($identity), ['user_id' => $identity->primaryKey()]);
+        $identityClass = Yii::$app->user->identityClass;
+        if (is_subclass_of($identityClass, ActiveRecord::class)) {
+            /** @var ActiveRecord $identityClass */
+            $primaryKey = $identityClass::primaryKey();
+            return $this->hasOne($identityClass, [reset($primaryKey) => 'user_id']);
         }
         return null;
     }

@@ -69,7 +69,7 @@ class Implicit extends BaseModel
             [['state'], 'string', 'max' => 255],
             [['redirect_uri'], 'url'],
             [['client_id'], 'validateClientId'],
-            [['redirect_uri'], 'validateRedirectUri'],
+            [['redirect_uri'], 'validateAuthorizationRedirectUri', 'skipOnEmpty' => false],
             [['scope'], 'validateScope'],
 
         ];
