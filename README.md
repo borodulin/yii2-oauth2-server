@@ -1,7 +1,7 @@
 Yii2 OAuth 2.0 Server
 =================
 
-[![Build Status](https://travis-ci.org/borodulin/yii2-oauth2-server.svg?branch=master)](https://travis-ci.org/borodulin/yii2-oauth2-server)
+[![CI](https://github.com/borodulin/yii2-oauth2-server/actions/workflows/ci.yml/badge.svg)](https://github.com/borodulin/yii2-oauth2-server/actions/workflows/ci.yml)
 
 ## Description
 

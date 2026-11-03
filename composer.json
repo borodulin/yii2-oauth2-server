@@ -1,7 +1,11 @@
 {
     "name": "conquer/oauth2",
     "description": "The Oauth2 Server extension for the Yii2 framework",
-    "keywords": ["yii2", "oauth2", "oauth2-server"],
+    "keywords": [
+        "yii2",
+        "oauth2",
+        "oauth2-server"
+    ],
     "homepage": "https://github.com/borodulin/yii2-oauth2-server",
     "type": "yii2-extension",
     "license": "MIT",
@@ -18,11 +22,13 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
+        "php": "^7.4 || ^8.0",
         "yiisoft/yii2": "^2.0",
         "jakeasmith/http_build_url": ">=1.0.1"
     },
     "require-dev": {
-        "codeception/codeception": "^2.5",
+        "codeception/codeception": "^4.2 || ^5.0",
+        "codeception/module-asserts": "^2.0 || ^3.0",
         "yiisoft/yii2-coding-standards": "^2.0"
     },
     "autoload": {
@@ -31,7 +37,10 @@
         }
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true
+        }
     },
     "extra": {
         "branch-alias": {

@@ -9,10 +9,7 @@ use yii\web\Request;
 
 class AccessTokenExtractorTest extends \Codeception\Test\Unit
 {
-    /**
-     * @test
-     */
-    public function exceptionWhenNoAccessTokenIsPresent()
+    public function testExceptionWhenNoAccessTokenIsPresent()
     {
         $this->expectException(Exception::class);
         $extractor = new AccessTokenExtractor($this->make(Request::class, [
@@ -21,10 +18,7 @@ class AccessTokenExtractorTest extends \Codeception\Test\Unit
         $extractor->extract();
     }
 
-    /**
-     * @test
-     */
-    public function exceptionWhenMultipleAccessTokensArePresent()
+    public function testExceptionWhenMultipleAccessTokensArePresent()
     {
         $this->expectException(Exception::class);
         $extractor = new AccessTokenExtractor($this->make(Request::class, [
@@ -34,10 +28,7 @@ class AccessTokenExtractorTest extends \Codeception\Test\Unit
         $extractor->extract();
     }
 
-    /**
-     * @test
-     */
-    public function exceptionWhenAccessTokenInBodyOfNonPostRequest()
+    public function testExceptionWhenAccessTokenInBodyOfNonPostRequest()
     {
         $this->expectException(Exception::class);
         $extractor = new AccessTokenExtractor($this->make(Request::class, [
@@ -47,10 +38,7 @@ class AccessTokenExtractorTest extends \Codeception\Test\Unit
         $extractor->extract();
     }
 
-    /**
-     * @test
-     */
-    public function exceptionWhenWrongContentTypeInRequest()
+    public function testExceptionWhenWrongContentTypeInRequest()
     {
         $this->expectException(Exception::class);
         $extractor = new AccessTokenExtractor($this->make(Request::class, [
@@ -61,10 +49,7 @@ class AccessTokenExtractorTest extends \Codeception\Test\Unit
         $extractor->extract();
     }
 
-    /**
-     * @test
-     */
-    public function postAccessTokenIsReturned()
+    public function testPostAccessTokenIsReturned()
     {
         $extractor = new AccessTokenExtractor($this->make(Request::class, [
             'getBodyParams' => ['access_token' => '321'],
@@ -75,10 +60,7 @@ class AccessTokenExtractorTest extends \Codeception\Test\Unit
         $this->assertEquals('321', $extractor->extract());
     }
 
-    /**
-     * @test
-     */
-    public function getAccessTokenIsReturned()
+    public function testGetAccessTokenIsReturned()
     {
         $extractor = new AccessTokenExtractor($this->make(Request::class, [
             'getQueryParams' => ['access_token' => '321'],
@@ -87,10 +69,7 @@ class AccessTokenExtractorTest extends \Codeception\Test\Unit
         $this->assertEquals('321', $extractor->extract());
     }
 
-    /**
-     * @test
-     */
-    public function headerAccessTokenIsReturned()
+    public function testHeaderAccessTokenIsReturned()
     {
         $extractor = new AccessTokenExtractor($this->make(Request::class, [
             'getHeaders' => (new HeaderCollection)->add('Authorization', 'Bearer 321'),
@@ -99,10 +78,7 @@ class AccessTokenExtractorTest extends \Codeception\Test\Unit
         $this->assertEquals('321', $extractor->extract());
     }
 
-    /**
-     * @test
-     */
-    public function headerAccessTokenIsReturnedWithOtherAuthHeaders()
+    public function testHeaderAccessTokenIsReturnedWithOtherAuthHeaders()
     {
         $extractor = new AccessTokenExtractor($this->make(Request::class, [
             'getHeaders' => (new HeaderCollection)
