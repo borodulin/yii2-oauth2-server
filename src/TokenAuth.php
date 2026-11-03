@@ -131,7 +131,7 @@ class TokenAuth extends AuthMethod
     protected function getAccessToken()
     {
         if (is_null($this->_accessToken)) {
-            $tokenExtractor = Yii::createObject(AccessTokenExtractor::class);
+            $tokenExtractor = Yii::createObject(AccessTokenExtractor::class, [Yii::$app->getRequest()]);
 
             if (!$accessToken = AccessToken::findOne(['access_token' => $tokenExtractor->extract()])) {
                 throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'The access token provided is invalid.'));
