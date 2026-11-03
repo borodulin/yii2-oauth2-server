@@ -1,28 +1,26 @@
-Yii2 OAuth 2.0 Server
-=================
+# Yii2 OAuth 2.0 Server
 
+[![Latest Version](https://img.shields.io/packagist/v/conquer/oauth2.svg)](https://packagist.org/packages/conquer/oauth2)
+[![Total Downloads](https://img.shields.io/packagist/dt/conquer/oauth2.svg)](https://packagist.org/packages/conquer/oauth2)
 [![CI](https://github.com/borodulin/yii2-oauth2-server/actions/workflows/ci.yml/badge.svg)](https://github.com/borodulin/yii2-oauth2-server/actions/workflows/ci.yml)
+[![License](https://img.shields.io/packagist/l/conquer/oauth2.svg)](LICENSE)
 
 ## Description
 
 This extension provides simple implementation of [Oauth 2.0](http://tools.ietf.org/wg/oauth/draft-ietf-oauth-v2/) specification using Yii2 framework.
 
+## Requirements
+
+- PHP 7.4 or 8.x
+- Yii 2.0
+
 ## Installation
 
-The preferred way to install this extension is through [composer](http://getcomposer.org/download/). 
+Install the extension via [Composer](https://getcomposer.org):
 
-To install, either run
-
+```bash
+composer require conquer/oauth2:^1.8
 ```
-$ php composer.phar require conquer/oauth2 "*"
-```
-or add
-
-```
-"conquer/oauth2": "*"
-```
-
-to the ```require``` section of your `composer.json` file.
 
 Migrations are available from [migrations](./src/migrations) folder.
 
@@ -253,4 +251,4 @@ For further information see [Yii2 Ratelimiter](http://www.yiiframework.com/doc-2
 
 ## License
 
-**conquer/oauth2** is released under the MIT License. See the bundled `LICENSE` for details.
+**conquer/oauth2** is released under the MIT License. See the bundled [`LICENSE`](LICENSE) for details.
