@@ -75,6 +75,12 @@ Version 2.0 fixes several security issues and makes the server follow RFC 6749 /
 4. If `oauth2_client.grant_type` is filled, only the listed grant types are allowed for the client.
 5. The implicit grant is disabled by default. Set `'allowImplicit' => true` on `AuthorizeFilter` if you still need it.
 
+## Upgrading to 2.1
+
+- The token endpoint accepts only `POST` requests with parameters in the body. If some clients still use `GET`,
+  set `'allowGet' => true` on `TokenAction` until they are fixed.
+- Clients may authenticate with HTTP Basic (`Authorization: Basic base64(client_id:client_secret)`).
+
 ### User consent
 
 `AuthorizeFilter` finishes the authorization as soon as the user is logged in. If your server serves third-party

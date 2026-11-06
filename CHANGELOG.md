@@ -1,3 +1,15 @@
+2.1.0
+-----
+- Sec: authorization codes and refresh tokens are redeemed atomically: concurrent requests with the same code or refresh token no longer both get tokens
+- Sec: `TokenAction` accepts only POST and rejects secrets, codes, refresh tokens and passwords in the query string (`$allowGet` restores the old behaviour)
+- Sec: token responses are sent with `Cache-Control: no-store` and `Pragma: no-cache` (RFC 6749, 5.1)
+- Sec: the authorization request stored in the session is removed after `finishAuthorization()`; later logins in the same session no longer issue codes to the previous client
+- Enh: HTTP Basic client authentication (RFC 6749, 2.3.1); requires Yii 2.0.14+
+- Bug: tokens without a scope crashed `TokenAuth` on PHP 8.1+ (`trim(null)` deprecation turned into an exception by Yii)
+- Bug: token endpoint errors (for example an invalid scope) were sent as redirects to the client
+- Bug: `TokenAuth` returns null when the request has no access token, so `optional` actions and `CompositeAuth` work and a 401 challenge is sent; unknown users get 401 instead of 400
+- Bug: scopes separated by several spaces were rejected
+
 2.0.0
 -----
 Security release. See "Upgrading to 2.0" in README.
@@ -19,9 +31,6 @@ Security release. See "Upgrading to 2.0" in README.
 - Bug: `user` relation of token models was built incorrectly
 - Bug: `TokenAuth::handleFailure()` responds with 401
 - Bug: array-typed request parameters are rejected instead of causing PHP errors
-
-1.8.0
------
 - Enh: PHP 8 support, CI on GitHub Actions
 
 1.8.0

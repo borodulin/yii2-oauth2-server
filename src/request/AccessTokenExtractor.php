@@ -28,10 +28,12 @@ class AccessTokenExtractor
 
     /**
      * Extracts access_token from web request
-     * @return string
+     * @param bool $required whether to throw an exception when the request has no access token;
+     * when false, null is returned instead
+     * @return string|null
      * @throws Exception
      */
-    public function extract()
+    public function extract($required = true)
     {
         $headerToken = null;
         foreach ($this->_request->getHeaders()->get('Authorization', [], false) as $authHeader) {
@@ -48,6 +50,9 @@ class AccessTokenExtractor
         if ($methodsCount > 1) {
             throw new Exception(Yii::t('conquer/oauth2', 'Only one method may be used to authenticate at a time (Auth header, POST or GET).'));
         } elseif ($methodsCount === 0) {
+            if (!$required) {
+                return null;
+            }
             throw new Exception(Yii::t('conquer/oauth2', 'The access token was not found.'));
         }
 

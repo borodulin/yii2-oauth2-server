@@ -139,6 +139,15 @@ class Authorization extends BaseModel
     {
         $authCode = $this->getAuthCode();
 
+        /**
+         * The client MUST NOT use the authorization code more than once.
+         * Deleting first makes concurrent requests with the same code fail instead of both getting tokens.
+         * @link https://tools.ietf.org/html/rfc6749#section-4.1.2
+         */
+        if ($authCode->delete() !== 1) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'The authorization code is not found or has been expired.'), Exception::INVALID_GRANT);
+        }
+
         $acessToken = AccessToken::createAccessToken([
             'client_id' => $this->client_id,
             'user_id' => $authCode->user_id,
@@ -152,12 +161,6 @@ class Authorization extends BaseModel
             'expires' => $this->refreshTokenLifetime + time(),
             'scope' => $authCode->scope,
         ]);
-        /**
-         * The client MUST NOT use the authorization code more than once.
-         * @link https://tools.ietf.org/html/rfc6749#section-4.1.2
-         */
-        $authCode->delete();
-
         return [
             'access_token' => $acessToken->access_token,
             'expires_in' => $this->accessTokenLifetime,

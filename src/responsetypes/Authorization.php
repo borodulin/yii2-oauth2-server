@@ -82,6 +82,14 @@ class Authorization extends BaseModel
      * @throws \conquer\oauth2\Exception
      * @throws \yii\base\Exception
      */
+    /**
+     * @inheritdoc
+     */
+    protected function redirectsErrors()
+    {
+        return true;
+    }
+
     public function getResponseData()
     {
         $authCode = AuthorizationCode::createAuthorizationCode([

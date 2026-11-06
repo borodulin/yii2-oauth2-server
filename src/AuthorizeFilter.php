@@ -111,6 +111,10 @@ class AuthorizeFilter extends ActionFilter
     {
         /** @var Authorization $responseType */
         $responseType = $this->getResponseType();
+        // the stored request is used once: later logins in the same session are not OAuth requests
+        if ($this->storeKey && Yii::$app->has('session')) {
+            Yii::$app->session->remove($this->storeKey);
+        }
         if (Yii::$app->user->isGuest) {
             $responseType->errorRedirect(Yii::t('conquer/oauth2', 'The User denied access to your application.'), Exception::ACCESS_DENIED);
         }

@@ -51,4 +51,6 @@ return [
     'User is not found.' => '',
     'When putting the token in the body, the method must be POST.' => '',
     'You are requesting with an invalid credential.' => '',
+    'Credentials must be sent in the request body, not in the URL.' => '',
+    'The token endpoint accepts only POST requests.' => '',
 ];

@@ -5,7 +5,6 @@ namespace conquer\oauth2;
 use conquer\oauth2\models\Client;
 use Yii;
 use yii\base\Model;
-use yii\helpers\ArrayHelper;
 use yii\web\Request;
 
 /**
@@ -51,14 +50,31 @@ abstract class BaseModel extends Model
     public function init()
     {
         parent::init();
-        $headers = [
-            'client_id' => 'PHP_AUTH_USER',
-            'client_secret' => 'PHP_AUTH_PW',
-        ];
-
-        foreach ($this->safeAttributes() as $attribute) {
-            $this->$attribute = self::getRequestValue($attribute, ArrayHelper::getValue($headers, $attribute));
+        $attributes = $this->safeAttributes();
+        foreach ($attributes as $attribute) {
+            $this->$attribute = self::getRequestValue($attribute);
         }
+        // HTTP Basic client authentication (RFC 6749, 2.3.1), only for requests that authenticate the client
+        if (in_array('client_secret', $attributes, true)) {
+            $request = Yii::$app->request;
+            if ($request instanceof Request) {
+                list($user, $password) = $request->getAuthCredentials();
+                if ($user !== null && $user !== '') {
+                    $this->client_id = urldecode($user);
+                    $this->client_secret = urldecode((string)$password);
+                }
+            }
+        }
+    }
+
+    /**
+     * Whether errors of this model are reported by redirecting the user agent to the client
+     * (authorization endpoint) instead of an error response (token endpoint).
+     * @return bool
+     */
+    protected function redirectsErrors()
+    {
+        return false;
     }
 
     public function addError($attribute, $error = '', $type = Exception::INVALID_REQUEST)
@@ -73,6 +89,9 @@ abstract class BaseModel extends Model
 
     public function errorRedirect($error, $type = Exception::INVALID_REQUEST)
     {
+        if (!$this->redirectsErrors()) {
+            throw new Exception($error, $type);
+        }
         $redirectUri = isset($this->redirect_uri) ? $this->redirect_uri : $this->getDefaultRedirectUri();
         if ($redirectUri) {
             throw new RedirectException($redirectUri, $error, $type, isset($this->state) ? $this->state : null);
@@ -204,12 +223,19 @@ abstract class BaseModel extends Model
      */
     protected function checkSets($requiredSet, $availableSet)
     {
-        if (!is_array($requiredSet)) {
-            $requiredSet = explode(' ', trim($requiredSet));
+        return count(array_diff(self::splitScope($requiredSet), self::splitScope($availableSet))) === 0;
+    }
+
+    /**
+     * Splits a space-delimited scope string into a list; null and empty strings give an empty list.
+     * @param string|array|null $scope
+     * @return string[]
+     */
+    public static function splitScope($scope)
+    {
+        if (is_array($scope)) {
+            return array_values(array_filter($scope, 'strlen'));
         }
-        if (!is_array($availableSet)) {
-            $availableSet = explode(' ', trim($availableSet));
-        }
-        return (count(array_diff($requiredSet, $availableSet)) == 0);
+        return preg_split('/\s+/', trim((string)$scope), -1, PREG_SPLIT_NO_EMPTY);
     }
 }

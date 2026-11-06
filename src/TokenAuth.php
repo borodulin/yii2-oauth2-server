@@ -67,6 +67,10 @@ class TokenAuth extends AuthMethod
     public function authenticate($user, $request, $response)
     {
         $accessToken = $this->getAccessToken();
+        if ($accessToken === null) {
+            // no credentials: let AuthMethod handle optional actions, CompositeAuth and the 401 challenge
+            return null;
+        }
 
         if (!$this->checkScopes($this->scopes, $accessToken->scope)) {
             throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'The access token does not have required scopes.'));
@@ -78,7 +82,7 @@ class TokenAuth extends AuthMethod
         $identity = $identityClass::findIdentity($accessToken->user_id);
 
         if (empty($identity)) {
-            throw new Exception(Yii::t('conquer/oauth2', 'User is not found.'), Exception::ACCESS_DENIED);
+            throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'User is not found.'));
         }
 
         $user->setIdentity($identity);
@@ -95,13 +99,7 @@ class TokenAuth extends AuthMethod
      */
     protected function checkScopes($requiredSet, $availableSet)
     {
-        if (!is_array($requiredSet)) {
-            $requiredSet = explode(' ', trim($requiredSet));
-        }
-        if (!is_array($availableSet)) {
-            $availableSet = explode(' ', trim($availableSet));
-        }
-        return (count(array_diff($requiredSet, $availableSet)) == 0);
+        return count(array_diff(BaseModel::splitScope($requiredSet), BaseModel::splitScope($availableSet))) === 0;
     }
 
     /**
@@ -124,7 +122,7 @@ class TokenAuth extends AuthMethod
     }
 
     /**
-     * @return AccessToken
+     * @return AccessToken|null null when the request contains no access token
      * @throws Exception
      * @throws UnauthorizedHttpException
      */
@@ -133,7 +131,11 @@ class TokenAuth extends AuthMethod
         if (is_null($this->_accessToken)) {
             $tokenExtractor = Yii::createObject(AccessTokenExtractor::class, [Yii::$app->getRequest()]);
 
-            if (!$accessToken = AccessToken::findOne(['access_token' => $tokenExtractor->extract()])) {
+            $token = $tokenExtractor->extract(false);
+            if ($token === null) {
+                return null;
+            }
+            if (!$accessToken = AccessToken::findOne(['access_token' => $token])) {
                 throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'The access token provided is invalid.'));
             }
             if ($accessToken->expires < time()) {

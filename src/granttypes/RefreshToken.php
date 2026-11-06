@@ -93,14 +93,17 @@ class RefreshToken extends BaseModel
         $oldToken = $this->getRefreshToken();
         $scope = empty($this->scope) ? $oldToken->scope : $this->scope;
 
+        // rotate atomically: concurrent requests with the same refresh token must not both succeed
+        if ($oldToken->delete() !== 1) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'The Refresh Token is invalid.'), Exception::INVALID_GRANT);
+        }
+
         $acessToken = AccessToken::createAccessToken([
             'client_id' => $this->client_id,
             'user_id' => $oldToken->user_id,
             'expires' => $this->accessTokenLifetime + time(),
             'scope' => $scope,
         ]);
-
-        $oldToken->delete();
 
         $refreshToken = \conquer\oauth2\models\RefreshToken::createRefreshToken([
             'client_id' => $this->client_id,
