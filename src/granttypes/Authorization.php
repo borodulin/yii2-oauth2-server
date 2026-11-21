@@ -17,9 +17,8 @@ use Yii;
 /**
  * Authorization code grant.
  *
- * The client authenticates either with its client_secret (confidential clients)
- * or with a PKCE code_verifier when the authorization request contained a code_challenge
- * (public clients, RFC 7636).
+ * Confidential clients authenticate with their client_secret or a client assertion, also when PKCE is used.
+ * Public clients (no secret, no public key) cannot authenticate and must use PKCE (RFC 7636).
  *
  * @link https://tools.ietf.org/html/rfc6749#section-4.1.3
  * @link https://tools.ietf.org/html/rfc7636
@@ -57,7 +56,7 @@ class Authorization extends BaseModel
     public $client_id;
 
     /**
-     * Required unless the code was issued with a PKCE code_challenge.
+     * Required for confidential clients, public clients have no secret.
      * @var string
      */
     public $client_secret;
@@ -75,7 +74,7 @@ class Authorization extends BaseModel
             ['grant_type', 'required', 'requiredValue' => 'authorization_code'],
             [['client_id', 'client_secret'], 'string', 'max' => 80],
             [['code'], 'string', 'max' => 40],
-            [['code_verifier'], 'string', 'min' => 43, 'max' => 128],
+            [['code_verifier'], 'match', 'pattern' => '/^[A-Za-z0-9\-._~]{43,128}$/'],
             [['redirect_uri'], 'string'],
             [['client_id'], 'validateClientId'],
             [['code'], 'validateCode', 'skipOnEmpty' => false],
@@ -101,15 +100,18 @@ class Authorization extends BaseModel
             $this->errorServer(Yii::t('conquer/oauth2', 'The redirect URI provided does not match.'), Exception::INVALID_GRANT);
         }
 
+        // confidential clients always authenticate, PKCE does not replace client authentication
+        $this->validateClientSecret('client_secret');
+
         if (!empty($authCode->code_challenge)) {
             if (!$this->verifyCodeChallenge($authCode->code_challenge, $authCode->code_challenge_method)) {
                 $this->errorServer(Yii::t('conquer/oauth2', 'The code verifier is invalid.'), Exception::INVALID_GRANT);
             }
-            if ($this->hasClientCredentials()) {
-                $this->validateClientSecret('client_secret');
-            }
-        } else {
-            $this->validateClientSecret('client_secret');
+        } elseif ($this->code_verifier !== null && $this->code_verifier !== '') {
+            // a verifier for a code issued without a challenge means a PKCE downgrade (RFC 9700, 2.1.1)
+            $this->errorServer(Yii::t('conquer/oauth2', 'The code was issued without a code challenge.'), Exception::INVALID_GRANT);
+        } elseif ($this->getClient()->isPublic()) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'Public clients must use PKCE.'), Exception::INVALID_GRANT);
         }
     }
 

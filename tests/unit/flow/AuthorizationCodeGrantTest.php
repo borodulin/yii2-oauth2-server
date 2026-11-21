@@ -39,12 +39,12 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
     {
         $code = $this->createCode('app');
         $model = $this->grant(['client_id' => 'app', 'code' => $code->authorization_code]);
-        $this->assertOAuthError(Exception::UNAUTHORIZED_CLIENT, function () use ($model) {
+        $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
             $model->validate();
         });
         $code = $this->createCode('app');
         $model = $this->grant(['client_id' => 'app', 'client_secret' => 'wrong', 'code' => $code->authorization_code]);
-        $this->assertOAuthError(Exception::UNAUTHORIZED_CLIENT, function () use ($model) {
+        $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
             $model->validate();
         });
     }
@@ -72,19 +72,66 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
         $this->assertTrue($model->validate());
     }
 
+    private static function challenge($verifier)
+    {
+        return rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
+    }
+
     public function testPkceS256AllowsPublicClient()
     {
+        $this->createClient('spa', '', 'https://spa.example.com/cb');
         $verifier = str_repeat('v', 50);
-        $challenge = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
-        $code = $this->createCode('app', ['code_challenge' => $challenge, 'code_challenge_method' => 'S256']);
+        $code = $this->createCode('spa', ['code_challenge' => self::challenge($verifier), 'code_challenge_method' => 'S256']);
 
-        $model = $this->grant(['client_id' => 'app', 'code' => $code->authorization_code, 'code_verifier' => str_repeat('x', 50)]);
+        $model = $this->grant(['client_id' => 'spa', 'code' => $code->authorization_code, 'code_verifier' => str_repeat('x', 50)]);
         $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
             $model->validate();
         });
 
-        $model = $this->grant(['client_id' => 'app', 'code' => $code->authorization_code, 'code_verifier' => $verifier]);
+        $model = $this->grant(['client_id' => 'spa', 'code' => $code->authorization_code, 'code_verifier' => $verifier]);
         $this->assertTrue($model->validate());
+    }
+
+    public function testPkceDoesNotReplaceAuthenticationOfConfidentialClient()
+    {
+        $verifier = str_repeat('v', 50);
+        $code = $this->createCode('app', ['code_challenge' => self::challenge($verifier), 'code_challenge_method' => 'S256']);
+        $model = $this->grant(['client_id' => 'app', 'code' => $code->authorization_code, 'code_verifier' => $verifier]);
+        $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
+            $model->validate();
+        });
+        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->authorization_code, 'code_verifier' => $verifier]);
+        $this->assertTrue($model->validate());
+    }
+
+    public function testVerifierForCodeWithoutChallengeIsRejected()
+    {
+        $code = $this->createCode('app');
+        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->authorization_code, 'code_verifier' => str_repeat('v', 50)]);
+        $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
+            $model->validate();
+        });
+    }
+
+    public function testPublicClientWithoutPkceIsRejected()
+    {
+        $this->createClient('spa', '', 'https://spa.example.com/cb');
+        $code = $this->createCode('spa');
+        $model = $this->grant(['client_id' => 'spa', 'code' => $code->authorization_code]);
+        $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
+            $model->validate();
+        });
+    }
+
+    public function testPublicClientMustNotSendSecret()
+    {
+        $this->createClient('spa', '', 'https://spa.example.com/cb');
+        $verifier = str_repeat('v', 50);
+        $code = $this->createCode('spa', ['code_challenge' => self::challenge($verifier), 'code_challenge_method' => 'S256']);
+        $model = $this->grant(['client_id' => 'spa', 'client_secret' => 'x', 'code' => $code->authorization_code, 'code_verifier' => $verifier]);
+        $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
+            $model->validate();
+        });
     }
 
     public function testGrantTypeRestrictionIsEnforced()

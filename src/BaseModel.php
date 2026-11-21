@@ -35,6 +35,11 @@ abstract class BaseModel extends Model
     protected $_clientAssertion;
 
     /**
+     * @var bool whether the request used HTTP Basic and body credentials at the same time
+     */
+    protected $_multipleClientAuth = false;
+
+    /**
      * @var Client|null
      */
     protected $_client;
@@ -82,7 +87,14 @@ abstract class BaseModel extends Model
             if ($request instanceof Request) {
                 list($user, $password) = $request->getAuthCredentials();
                 if ($user !== null && $user !== '') {
-                    $this->client_id = urldecode($user);
+                    $user = urldecode($user);
+                    // RFC 6749, 2.3: the client MUST NOT use more than one authentication method in each request
+                    if ((is_string($this->client_secret) && $this->client_secret !== '')
+                        || ($this->client_id !== null && $this->client_id !== '' && $this->client_id !== $user)
+                    ) {
+                        $this->_multipleClientAuth = true;
+                    }
+                    $this->client_id = $user;
                     $this->client_secret = urldecode((string)$password);
                 }
             }
@@ -216,17 +228,49 @@ abstract class BaseModel extends Model
         $this->getClient();
     }
 
-    public function validateClientSecret($attribute)
+    /**
+     * Authenticates the client (RFC 6749, 2.3) with its secret (body or HTTP Basic) or a JWT assertion.
+     * Confidential clients must authenticate. Public clients (no secret and no public key) have no credentials
+     * and must not send any.
+     * @param string $attribute
+     * @return void
+     * @throws Exception
+     */
+    public function validateClientSecret($attribute = 'client_secret')
     {
+        if ($this->_multipleClientAuth) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'Only one client authentication method may be used.'), Exception::INVALID_REQUEST);
+        }
         if ($this->hasClientAssertion()) {
             $this->validateClientAssertion();
             return;
         }
+        $client = $this->getClient();
         $secret = $this->$attribute;
-        if (!is_string($secret) || $secret === ''
-            || !Yii::$app->security->compareString((string)$this->getClient()->client_secret, $secret)
-        ) {
-            $this->addError($attribute, Yii::t('conquer/oauth2', 'The client credentials are invalid.'), Exception::UNAUTHORIZED_CLIENT);
+        $hasSecret = $secret !== null && $secret !== '';
+        if ($client->isPublic()) {
+            if ($hasSecret) {
+                $this->errorServer(Yii::t('conquer/oauth2', 'The client credentials are invalid.'), Exception::INVALID_CLIENT);
+            }
+            return;
+        }
+        if (!$hasSecret) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'Client authentication is required.'), Exception::INVALID_CLIENT);
+        }
+        if (!is_string($secret) || !$client->validateSecret($secret)) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'The client credentials are invalid.'), Exception::INVALID_CLIENT);
+        }
+    }
+
+    /**
+     * Rejects public clients, for grants that require client authentication.
+     * @return void
+     * @throws Exception
+     */
+    public function requireConfidentialClient()
+    {
+        if ($this->getClient()->isPublic()) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'The grant type is unauthorized for this client.'), Exception::UNAUTHORIZED_CLIENT);
         }
     }
 

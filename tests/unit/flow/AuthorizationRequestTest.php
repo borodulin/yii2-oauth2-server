@@ -63,4 +63,33 @@ class AuthorizationRequestTest extends OAuthTestCase
         $this->assertSame('S256', $code->code_challenge_method);
         $this->assertSame('', $code->redirect_uri, 'redirect_uri taken from client is not bound to the code');
     }
+
+    public function testPlainPkceIsRejectedByDefault()
+    {
+        foreach ([['code_challenge' => str_repeat('a', 43)], ['code_challenge' => str_repeat('a', 43), 'code_challenge_method' => 'plain']] as $params) {
+            $model = $this->model(Authorization::class, array_merge(['response_type' => 'code', 'client_id' => 'app'], $params));
+            $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($model) {
+                $model->validate();
+            });
+        }
+    }
+
+    public function testMalformedCodeChallengeIsRejected()
+    {
+        $model = $this->model(Authorization::class, [
+            'response_type' => 'code', 'client_id' => 'app', 'code_challenge' => str_repeat('a', 42) . '=', 'code_challenge_method' => 'S256',
+        ]);
+        $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($model) {
+            $model->validate();
+        });
+    }
+
+    public function testPublicClientMustSendCodeChallenge()
+    {
+        $this->createClient('spa', '', 'https://spa.example.com/cb');
+        $model = $this->model(Authorization::class, ['response_type' => 'code', 'client_id' => 'spa']);
+        $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($model) {
+            $model->validate();
+        });
+    }
 }

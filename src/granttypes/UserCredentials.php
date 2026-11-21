@@ -77,9 +77,6 @@ class UserCredentials extends BaseModel
     {
         return [
             [['grant_type', 'client_id', 'username', 'password'], 'required'],
-            ['client_secret', 'required', 'when' => function () {
-                return !$this->hasClientAssertion();
-            }],
             ['grant_type', 'required', 'requiredValue' => 'password'],
             [['client_id'], 'string', 'max' => 80],
             [['client_id'], 'validateClientId'],
@@ -165,6 +162,7 @@ class UserCredentials extends BaseModel
 
     public function validateGrantType()
     {
+        $this->requireConfidentialClient();
         $this->checkGrantType('password');
     }
 }

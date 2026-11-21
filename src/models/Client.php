@@ -42,7 +42,9 @@ class Client extends \yii\db\ActiveRecord
     public function rules()
     {
         $rules = [
-            [['client_id', 'client_secret', 'redirect_uri'], 'required'],
+            [['client_id', 'redirect_uri'], 'required'],
+            // empty secret and no public key: a public client (SPA, mobile app), it must use PKCE
+            [['client_secret'], 'default', 'value' => ''],
             [['scope'], 'string'],
             [['client_id', 'client_secret', 'grant_type'], 'string', 'max' => 80],
             [['redirect_uri'], 'string', 'max' => 2000],
@@ -78,6 +80,27 @@ class Client extends \yii\db\ActiveRecord
             'scope' => Yii::t('conquer/oauth2', 'Space-delimited list of approved scopes'),
             'public_key' => Yii::t('conquer/oauth2', 'PEM encoded public key for JWT assertions'),
         ];
+    }
+
+    /**
+     * Whether the client is public (RFC 6749, 2.1): it has neither a secret nor a public key,
+     * so it cannot authenticate. Public clients must use PKCE and cannot use client_credentials or password.
+     * @return bool
+     */
+    public function isPublic()
+    {
+        return (string)$this->client_secret === '' && $this->getPublicKey() === null;
+    }
+
+    /**
+     * Checks a client secret in constant time.
+     * @param string $secret
+     * @return bool
+     */
+    public function validateSecret($secret)
+    {
+        $stored = (string)$this->client_secret;
+        return $stored !== '' && $secret !== '' && Yii::$app->security->compareString($stored, $secret);
     }
 
     /**

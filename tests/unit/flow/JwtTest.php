@@ -243,7 +243,7 @@ class JwtTest extends OAuthTestCase
     public function testGrantWithWrongClientSecret()
     {
         $model = $this->grant(['assertion' => $this->jwt(), 'client_id' => 'jwt', 'client_secret' => 'wrong']);
-        $this->assertOAuthError(Exception::UNAUTHORIZED_CLIENT, function () use ($model) {
+        $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
             $model->validate();
         });
     }
@@ -346,7 +346,7 @@ class JwtTest extends OAuthTestCase
     public function testClientSecretIsStillRequiredWithoutAssertion()
     {
         $model = $this->model(ClientCredentials::class, ['grant_type' => 'client_credentials', 'client_id' => 'jwt']);
-        $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($model) {
+        $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
             $model->validate();
         });
     }

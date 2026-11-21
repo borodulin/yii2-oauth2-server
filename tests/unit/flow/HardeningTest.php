@@ -47,9 +47,41 @@ class HardeningTest extends OAuthTestCase
 
         Yii::$app->request->headers->set('Authorization', 'Basic ' . base64_encode('app:wrong'));
         $model = $this->model(ClientCredentials::class, ['grant_type' => 'client_credentials']);
+        $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
+            $model->validate();
+        });
+    }
+
+    public function testHttpBasicAndBodyCredentialsTogetherAreRejected()
+    {
+        Yii::$app->request->headers->set('Authorization', 'Basic ' . base64_encode('app:secret'));
+        $model = $this->model(ClientCredentials::class, ['grant_type' => 'client_credentials', 'client_secret' => 'secret']);
+        $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($model) {
+            $model->validate();
+        });
+        $model = $this->model(ClientCredentials::class, ['grant_type' => 'client_credentials', 'client_id' => 'other']);
+        $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($model) {
+            $model->validate();
+        });
+    }
+
+    public function testPublicClientCannotUseClientCredentials()
+    {
+        $this->createClient('spa', '', 'https://spa.example.com/cb');
+        $model = $this->model(ClientCredentials::class, ['grant_type' => 'client_credentials', 'client_id' => 'spa']);
         $this->assertOAuthError(Exception::UNAUTHORIZED_CLIENT, function () use ($model) {
             $model->validate();
         });
+    }
+
+    public function testPublicClientCanRefreshTokens()
+    {
+        $this->createClient('spa', '', 'https://spa.example.com/cb');
+        $token = $this->createRefreshToken('spa');
+        $model = $this->model(\conquer\oauth2\granttypes\RefreshToken::class, [
+            'grant_type' => 'refresh_token', 'client_id' => 'spa', 'refresh_token' => $token->refresh_token,
+        ]);
+        $this->assertTrue($model->validate());
     }
 
     public function testTokenEndpointErrorsAreNotRedirects()

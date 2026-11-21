@@ -57,9 +57,6 @@ class RefreshToken extends BaseModel
     {
         return [
             [['client_id', 'grant_type', 'refresh_token'], 'required'],
-            ['client_secret', 'required', 'when' => function () {
-                return !$this->hasClientAssertion();
-            }],
             ['grant_type', 'required', 'requiredValue' => 'refresh_token'],
             [['client_id', 'client_secret'], 'string', 'max' => 80],
             [['refresh_token'], 'string', 'max' => 40],
