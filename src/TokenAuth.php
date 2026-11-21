@@ -63,6 +63,15 @@ class TokenAuth extends AuthMethod
     public $allowQueryToken = false;
 
     /**
+     * @return void
+     */
+    public function init()
+    {
+        Translations::register();
+        parent::init();
+    }
+
+    /**
      * @param \yii\web\User $user
      * @param \yii\web\Request $request
      * @param \yii\web\Response $response

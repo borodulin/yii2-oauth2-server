@@ -84,6 +84,7 @@ abstract class BaseModel extends Model
      */
     public function init()
     {
+        Translations::register();
         parent::init();
         $attributes = $this->safeAttributes();
         foreach ($attributes as $attribute) {

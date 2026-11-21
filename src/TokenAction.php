@@ -44,6 +44,7 @@ class TokenAction extends Action
 
     public function init()
     {
+        Translations::register();
         Yii::$app->response->format = $this->format;
         // token responses must not be cached (RFC 6749, 5.1)
         Yii::$app->response->headers->set('Cache-Control', 'no-store');

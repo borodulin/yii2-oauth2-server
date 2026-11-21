@@ -34,6 +34,15 @@ class Client extends \yii\db\ActiveRecord
     public $secretHashCost = 10;
 
     /**
+     * @return void
+     */
+    public function init()
+    {
+        \conquer\oauth2\Translations::register();
+        parent::init();
+    }
+
+    /**
      * @inheritdoc
      */
     public static function tableName()

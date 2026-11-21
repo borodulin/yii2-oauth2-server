@@ -1,10 +1,35 @@
 3.0.0 under development
 -----------------------
-- Bug: `getUser()` of the token models returns null instead of a broken relation when the identity class has no primary key
-- Enh: PHPStan (level 5) in CI
+Security release with breaking changes, see "Upgrading to 3.0" in README.
+
+- Sec: confidential clients must authenticate in the authorization code grant also with PKCE (a leaked code could be redeemed with just the verifier); public clients are clients without a secret and public key
+- Sec: logged-in users are no longer authorized on a plain GET: `AuthorizeFilter` requires a consent step (`finishAuthorization($approved)` on POST) unless `autoApprove`
+- Sec: the authorization request in the session is a plain array that expires after 10 minutes and is validated again; no serialized models with the client secret, no `unserialize()`
+- Sec: PKCE accepts only S256 by default, checks challenge/verifier formats and rejects a verifier for a code issued without a challenge (downgrade)
+- Sec: tokens and codes are stored as SHA-256 hashes, client secrets as bcrypt hashes; existing ones are migrated in place
+- Sec: reuse of a code or rotated refresh token revokes the tokens of that user and client
+- Sec: HTTP Basic together with body credentials is rejected
+- Sec: password grant timing no longer reveals existing usernames
+- Sec: `access_token` in the query string is accepted only with `TokenAuth::$allowQueryToken`
+- Sec: JWT: `JwtValidator::$audience` must be configured (was taken from the Host header), `jti` is required and replay protection fails closed, client assertions cannot be used as JWT bearer grants, one generic error for clients that may not use the grant
 - Enh: JWT bearer grant (RFC 7523, 2.1), disabled by default; clients must list it explicitly in `grant_type`
 - Enh: JWT client authentication with `client_assertion` (RFC 7523, 2.2)
-- Enh: new migration `m261122_120000_oauth_jwt` adds `oauth2_client.public_key`; JWT support requires PHP 8.0+ and `firebase/php-jwt` ^7.0
+- Enh: token endpoint errors follow RFC 6749 5.2 (`error`, `error_description`, 401 for `invalid_client`)
+- Enh: `TokenAuth` sends `WWW-Authenticate` with `error="invalid_token"` / `"insufficient_scope"`, 403 for insufficient scope, accepts a lowercase `bearer` scheme (RFC 6750)
+- Enh: `iss` in authorization responses (RFC 9207) with `$issuer`
+- Enh: `Client::generateSecret()`, `Client::isPublic()`; translations are registered automatically; `yii oauth2/clear` reports what it deleted
+- Enh: new migrations `m261122_120000_oauth_jwt` (`public_key`) and `m261123_120000_oauth_v3` (hashing, `used` columns, indexes); the base migration works on SQLite
+- Enh: PHPStan (level 5) in CI; tests run the package migrations
+- Bug: authorization errors were 400 pages instead of redirects to the client; implicit errors go in the fragment
+- Bug: the README flow issued two codes per login
+- Bug: `oauth2_client.grant_type` was not checked at the authorization endpoint
+- Bug: loopback and custom scheme redirect URIs were rejected by the url validator (RFC 8252)
+- Bug: array parameters (`scope`, `username`, `password`) caused 500 errors
+- Bug: a narrowed scope on refresh also narrowed the new refresh token; scopes removed from the client were refreshed
+- Bug: public clients could not refresh tokens
+- Bug: request parameters that are not sent overwrote configured defaults
+- Bug: `getUser()` of the token models returns null instead of a broken relation when the identity class has no primary key
+- Bug: `Client::validate()` failed on databases without `public_key`
 
 2.1.0
 -----

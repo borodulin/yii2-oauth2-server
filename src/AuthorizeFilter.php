@@ -68,6 +68,7 @@ class AuthorizeFilter extends ActionFilter
      */
     public function init()
     {
+        Translations::register();
         parent::init();
         if (!$this->allowImplicit) {
             unset($this->responseTypes['token']);

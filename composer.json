@@ -24,7 +24,7 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "yiisoft/yii2": "^2.0.14",
-        "jakeasmith/http_build_url": ">=1.0.1"
+        "jakeasmith/http_build_url": "^1.0.1"
     },
     "require-dev": {
         "ext-pdo_sqlite": "*",
@@ -51,7 +51,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "2.2.x-dev"
+            "dev-master": "3.0.x-dev"
         }
     },
     "repositories": [

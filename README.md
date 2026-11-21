@@ -7,203 +7,214 @@
 
 ## Description
 
-This extension provides simple implementation of [Oauth 2.0](http://tools.ietf.org/wg/oauth/draft-ietf-oauth-v2/) specification using Yii2 framework.
+An OAuth 2.0 authorization server for Yii 2: authorization code (with PKCE), refresh token, client credentials,
+password and JWT bearer (RFC 7523) grants, plus a filter that protects API actions with access tokens.
+It follows RFC 6749, RFC 6750, RFC 7636 and the OAuth 2.0 Security BCP (RFC 9700).
 
 ## Requirements
 
-- PHP 7.4 or 8.x
-- Yii 2.0
+- PHP 7.4 or 8.x (JWT support needs PHP 8.0+)
+- Yii 2.0.14+
 
 ## Installation
 
-Install the extension via [Composer](https://getcomposer.org):
-
 ```bash
-composer require conquer/oauth2:^1.8
+composer require conquer/oauth2:^3.0
 ```
 
-Migrations are available from [migrations](./src/migrations) folder.
-
-To add migrations to your application, edit the console config file to configure
-[a namespaced migration](http://www.yiiframework.com/doc-2.0/guide-db-migrations.html#namespaced-migrations):
+Add the [migrations](./src/migrations) to the console config as
+[namespaced migrations](https://www.yiiframework.com/doc/guide/2.0/en/db-migrations#namespaced-migrations)
+and run them:
 
 ```php
 'controllerMap' => [
-    // ...
     'migrate' => [
         'class' => 'yii\console\controllers\MigrateController',
         'migrationPath' => null,
         'migrationNamespaces' => [
-            // ...
             'conquer\oauth2\migrations',
         ],
     ],
 ],
 ```
 
-Then issue the `migrate/up` command:
-
 ```sh
 yii migrate/up
 ```
 
-You also need to specify message translation source for this package:
+Delete expired codes and tokens periodically, e.g. from cron. Register the module for the console application:
 
-```
-'components' => [
-    'i18n' => [
-        'translations' => [
-            'conquer/oauth2' => [
-                'class' => \yii\i18n\PhpMessageSource::class,
-                'basePath' => '@conquer/oauth2/messages',
-            ],
-        ],
-    ]
+```php
+'bootstrap' => ['oauth2'],
+'modules' => [
+    'oauth2' => \conquer\oauth2\Module::class,
 ],
 ```
 
-## Upgrading to 2.0
+```sh
+yii oauth2/clear
+```
 
-Version 2.0 fixes several security issues and makes the server follow RFC 6749 / OAuth 2.0 Security BCP more strictly:
+Translations of the `conquer/oauth2` category are registered automatically; configure the category yourself
+to override them.
 
-1. Run the new migration (`yii migrate/up`) — it adds PKCE columns to `oauth2_authorization_code`.
-2. `redirect_uri` sent by clients must be **exactly equal** to a registered URI. Register every callback URI
-   of a client in `oauth2_client.redirect_uri`, separated by whitespace.
-3. The `authorization_code` grant requires `client_secret`. Public clients (SPA, mobile) must use
-   PKCE instead: send `code_challenge` (+ `code_challenge_method=S256`) to the authorization endpoint
-   and `code_verifier` to the token endpoint.
-4. If `oauth2_client.grant_type` is filled, only the listed grant types are allowed for the client.
-5. The implicit grant is disabled by default. Set `'allowImplicit' => true` on `AuthorizeFilter` if you still need it.
+## Clients
 
-## Upgrading to 2.1
+Clients are rows of `oauth2_client` (model `conquer\oauth2\models\Client`):
 
-- The token endpoint accepts only `POST` requests with parameters in the body. If some clients still use `GET`,
-  set `'allowGet' => true` on `TokenAction` until they are fixed.
-- Clients may authenticate with HTTP Basic (`Authorization: Basic base64(client_id:client_secret)`).
+- `redirect_uri`: registered redirect URIs separated by whitespace; requests must use one of them exactly;
+- `grant_type`: permitted grant types separated by whitespace (`authorization_code`, `implicit`, `refresh_token`,
+  `client_credentials`, `password`), empty means all except the JWT bearer grant;
+- `scope`: scopes the client may request, separated by whitespace;
+- `client_secret`: stored as a bcrypt hash. **Confidential** clients (server-side apps) have a secret or a
+  `public_key` and must authenticate at the token endpoint, also when they use PKCE. **Public** clients (SPA, mobile
+  and desktop apps) have an empty secret and no public key; they must use PKCE with `S256` and cannot use the
+  client credentials and password grants.
 
-### User consent
-
-`AuthorizeFilter` finishes the authorization as soon as the user is logged in. If your server serves third-party
-clients, show a consent page first: override `AuthorizeFilter::afterAction()` (or call
-`finishAuthorization()` yourself) only after the user has approved the requested scopes.
+```php
+$client = new \conquer\oauth2\models\Client([
+    'client_id' => 'my-app',
+    'redirect_uri' => 'https://my-app.example.com/oauth/callback',
+    'grant_type' => 'authorization_code refresh_token',
+    'scope' => 'profile email',
+]);
+$secret = $client->generateSecret(); // give it to the client, only the hash is stored
+$client->save();
+```
 
 ## Usage
 
-OAuth 2.0 Authorization usage 
+### Authorization endpoint
+
+`AuthorizeFilter` validates the authorization request and keeps it in the session while the user logs in.
+The user must then approve the request on a consent page, which posts back to the same action;
+`finishAuthorization()` redirects the user agent to the client with a code, or with `access_denied`.
+
 ```php
 namespace app\controllers;
 
 use app\models\LoginForm;
+use conquer\oauth2\AuthorizeFilter;
+use conquer\oauth2\TokenAction;
+use Yii;
 
 class AuthController extends \yii\web\Controller
 {
     public function behaviors()
     {
         return [
-            /** 
-             * Checks oauth2 credentions and try to perform OAuth2 authorization on logged user.
-             * AuthorizeFilter uses session to store incoming oauth2 request, so 
-             * you can do additional steps, such as third party oauth authorization (Facebook, Google ...)  
-             */
             'oauth2Auth' => [
-                'class' => \conquer\oauth2\AuthorizeFilter::className(),
+                'class' => AuthorizeFilter::class,
                 'only' => ['index'],
+                // optional: skip the consent page for your own clients
+                // 'autoApprove' => function ($request) { return $request->client->client_id === 'my-spa'; },
             ],
         ];
     }
+
     public function actions()
     {
         return [
-            /**
-             * Returns an access token.
-             */
             'token' => [
-                'class' => \conquer\oauth2\TokenAction::classname(),
-            ],
-            /**
-             * OPTIONAL
-             * Third party oauth providers also can be used.
-             */
-            'back' => [
-                'class' => \yii\authclient\AuthAction::className(),
-                'successCallback' => [$this, 'successCallback'],
+                'class' => TokenAction::class,
             ],
         ];
     }
+
     /**
-     * Display login form, signup or something else.
-     * AuthClients such as Google also may be used
+     * Login form, then the consent page.
      */
     public function actionIndex()
     {
-        $model = new LoginForm();
-        if ($model->load(\Yii::$app->request->post()) && $model->login()) {
-            if ($this->isOauthRequest) {
-                $this->finishAuthorization();
-            } else {
-                return $this->goBack();
+        /** @var AuthorizeFilter $oauth */
+        $oauth = $this->getBehavior('oauth2Auth');
+
+        if (Yii::$app->user->isGuest) {
+            $model = new LoginForm();
+            if ($model->load(Yii::$app->request->post()) && $model->login()) {
+                return $this->refresh();
             }
-        } else {
-            return $this->render('index', [
-                'model' => $model,
-            ]);
+            return $this->render('login', ['model' => $model]);
         }
+
+        if (Yii::$app->request->isPost) {
+            // the form is protected by Yii's CSRF validation
+            $oauth->finishAuthorization(Yii::$app->request->post('approve') === '1');
+            return null;
+        }
+
+        $request = $oauth->getAuthorizationRequest();
+        return $this->render('consent', [
+            'client' => $request->client,
+            'scope' => $request->scope,
+        ]);
     }
-    /**
-     * OPTIONAL
-     * Third party oauth callback sample
-     * @param OAuth2 $client
-     */
-    public function successCallback($client)
-    {
-        switch ($client::className()) {
-            case GoogleOAuth::className():
-                // Do login with automatic signup                
-                break;
-            ...
-            default:
-                break;
-        }
-        /**
-         * If user is logged on, redirects to oauth client with success,
-         * or redirects error with Access Denied
-         */
-        if ($this->isOauthRequest) {
-            $this->finishAuthorization();
-        }
-    }
-    
 }
 ```
-Api controller sample
+
+`consent.php`:
+
+```php
+<p><?= Html::encode($client->client_id) ?> asks for: <?= Html::encode($scope) ?></p>
+<?= Html::beginForm() ?>
+<?= Html::submitButton('Allow', ['name' => 'approve', 'value' => '1']) ?>
+<?= Html::submitButton('Deny', ['name' => 'approve', 'value' => '0']) ?>
+<?= Html::endForm() ?>
+```
+
+The user may also log in with a third-party provider (`yii\authclient\AuthAction`) in between: the request is kept
+in the session for `AuthorizeFilter::$requestLifetime` seconds (10 minutes) and validated again when it is finished.
+
+Options of the `code` response type (`conquer\oauth2\responsetypes\Authorization`, configure it through
+`AuthorizeFilter::$responseTypes`): `requirePkce` (PKCE for confidential clients too, recommended),
+`allowPlainPkce`, `issuer` (adds `iss` to responses, RFC 9207). The implicit grant is disabled by default
+(`AuthorizeFilter::$allowImplicit`); don't use it for new clients.
+
+### Token endpoint
+
+`TokenAction` accepts only `POST` requests with parameters in the body (`allowGet` disables this check).
+Clients authenticate with HTTP Basic or `client_id` + `client_secret` in the body, not both, or with a JWT
+(see below). Errors are returned as `{"error": "...", "error_description": "..."}` with status 400, or 401 for
+`invalid_client` (RFC 6749, 5.2).
+
+Codes and refresh tokens can be used once. Using one again revokes the tokens issued to that user and client.
+Tokens and codes are stored as SHA-256 hashes.
+
+### Resource server
+
 ```php
 class ApiController extends \yii\rest\Controller
 {
     public function behaviors()
     {
         return [
-            /** 
-             * Performs authorization by token
-             */
             'tokenAuth' => [
-                'class' => \conquer\oauth2\TokenAuth::className(),
+                'class' => \conquer\oauth2\TokenAuth::class,
+                'scopes' => ['profile'],
             ],
         ];
     }
-    /**
-     * Returns username and email
-     */
+
     public function actionIndex()
     {
         $user = \Yii::$app->user->identity;
         return [
             'username' => $user->username,
-            'email' =>  $user->email,
+            'email' => $user->email,
         ];
     }
 }
 ```
-Sample client config
+
+`TokenAuth` reads the token from the `Authorization: Bearer` header or a form-encoded POST body; the `access_token`
+query parameter is accepted only with `allowQueryToken`. Invalid and expired tokens get 401, insufficient scope
+403, both with a `WWW-Authenticate` header (RFC 6750). Tokens of the client credentials grant have no user,
+`TokenAuth` rejects them.
+
+### Client example
+
+A Yii application as a client:
+
 ```php
 return [
 ...
@@ -215,17 +226,19 @@ return [
                     'class' => 'yii\authclient\OAuth2',
                     'clientId' => 'unique client_id',
                     'clientSecret' => 'client_secret',
-                    'tokenUrl' => 'http://myserver.local/auth/token',
-                    'authUrl' => 'http://myserver.local/auth/index',
-                    'apiBaseUrl' => 'http://myserver.local/api',
+                    'tokenUrl' => 'https://myserver.example.com/auth/token',
+                    'authUrl' => 'https://myserver.example.com/auth/index',
+                    'apiBaseUrl' => 'https://myserver.example.com/api',
                 ],
             ],
         ],
 ];
 ```
 
-If you want to use Resource Owner Password Credentials Grant, 
-implement `\conquer\oauth2\OAuth2IdentityInterface`.
+### Password grant
+
+The password grant is disabled by default and discouraged (RFC 9700, 2.4). To use it, add
+`'password' => \conquer\oauth2\granttypes\UserCredentials::class` to `TokenAction::$grantTypes` and implement `\conquer\oauth2\OAuth2IdentityInterface`.
 
 ```php
 use conquer\oauth2\OAuth2IdentityInterface;
@@ -328,6 +341,44 @@ It's strongly recommended to rate limits on token endpoint.
 Fortunately, Yii2 have instruments to do this.
 
 For further information see [Yii2 Ratelimiter](http://www.yiiframework.com/doc-2.0/yii-filters-ratelimiter.html)
+
+## Upgrading to 3.0
+
+Version 3.0 fixes security issues found in a review and changes several defaults. Run `yii migrate/up`:
+`m261123_120000_oauth_v3` hashes existing tokens and client secrets in place (they stay valid) and cannot be
+reverted. Then check:
+
+1. **Consent.** A logged-in user is no longer authorized on a plain GET. Show a consent page and call
+   `finishAuthorization($approved)` on POST (see above), or set `autoApprove` for your own clients only.
+   `finishAuthorization()` on a GET request without auto approval throws.
+2. **Client authentication.** Confidential clients must authenticate also when they use PKCE. Clients that used
+   PKCE without a secret must become public clients: set their `client_secret` to an empty string.
+3. **PKCE.** Only `S256` is accepted (`allowPlainPkce` restores `plain`); public clients must use PKCE.
+4. **Secrets and tokens are hashed.** Assign a plain secret to `Client::$client_secret` and save the model, or
+   use `Client::generateSecret()`; don't write secrets to the table directly. Tokens can't be read from the
+   database any more: `$model->token` holds the token right after `create*()`, look tokens up with `findByToken()`.
+5. **Token endpoint errors** are RFC 6749 JSON (`error`, `error_description`) instead of Yii error pages,
+   with 401 for `invalid_client`. Wrong secrets are `invalid_client` (was `unauthorized_client`).
+   `redirect_uri_mismatch` is replaced with `invalid_request`.
+6. **Authorization errors** now really redirect to the client (they were 400 pages).
+7. **Resource server.** `access_token` in the query string is rejected unless `TokenAuth::$allowQueryToken`;
+   insufficient scope is 403.
+8. **Authorization endpoint** checks `oauth2_client.grant_type` (`authorization_code` / `implicit`).
+9. **JWT:** `JwtValidator::$audience` must be configured, `jti` is required and needs a shared cache.
+10. HTTP Basic and body credentials in one request are rejected.
+
+## Upgrading to 2.1
+
+- The token endpoint accepts only `POST` requests with parameters in the body. If some clients still use `GET`,
+  set `'allowGet' => true` on `TokenAction` until they are fixed.
+- Clients may authenticate with HTTP Basic (`Authorization: Basic base64(client_id:client_secret)`).
+
+## Upgrading to 2.0
+
+1. Run the new migration (`yii migrate/up`), it adds PKCE columns to `oauth2_authorization_code`.
+2. `redirect_uri` sent by clients must be **exactly equal** to a registered URI.
+3. If `oauth2_client.grant_type` is filled, only the listed grant types are allowed for the client.
+4. The implicit grant is disabled by default.
 
 ## License
 

@@ -336,5 +336,13 @@ class HardeningTest extends OAuthTestCase
         $this->assertSame(hash('sha256', $token->token), $token->access_token);
         $this->assertNull(AccessToken::findOne($token->token));
     }
-}
 
+    public function testTranslationsAreRegisteredAutomatically()
+    {
+        unset(Yii::$app->i18n->translations['conquer/oauth2']);
+        $model = $this->model(ClientCredentials::class, ['grant_type' => 'client_credentials', 'client_id' => 'app', 'client_secret' => 'wrong']);
+        $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
+            $model->validate();
+        });
+    }
+}
