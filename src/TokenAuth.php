@@ -198,7 +198,7 @@ class TokenAuth extends AuthMethod
             if ($token === null) {
                 return null;
             }
-            if (!$accessToken = AccessToken::findOne(['access_token' => $token])) {
+            if (!$accessToken = AccessToken::findByToken($token)) {
                 $this->invalidToken(Yii::$app->getResponse(), Yii::t('conquer/oauth2', 'The access token provided is invalid.'));
             }
             if ($accessToken->expires < time()) {

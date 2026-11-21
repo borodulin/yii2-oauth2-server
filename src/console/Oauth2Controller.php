@@ -8,6 +8,7 @@
 namespace conquer\oauth2\console;
 
 use yii\console\Controller;
+use yii\console\ExitCode;
 use conquer\oauth2\models\AuthorizationCode;
 use conquer\oauth2\models\RefreshToken;
 use conquer\oauth2\models\AccessToken;
@@ -17,14 +18,26 @@ use conquer\oauth2\models\AccessToken;
  */
 class Oauth2Controller extends Controller
 {
+    /**
+     * Deletes expired authorization codes and tokens. Run it periodically, e.g. from cron.
+     * @return int
+     */
     public function actionIndex()
     {
+        return $this->actionClear();
     }
 
+    /**
+     * Deletes expired authorization codes and tokens. Run it periodically, e.g. from cron.
+     * @return int
+     */
     public function actionClear()
     {
-        AuthorizationCode::deleteAll(['<', 'expires', time()]);
-        RefreshToken::deleteAll(['<', 'expires', time()]);
-        AccessToken::deleteAll(['<', 'expires', time()]);
+        $now = time();
+        $count = AuthorizationCode::deleteAll(['<', 'expires', $now])
+            + RefreshToken::deleteAll(['<', 'expires', $now])
+            + AccessToken::deleteAll(['<', 'expires', $now]);
+        $this->stdout("Deleted $count expired codes and tokens.\n");
+        return ExitCode::OK;
     }
 }

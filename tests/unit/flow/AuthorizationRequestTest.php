@@ -3,8 +3,10 @@
 namespace tests\unit\flow;
 
 use conquer\oauth2\Exception;
+use conquer\oauth2\models\AuthorizationCode;
 use conquer\oauth2\responsetypes\Authorization;
 use tests\OAuthTestCase;
+use tests\TestIdentity;
 
 class AuthorizationRequestTest extends OAuthTestCase
 {
@@ -51,14 +53,14 @@ class AuthorizationRequestTest extends OAuthTestCase
 
     public function testCodeStoresPkceChallenge()
     {
-        \Yii::$app->user->setIdentity(new \tests\TestIdentity(['id' => 7]));
+        \Yii::$app->user->setIdentity(new TestIdentity(['id' => 7]));
         $model = $this->model(Authorization::class, [
             'response_type' => 'code', 'client_id' => 'app',
             'code_challenge' => str_repeat('a', 43), 'code_challenge_method' => 'S256',
         ]);
         $this->assertTrue($model->validate());
         parse_str($model->getResponseData()['query'], $query);
-        $code = \conquer\oauth2\models\AuthorizationCode::findOne($query['code']);
+        $code = AuthorizationCode::findByToken($query['code']);
         $this->assertSame(str_repeat('a', 43), $code->code_challenge);
         $this->assertSame('S256', $code->code_challenge_method);
         $this->assertSame('', $code->redirect_uri, 'redirect_uri taken from client is not bound to the code');

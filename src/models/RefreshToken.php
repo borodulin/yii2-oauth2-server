@@ -10,21 +10,23 @@ namespace conquer\oauth2\models;
 use conquer\oauth2\Exception;
 use Yii;
 use yii\db\ActiveRecord;
-use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "{{%oauth2_refresh_token}}".
  *
- * @property string $refresh_token
+ * @property string $refresh_token SHA-256 hash of the token, see TokenTrait
  * @property string $client_id
  * @property integer $user_id
  * @property integer $expires
  * @property string $scope
+ * @property int|null $used when the token was used, single-use tokens are kept until they expire to detect reuse
  *
  * @property Client $client
  */
 class RefreshToken extends ActiveRecord
 {
+    use TokenTrait;
+
     /**
      * @inheritdoc
      */
@@ -42,7 +44,8 @@ class RefreshToken extends ActiveRecord
             [['refresh_token', 'client_id', 'expires'], 'required'],
             [['user_id', 'expires'], 'integer'],
             [['scope'], 'string'],
-            [['refresh_token'], 'string', 'max' => 40],
+            [['used'], 'integer'],
+            [['refresh_token'], 'string', 'max' => 64],
             [['client_id'], 'string', 'max' => 80]
         ];
     }
@@ -70,17 +73,19 @@ class RefreshToken extends ActiveRecord
      */
     public static function createRefreshToken(array $attributes)
     {
-        static::deleteAll(['<', 'expires', time()]);
-
-        $attributes['refresh_token'] = Yii::$app->security->generateRandomString(40);
-        $refreshToken = new static($attributes);
-
-        if ($refreshToken->save()) {
-            return $refreshToken;
-        } else {
-            Yii::error(__CLASS__ . ' validation error:' . VarDumper::dumpAsString($refreshToken->errors));
+        $model = static::createWithToken($attributes);
+        if ($model === null) {
+            throw new Exception(Yii::t('conquer/oauth2', 'Unable to create refresh token.'), Exception::SERVER_ERROR);
         }
-        throw new Exception(Yii::t('conquer/oauth2', 'Unable to create refresh token.'), Exception::SERVER_ERROR);
+        return $model;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function tokenAttribute()
+    {
+        return 'refresh_token';
     }
 
     /**

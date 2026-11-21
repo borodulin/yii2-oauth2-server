@@ -4,6 +4,7 @@ namespace tests\unit\flow;
 
 use conquer\oauth2\Exception;
 use conquer\oauth2\granttypes\Authorization;
+use conquer\oauth2\models\AccessToken;
 use conquer\oauth2\models\AuthorizationCode;
 use tests\OAuthTestCase;
 
@@ -17,19 +18,24 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
     public function testSuccessfulExchangeReturnsGrantedScope()
     {
         $code = $this->createCode('app', ['scope' => 'read']);
-        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->authorization_code]);
+        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->token]);
         $this->assertTrue($model->validate());
         $data = $model->getResponseData();
         $this->assertSame('read', $data['scope'], 'issue #25: response scope must be the granted scope');
         $this->assertNotEmpty($data['access_token']);
         $this->assertNotEmpty($data['refresh_token']);
-        $this->assertNull(AuthorizationCode::findOne($code->authorization_code), 'code is single-use');
+        $this->assertNotNull(AuthorizationCode::findByToken($code->token)->used, 'code is single-use');
+        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->token]);
+        $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
+            $model->validate();
+        });
+        $this->assertNull(AccessToken::findByToken($data['access_token']), 'a reused code revokes the tokens');
     }
 
     public function testCodeIssuedToAnotherClientIsRejected()
     {
         $code = $this->createCode('app');
-        $model = $this->grant(['client_id' => 'other', 'client_secret' => 'other-secret', 'code' => $code->authorization_code]);
+        $model = $this->grant(['client_id' => 'other', 'client_secret' => 'other-secret', 'code' => $code->token]);
         $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
             $model->validate();
         });
@@ -38,12 +44,12 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
     public function testClientSecretIsRequired()
     {
         $code = $this->createCode('app');
-        $model = $this->grant(['client_id' => 'app', 'code' => $code->authorization_code]);
+        $model = $this->grant(['client_id' => 'app', 'code' => $code->token]);
         $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
             $model->validate();
         });
         $code = $this->createCode('app');
-        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'wrong', 'code' => $code->authorization_code]);
+        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'wrong', 'code' => $code->token]);
         $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
             $model->validate();
         });
@@ -52,7 +58,7 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
     public function testExpiredCodeIsRejected()
     {
         $code = $this->createCode('app', ['expires' => time() - 1]);
-        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->authorization_code]);
+        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->token]);
         $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
             $model->validate();
         });
@@ -61,12 +67,12 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
     public function testRedirectUriMustMatchTheOneUsedForTheCode()
     {
         $code = $this->createCode('app', ['redirect_uri' => 'https://app.example.com/cb']);
-        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->authorization_code]);
+        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->token]);
         $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
             $model->validate();
         });
         $model = $this->grant([
-            'client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->authorization_code,
+            'client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->token,
             'redirect_uri' => 'https://app.example.com/cb',
         ]);
         $this->assertTrue($model->validate());
@@ -83,12 +89,12 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
         $verifier = str_repeat('v', 50);
         $code = $this->createCode('spa', ['code_challenge' => self::challenge($verifier), 'code_challenge_method' => 'S256']);
 
-        $model = $this->grant(['client_id' => 'spa', 'code' => $code->authorization_code, 'code_verifier' => str_repeat('x', 50)]);
+        $model = $this->grant(['client_id' => 'spa', 'code' => $code->token, 'code_verifier' => str_repeat('x', 50)]);
         $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
             $model->validate();
         });
 
-        $model = $this->grant(['client_id' => 'spa', 'code' => $code->authorization_code, 'code_verifier' => $verifier]);
+        $model = $this->grant(['client_id' => 'spa', 'code' => $code->token, 'code_verifier' => $verifier]);
         $this->assertTrue($model->validate());
     }
 
@@ -96,18 +102,18 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
     {
         $verifier = str_repeat('v', 50);
         $code = $this->createCode('app', ['code_challenge' => self::challenge($verifier), 'code_challenge_method' => 'S256']);
-        $model = $this->grant(['client_id' => 'app', 'code' => $code->authorization_code, 'code_verifier' => $verifier]);
+        $model = $this->grant(['client_id' => 'app', 'code' => $code->token, 'code_verifier' => $verifier]);
         $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
             $model->validate();
         });
-        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->authorization_code, 'code_verifier' => $verifier]);
+        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->token, 'code_verifier' => $verifier]);
         $this->assertTrue($model->validate());
     }
 
     public function testVerifierForCodeWithoutChallengeIsRejected()
     {
         $code = $this->createCode('app');
-        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->authorization_code, 'code_verifier' => str_repeat('v', 50)]);
+        $model = $this->grant(['client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->token, 'code_verifier' => str_repeat('v', 50)]);
         $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
             $model->validate();
         });
@@ -117,7 +123,7 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
     {
         $this->createClient('spa', '', 'https://spa.example.com/cb');
         $code = $this->createCode('spa');
-        $model = $this->grant(['client_id' => 'spa', 'code' => $code->authorization_code]);
+        $model = $this->grant(['client_id' => 'spa', 'code' => $code->token]);
         $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
             $model->validate();
         });
@@ -128,7 +134,7 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
         $this->createClient('spa', '', 'https://spa.example.com/cb');
         $verifier = str_repeat('v', 50);
         $code = $this->createCode('spa', ['code_challenge' => self::challenge($verifier), 'code_challenge_method' => 'S256']);
-        $model = $this->grant(['client_id' => 'spa', 'client_secret' => 'x', 'code' => $code->authorization_code, 'code_verifier' => $verifier]);
+        $model = $this->grant(['client_id' => 'spa', 'client_secret' => 'x', 'code' => $code->token, 'code_verifier' => $verifier]);
         $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
             $model->validate();
         });
@@ -138,7 +144,7 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
     {
         $this->createClient('cc-only', 's', 'https://cc.example.com/cb', 'client_credentials');
         $code = $this->createCode('cc-only');
-        $model = $this->grant(['client_id' => 'cc-only', 'client_secret' => 's', 'code' => $code->authorization_code]);
+        $model = $this->grant(['client_id' => 'cc-only', 'client_secret' => 's', 'code' => $code->token]);
         $this->assertOAuthError(Exception::UNAUTHORIZED_CLIENT, function () use ($model) {
             $model->validate();
         });

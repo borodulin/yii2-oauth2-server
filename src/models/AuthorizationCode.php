@@ -10,17 +10,17 @@ namespace conquer\oauth2\models;
 use conquer\oauth2\Exception;
 use Yii;
 use yii\db\ActiveRecord;
-use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "oauth_authorization_code".
  *
- * @property string $authorization_code
+ * @property string $authorization_code SHA-256 hash of the token, see TokenTrait
  * @property string $client_id
  * @property integer $user_id
  * @property string $redirect_uri
  * @property integer $expires
  * @property string $scope
+ * @property int|null $used when the token was used, single-use tokens are kept until they expire to detect reuse
  * @property string|null $code_challenge
  * @property string|null $code_challenge_method
  *
@@ -29,6 +29,8 @@ use yii\helpers\VarDumper;
  */
 class AuthorizationCode extends ActiveRecord
 {
+    use TokenTrait;
+
     /**
      * @inheritdoc
      */
@@ -46,7 +48,8 @@ class AuthorizationCode extends ActiveRecord
             [['authorization_code', 'client_id', 'user_id', 'expires'], 'required'],
             [['user_id', 'expires'], 'integer'],
             [['scope'], 'string'],
-            [['authorization_code'], 'string', 'max' => 40],
+            [['used'], 'integer'],
+            [['authorization_code'], 'string', 'max' => 64],
             [['client_id'], 'string', 'max' => 80],
             [['redirect_uri'], 'string'],
             [['code_challenge'], 'string', 'max' => 128],
@@ -78,17 +81,19 @@ class AuthorizationCode extends ActiveRecord
      */
     public static function createAuthorizationCode(array $params)
     {
-        static::deleteAll(['<', 'expires', time()]);
-
-        $params['authorization_code'] = Yii::$app->security->generateRandomString(40);
-        $authCode = new static($params);
-
-        if ($authCode->save()) {
-            return $authCode;
-        } else {
-            Yii::error(__CLASS__ . ' validation error: ' . VarDumper::dumpAsString($authCode->errors));
+        $model = static::createWithToken($params);
+        if ($model === null) {
+            throw new Exception(Yii::t('conquer/oauth2', 'Unable to create authorization code.'), Exception::SERVER_ERROR);
         }
-        throw new Exception(Yii::t('conquer/oauth2', 'Unable to create authorization code.'), Exception::SERVER_ERROR);
+        return $model;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function tokenAttribute()
+    {
+        return 'authorization_code';
     }
 
     /**

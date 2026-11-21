@@ -4,19 +4,22 @@ namespace tests\unit\flow;
 
 use conquer\oauth2\AuthorizeFilter;
 use conquer\oauth2\Exception;
-use conquer\oauth2\RedirectException;
-use conquer\oauth2\TokenAction;
-use conquer\oauth2\TokenAuth;
 use conquer\oauth2\granttypes\Authorization;
 use conquer\oauth2\granttypes\ClientCredentials;
 use conquer\oauth2\granttypes\RefreshToken;
 use conquer\oauth2\models\AccessToken;
+use conquer\oauth2\models\Client;
+use conquer\oauth2\RedirectException;
+use conquer\oauth2\TokenAction;
+use conquer\oauth2\TokenAuth;
+use tests\ArraySession;
 use tests\OAuthTestCase;
 use tests\TestIdentity;
 use Yii;
 use yii\base\Action;
-use tests\ArraySession;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
+use yii\web\UnauthorizedHttpException;
 
 class HardeningTest extends OAuthTestCase
 {
@@ -66,8 +69,8 @@ class HardeningTest extends OAuthTestCase
     {
         $this->createClient('spa', '', 'https://spa.example.com/cb');
         $token = $this->createRefreshToken('spa');
-        $model = $this->model(\conquer\oauth2\granttypes\RefreshToken::class, [
-            'grant_type' => 'refresh_token', 'client_id' => 'spa', 'refresh_token' => $token->refresh_token,
+        $model = $this->model(RefreshToken::class, [
+            'grant_type' => 'refresh_token', 'client_id' => 'spa', 'refresh_token' => $token->token,
         ]);
         $this->assertTrue($model->validate());
     }
@@ -98,7 +101,7 @@ class HardeningTest extends OAuthTestCase
     public function testTokenWithoutScopeAuthenticatesOnPhp81()
     {
         $token = AccessToken::createAccessToken(['client_id' => 'app', 'user_id' => 42, 'expires' => time() + 60]);
-        Yii::$app->request->headers->set('Authorization', 'Bearer ' . $token->access_token);
+        Yii::$app->request->headers->set('Authorization', 'Bearer ' . $token->token);
         set_error_handler(function ($code, $message) {
             throw new \ErrorException($message, 0, $code);
         });
@@ -132,7 +135,7 @@ class HardeningTest extends OAuthTestCase
 
     private function tokenAction()
     {
-        return new TokenAction('token', new \yii\web\Controller('auth', Yii::$app));
+        return new TokenAction('token', new Controller('auth', Yii::$app));
     }
 
     public function testTokenEndpointRequiresPost()
@@ -229,7 +232,7 @@ class HardeningTest extends OAuthTestCase
         try {
             $this->tokenAuth()->authenticate(Yii::$app->user, Yii::$app->request, Yii::$app->response);
             $this->fail('invalid token must be rejected');
-        } catch (\yii\web\UnauthorizedHttpException $e) {
+        } catch (UnauthorizedHttpException $e) {
             $this->assertStringContainsString('error="invalid_token"', Yii::$app->response->headers->get('WWW-Authenticate'));
         }
     }
@@ -237,19 +240,19 @@ class HardeningTest extends OAuthTestCase
     public function testExpiredAccessTokenIsRejected()
     {
         $token = AccessToken::createAccessToken(['client_id' => 'app', 'user_id' => 42, 'expires' => time() - 1]);
-        Yii::$app->request->headers->set('Authorization', 'Bearer ' . $token->access_token);
-        $this->expectException(\yii\web\UnauthorizedHttpException::class);
+        Yii::$app->request->headers->set('Authorization', 'Bearer ' . $token->token);
+        $this->expectException(UnauthorizedHttpException::class);
         $this->tokenAuth()->authenticate(Yii::$app->user, Yii::$app->request, Yii::$app->response);
     }
 
     public function testInsufficientScopeIsForbidden()
     {
         $token = AccessToken::createAccessToken(['client_id' => 'app', 'user_id' => 42, 'expires' => time() + 60, 'scope' => 'read']);
-        Yii::$app->request->headers->set('Authorization', 'bearer ' . $token->access_token);
+        Yii::$app->request->headers->set('Authorization', 'bearer ' . $token->token);
         try {
             $this->tokenAuth(['scopes' => ['write']])->authenticate(Yii::$app->user, Yii::$app->request, Yii::$app->response);
             $this->fail('insufficient scope must be rejected');
-        } catch (\yii\web\ForbiddenHttpException $e) {
+        } catch (ForbiddenHttpException $e) {
             $header = Yii::$app->response->headers->get('WWW-Authenticate');
             $this->assertStringContainsString('error="insufficient_scope"', $header);
             $this->assertStringContainsString('scope="write"', $header);
@@ -259,7 +262,7 @@ class HardeningTest extends OAuthTestCase
     public function testLowercaseBearerSchemeIsAccepted()
     {
         $token = AccessToken::createAccessToken(['client_id' => 'app', 'user_id' => 42, 'expires' => time() + 60]);
-        Yii::$app->request->headers->set('Authorization', 'bearer ' . $token->access_token);
+        Yii::$app->request->headers->set('Authorization', 'bearer ' . $token->token);
         $identity = $this->tokenAuth()->authenticate(Yii::$app->user, Yii::$app->request, Yii::$app->response);
         $this->assertSame(42, $identity->getId());
     }
@@ -278,7 +281,7 @@ class HardeningTest extends OAuthTestCase
     public function testCodeCannotBeRedeemedTwiceConcurrently()
     {
         $code = $this->createCode('app');
-        $params = ['grant_type' => 'authorization_code', 'client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->authorization_code];
+        $params = ['grant_type' => 'authorization_code', 'client_id' => 'app', 'client_secret' => 'secret', 'code' => $code->token];
         $first = $this->model(Authorization::class, $params);
         $second = $this->model(Authorization::class, $params);
         $this->assertTrue($first->validate());
@@ -292,7 +295,7 @@ class HardeningTest extends OAuthTestCase
     public function testRefreshTokenCannotBeUsedTwiceConcurrently()
     {
         $token = $this->createRefreshToken('app');
-        $params = ['grant_type' => 'refresh_token', 'client_id' => 'app', 'client_secret' => 'secret', 'refresh_token' => $token->refresh_token];
+        $params = ['grant_type' => 'refresh_token', 'client_id' => 'app', 'client_secret' => 'secret', 'refresh_token' => $token->token];
         $first = $this->model(RefreshToken::class, $params);
         $second = $this->model(RefreshToken::class, $params);
         $this->assertTrue($first->validate());
@@ -302,4 +305,36 @@ class HardeningTest extends OAuthTestCase
             $second->getResponseData();
         });
     }
+
+    public function testClientSecretIsStoredHashed()
+    {
+        $client = new Client(['client_id' => 'new', 'redirect_uri' => 'https://new.example.com/cb', 'secretHashCost' => 4]);
+        $secret = $client->generateSecret();
+        $this->assertTrue($client->save());
+        $stored = Client::findOne('new');
+        $this->assertNotSame($secret, $stored->client_secret);
+        $this->assertTrue($stored->validateSecret($secret));
+        $this->assertFalse($stored->validateSecret('wrong'));
+        // saving again does not hash the hash
+        $this->assertTrue($stored->save());
+        $this->assertTrue(Client::findOne('new')->validateSecret($secret));
+    }
+
+    public function testPlainSecretInDatabaseIsNotAccepted()
+    {
+        Yii::$app->db->createCommand()->update('{{%oauth2_client}}', ['client_secret' => 'plain'], ['client_id' => 'app'])->execute();
+        $model = $this->model(ClientCredentials::class, ['grant_type' => 'client_credentials', 'client_id' => 'app', 'client_secret' => 'plain']);
+        $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
+            $model->validate();
+        });
+    }
+
+    public function testAccessTokenIsStoredHashed()
+    {
+        $token = AccessToken::createAccessToken(['client_id' => 'app', 'user_id' => 42, 'expires' => time() + 60]);
+        $this->assertSame(40, strlen($token->token));
+        $this->assertSame(hash('sha256', $token->token), $token->access_token);
+        $this->assertNull(AccessToken::findOne($token->token));
+    }
 }
+

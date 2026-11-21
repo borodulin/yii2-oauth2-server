@@ -234,7 +234,13 @@ abstract class BaseModel extends Model
 
     abstract public function getResponseData();
 
-    public static function getRequestValue($param, $header = null, Request $request = null)
+    /**
+     * @param string $param
+     * @param string|null $header
+     * @param Request|null $request
+     * @return mixed
+     */
+    public static function getRequestValue($param, $header = null, $request = null)
     {
         if (is_null($request)) {
             $request = Yii::$app->request;
@@ -299,6 +305,21 @@ abstract class BaseModel extends Model
         if (!is_string($secret) || !$client->validateSecret($secret)) {
             $this->errorServer(Yii::t('conquer/oauth2', 'The client credentials are invalid.'), Exception::INVALID_CLIENT);
         }
+    }
+
+    /**
+     * Revokes all access and refresh tokens of a user issued to a client, after a code or refresh token
+     * was used twice (RFC 6749, 4.1.2 and 10.4; RFC 9700, 4.14.2).
+     * @param string $clientId
+     * @param int|string|null $userId
+     * @return void
+     */
+    protected function revokeTokens($clientId, $userId)
+    {
+        $condition = ['client_id' => $clientId, 'user_id' => $userId];
+        \conquer\oauth2\models\AccessToken::deleteAll($condition);
+        \conquer\oauth2\models\RefreshToken::deleteAll($condition);
+        Yii::warning("Reused code or refresh token of client $clientId, tokens of user $userId are revoked", __METHOD__);
     }
 
     /**

@@ -143,7 +143,7 @@ class Authorization extends BaseModel
         ]);
 
         $query = [
-            'code' => $authCode->authorization_code,
+            'code' => $authCode->token,
         ];
 
         if ($this->state !== null && $this->state !== '') {

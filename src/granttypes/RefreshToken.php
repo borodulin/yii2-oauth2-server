@@ -67,34 +67,55 @@ class RefreshToken extends BaseModel
         ];
     }
 
+    /**
+     * @return void
+     * @throws Exception
+     */
     public function validateRefreshToken()
     {
         $refreshToken = $this->getRefreshToken();
+        if ($refreshToken->used !== null) {
+            // a rotated refresh token was used again: it has leaked (RFC 9700, 4.14.2)
+            $this->revokeTokens($refreshToken->client_id, $refreshToken->user_id);
+            $this->errorServer(Yii::t('conquer/oauth2', 'The Refresh Token is invalid.'), Exception::INVALID_GRANT);
+        }
         $this->checkGrantType('refresh_token');
-
         if ($refreshToken->client_id !== $this->client_id) {
             $this->errorServer(Yii::t('conquer/oauth2', 'The Refresh Token was issued to another client.'), Exception::INVALID_GRANT);
         }
         if ($refreshToken->expires < time()) {
-            $refreshToken->delete();
             $this->errorServer(Yii::t('conquer/oauth2', 'The Refresh Token has expired.'), Exception::INVALID_GRANT);
         }
-        if (!empty($this->scope) && !$this->checkSets($this->scope, (string)$refreshToken->scope)) {
+        if (!empty($this->scope)
+            && !$this->checkSets($this->scope, implode(' ', $this->getGrantedScope()))
+        ) {
             $this->errorServer(Yii::t('conquer/oauth2', 'The requested scope is invalid, unknown, or malformed.'), Exception::INVALID_SCOPE);
         }
     }
 
     /**
-     * @return array
+     * The originally granted scope, without scopes the client is no longer allowed.
+     * @return string[]
+     */
+    protected function getGrantedScope()
+    {
+        $clientScope = self::splitScope($this->getClient()->scope);
+        return array_values(array_intersect(self::splitScope($this->getRefreshToken()->scope), $clientScope));
+    }
+
+    /**
+     * @return array<string, mixed>
      * @throws Exception
      */
     public function getResponseData()
     {
         $oldToken = $this->getRefreshToken();
-        $scope = empty($this->scope) ? $oldToken->scope : $this->scope;
-
+        $granted = implode(' ', $this->getGrantedScope());
+        // the access token may get a narrower scope, the new refresh token keeps the granted scope (RFC 6749, 6)
+        $scope = empty($this->scope) ? $granted : implode(' ', self::splitScope($this->scope));
         // rotate atomically: concurrent requests with the same refresh token must not both succeed
-        if ($oldToken->delete() !== 1) {
+        if (!$oldToken->markUsed()) {
+            $this->revokeTokens($oldToken->client_id, $oldToken->user_id);
             $this->errorServer(Yii::t('conquer/oauth2', 'The Refresh Token is invalid.'), Exception::INVALID_GRANT);
         }
 
@@ -109,15 +130,15 @@ class RefreshToken extends BaseModel
             'client_id' => $this->client_id,
             'user_id' => $oldToken->user_id,
             'expires' => $this->refreshTokenLifetime + time(),
-            'scope' => $scope,
+            'scope' => $granted,
         ]);
 
         return [
-            'access_token' => $acessToken->access_token,
+            'access_token' => $acessToken->token,
             'expires_in' => $this->accessTokenLifetime,
             'token_type' => $this->tokenType,
             'scope' => $scope,
-            'refresh_token' => $refreshToken->refresh_token,
+            'refresh_token' => $refreshToken->token,
         ];
     }
 
@@ -131,7 +152,7 @@ class RefreshToken extends BaseModel
             if (empty($this->refresh_token) || !is_string($this->refresh_token)) {
                 $this->errorServer(Yii::t('conquer/oauth2', 'The request is missing "refresh_token" parameter.'));
             }
-            if (!$this->_refreshToken = \conquer\oauth2\models\RefreshToken::findOne(['refresh_token' => $this->refresh_token])) {
+            if (!$this->_refreshToken = \conquer\oauth2\models\RefreshToken::findByToken($this->refresh_token)) {
                 $this->errorServer(Yii::t('conquer/oauth2', 'The Refresh Token is invalid.'), Exception::INVALID_GRANT);
             }
         }

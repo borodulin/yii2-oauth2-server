@@ -28,8 +28,9 @@ class m150610_162817_oauth extends Migration
             'scope' => Schema::TYPE_TEXT,
             'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
             'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
-            'created_by' => Schema::TYPE_INTEGER . ' NOT NULL',
-            'updated_by' => Schema::TYPE_INTEGER . ' NOT NULL',
+            // BlameableBehavior writes null in console commands and for guests
+            'created_by' => Schema::TYPE_INTEGER,
+            'updated_by' => Schema::TYPE_INTEGER,
             'PRIMARY KEY (client_id)',
         ]);
 
@@ -61,9 +62,12 @@ class m150610_162817_oauth extends Migration
             'PRIMARY KEY (authorization_code)',
         ]);
 
-        $this->addforeignkey('fk_refresh_token_oauth2_client_client_id', '{{%oauth2_refresh_token}}', 'client_id', '{{%oauth2_client}}', 'client_id', 'cascade', 'cascade');
-        $this->addforeignkey('fk_authorization_code_oauth2_client_client_id', '{{%oauth2_authorization_code}}', 'client_id', '{{%oauth2_client}}', 'client_id', 'cascade', 'cascade');
-        $this->addforeignkey('fk_access_token_oauth2_client_client_id', '{{%oauth2_access_token}}', 'client_id', '{{%oauth2_client}}', 'client_id', 'cascade', 'cascade');
+        // SQLite cannot add foreign keys to existing tables
+        if ($this->db->driverName !== 'sqlite') {
+            $this->addforeignkey('fk_refresh_token_oauth2_client_client_id', '{{%oauth2_refresh_token}}', 'client_id', '{{%oauth2_client}}', 'client_id', 'cascade', 'cascade');
+            $this->addforeignkey('fk_authorization_code_oauth2_client_client_id', '{{%oauth2_authorization_code}}', 'client_id', '{{%oauth2_client}}', 'client_id', 'cascade', 'cascade');
+            $this->addforeignkey('fk_access_token_oauth2_client_client_id', '{{%oauth2_access_token}}', 'client_id', '{{%oauth2_client}}', 'client_id', 'cascade', 'cascade');
+        }
 
         $this->createIndex('ix_authorization_code_expires', '{{%oauth2_authorization_code}}', 'expires');
         $this->createIndex('ix_refresh_token_expires', '{{%oauth2_refresh_token}}', 'expires');

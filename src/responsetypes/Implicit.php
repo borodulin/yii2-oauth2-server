@@ -107,7 +107,7 @@ class Implicit extends BaseModel
         ]);
 
         $fragment = [
-            'access_token' => $accessToken->access_token,
+            'access_token' => $accessToken->token,
             'expires_in' => $this->accessTokenLifetime,
             'token_type' => $this->tokenType,
             'scope' => $this->scope,

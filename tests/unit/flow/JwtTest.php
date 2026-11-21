@@ -109,7 +109,7 @@ class JwtTest extends OAuthTestCase
         $data = $model->getResponseData();
         $this->assertSame('read', $data['scope']);
         $this->assertArrayNotHasKey('refresh_token', $data);
-        $token = AccessToken::findOne($data['access_token']);
+        $token = AccessToken::findByToken($data['access_token']);
         $this->assertNotNull($token);
         $this->assertSame('jwt', $token->client_id);
         $this->assertEquals(42, $token->user_id);
@@ -268,7 +268,7 @@ class JwtTest extends OAuthTestCase
         $model = $this->model(RefreshToken::class, array_merge([
             'grant_type' => 'refresh_token',
             'client_id' => 'jwt',
-            'refresh_token' => $token->refresh_token,
+            'refresh_token' => $token->token,
         ], $this->assertion()));
         $this->assertTrue($model->validate());
     }
@@ -278,7 +278,7 @@ class JwtTest extends OAuthTestCase
         $code = $this->createCode('jwt', ['redirect_uri' => '']);
         $model = $this->model(Authorization::class, array_merge([
             'grant_type' => 'authorization_code',
-            'code' => $code->authorization_code,
+            'code' => $code->token,
         ], $this->assertion()));
         $this->assertTrue($model->validate());
     }
@@ -288,7 +288,7 @@ class JwtTest extends OAuthTestCase
         $code = $this->createCode('jwt', ['redirect_uri' => '']);
         $model = $this->model(Authorization::class, array_merge([
             'grant_type' => 'authorization_code',
-            'code' => $code->authorization_code,
+            'code' => $code->token,
         ], $this->assertion(['exp' => time() - 120])));
         $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
             $model->validate();

@@ -15,7 +15,7 @@ use yii\behaviors\TimestampBehavior;
  * This is the model class for table "oauth2_client".
  *
  * @property string $client_id
- * @property string $client_secret
+ * @property string $client_secret bcrypt hash of the secret, empty for public clients
  * @property string $redirect_uri
  * @property string $grant_type
  * @property string $scope
@@ -28,6 +28,11 @@ use yii\behaviors\TimestampBehavior;
  */
 class Client extends \yii\db\ActiveRecord
 {
+    /**
+     * @var int bcrypt cost of client secret hashes; every token request with a secret checks the hash
+     */
+    public $secretHashCost = 10;
+
     /**
      * @inheritdoc
      */
@@ -93,14 +98,51 @@ class Client extends \yii\db\ActiveRecord
     }
 
     /**
-     * Checks a client secret in constant time.
+     * Checks a client secret against the stored bcrypt hash.
      * @param string $secret
      * @return bool
      */
     public function validateSecret($secret)
     {
         $stored = (string)$this->client_secret;
-        return $stored !== '' && $secret !== '' && Yii::$app->security->compareString($stored, $secret);
+        if ($secret === '' || !self::isSecretHash($stored)) {
+            return false;
+        }
+        return Yii::$app->security->validatePassword($secret, $stored);
+    }
+
+    /**
+     * Generates a new random secret and stores its hash; save() the model afterwards.
+     * @return string the secret to give to the client, it cannot be recovered later
+     * @throws \yii\base\Exception
+     */
+    public function generateSecret()
+    {
+        $secret = Yii::$app->security->generateRandomString(40);
+        $this->client_secret = $secret;
+        return $secret;
+    }
+
+    /**
+     * @param string $value
+     * @return bool whether the value is a bcrypt hash
+     */
+    public static function isSecretHash($value)
+    {
+        return (bool)preg_match('/^\$2[axy]\$\d\d\$[.\/A-Za-z0-9]{53}$/', $value);
+    }
+
+    /**
+     * Client secrets are stored as bcrypt hashes; a plain secret assigned to client_secret is hashed on save.
+     * @inheritdoc
+     */
+    public function beforeSave($insert)
+    {
+        $secret = (string)$this->client_secret;
+        if ($secret !== '' && !self::isSecretHash($secret)) {
+            $this->client_secret = Yii::$app->security->generatePasswordHash($secret, $this->secretHashCost);
+        }
+        return parent::beforeSave($insert);
     }
 
     /**

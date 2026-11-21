@@ -40,47 +40,43 @@ abstract class OAuthTestCase extends \Codeception\Test\Unit
         Yii::$app = null;
     }
 
-    private function createSchema()
+    /**
+     * Creates the schema with the package migrations.
+     */
+    protected function createSchema()
     {
-        $db = Yii::$app->db;
-        $db->createCommand()->createTable('{{%oauth2_client}}', [
-            'client_id' => 'string(80) NOT NULL PRIMARY KEY',
-            'client_secret' => 'string(80) NOT NULL',
-            'redirect_uri' => 'text NOT NULL',
-            'grant_type' => 'text',
-            'scope' => 'text',
-            'public_key' => 'text',
-            'created_at' => 'integer NOT NULL',
-            'updated_at' => 'integer NOT NULL',
-            'created_by' => 'integer',
-            'updated_by' => 'integer',
-        ])->execute();
-        foreach (['access_token', 'refresh_token'] as $name) {
-            $db->createCommand()->createTable("{{%oauth2_$name}}", [
-                $name => 'string(40) NOT NULL PRIMARY KEY',
-                'client_id' => 'string(80) NOT NULL',
-                'user_id' => 'integer',
-                'expires' => 'integer NOT NULL',
-                'scope' => 'text',
-            ])->execute();
+        $this->migrate([
+            \conquer\oauth2\migrations\m150610_162817_oauth::class,
+            \conquer\oauth2\migrations\m261103_120000_oauth_pkce::class,
+            \conquer\oauth2\migrations\m261122_120000_oauth_jwt::class,
+            \conquer\oauth2\migrations\m261123_120000_oauth_v3::class,
+        ]);
+    }
+
+    /**
+     * @param string[] $migrations
+     */
+    protected function migrate(array $migrations)
+    {
+        ob_start();
+        try {
+            foreach ($migrations as $class) {
+                $migration = new $class(['db' => Yii::$app->db, 'compact' => true]);
+                if ($migration->up() === false) {
+                    throw new \RuntimeException("Migration $class failed");
+                }
+            }
+        } finally {
+            ob_end_clean();
         }
-        $db->createCommand()->createTable('{{%oauth2_authorization_code}}', [
-            'authorization_code' => 'string(40) NOT NULL PRIMARY KEY',
-            'client_id' => 'string(80) NOT NULL',
-            'user_id' => 'integer',
-            'redirect_uri' => 'text NOT NULL',
-            'expires' => 'integer NOT NULL',
-            'scope' => 'text',
-            'code_challenge' => 'string(128)',
-            'code_challenge_method' => 'string(10)',
-        ])->execute();
     }
 
     protected function createClient($id, $secret, $redirectUri, $grantType = null, $scope = 'read write')
     {
         Yii::$app->db->createCommand()->insert('{{%oauth2_client}}', [
             'client_id' => $id,
-            'client_secret' => $secret,
+            // secrets are stored as bcrypt hashes; a low cost keeps the tests fast
+            'client_secret' => $secret === '' ? '' : Yii::$app->security->generatePasswordHash($secret, 4),
             'redirect_uri' => $redirectUri,
             'grant_type' => $grantType,
             'scope' => $scope,

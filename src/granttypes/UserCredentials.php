@@ -25,7 +25,7 @@ use yii\web\IdentityInterface;
  * Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
  * Content-Type: application/x-www-form-urlencoded
  *
- * response_type=password&username=johndoe&password=A3ddj3w
+ * grant_type=password&username=johndoe&password=A3ddj3w
  * ```
  *
  * @link https://tools.ietf.org/html/rfc6749#section-4.3
@@ -33,6 +33,11 @@ use yii\web\IdentityInterface;
  */
 class UserCredentials extends BaseModel
 {
+    /**
+     * bcrypt hash (cost 13, the Yii default) checked when the user does not exist
+     */
+    const DUMMY_PASSWORD_HASH = '$2y$13$wfr3uy.Wc06ySoxIonqUHuW4ZxJxOJ7mUTKqx3sBmtCZUgqEEBS9e';
+
     private $_user;
 
     /**
@@ -98,12 +103,14 @@ class UserCredentials extends BaseModel
      */
     public function validatePassword($attribute)
     {
-        if (! $this->hasErrors()) {
-            /** @var OAuth2IdentityInterface|null $user */
-            $user = $this->getUser();
-            if (!$user || !$user->validatePassword($this->password)) {
-                $this->addError($attribute, Yii::t('conquer/oauth2', 'Invalid username or password.'));
-            }
+        /** @var OAuth2IdentityInterface|null $user */
+        $user = $this->getUser();
+        if (!$user) {
+            // spend the time of a password check, so that response times do not reveal existing usernames
+            Yii::$app->security->validatePassword((string)$this->password, self::DUMMY_PASSWORD_HASH);
+        }
+        if (!$user || !$user->validatePassword($this->password)) {
+            $this->addError($attribute, Yii::t('conquer/oauth2', 'Invalid username or password.'));
         }
     }
 
@@ -130,11 +137,11 @@ class UserCredentials extends BaseModel
         ]);
 
         return [
-            'access_token' => $accessToken->access_token,
+            'access_token' => $accessToken->token,
             'expires_in' => $this->accessTokenLifetime,
             'token_type' => $this->tokenType,
             'scope' => $this->scope,
-            'refresh_token' => $refreshToken->refresh_token,
+            'refresh_token' => $refreshToken->token,
         ];
     }
 

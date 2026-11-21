@@ -87,13 +87,16 @@ class Authorization extends BaseModel
     public function validateCode()
     {
         $authCode = $this->getAuthCode();
+        if ($authCode->used !== null) {
+            $this->revokeTokens($authCode->client_id, $authCode->user_id);
+            $this->errorServer(Yii::t('conquer/oauth2', 'The authorization code is not found or has been expired.'), Exception::INVALID_GRANT);
+        }
         $this->checkGrantType('authorization_code');
 
         if ($authCode->client_id !== $this->client_id) {
             $this->errorServer(Yii::t('conquer/oauth2', 'The authorization code was issued to another client.'), Exception::INVALID_GRANT);
         }
         if ($authCode->expires < time()) {
-            $authCode->delete();
             $this->errorServer(Yii::t('conquer/oauth2', 'The authorization code is not found or has been expired.'), Exception::INVALID_GRANT);
         }
         if (!empty($authCode->redirect_uri) && $this->redirect_uri !== $authCode->redirect_uri) {
@@ -143,10 +146,12 @@ class Authorization extends BaseModel
 
         /**
          * The client MUST NOT use the authorization code more than once.
-         * Deleting first makes concurrent requests with the same code fail instead of both getting tokens.
+         * Marking it used first makes concurrent requests with the same code fail instead of both getting tokens;
+         * the used code is kept until it expires to detect reuse.
          * @link https://tools.ietf.org/html/rfc6749#section-4.1.2
          */
-        if ($authCode->delete() !== 1) {
+        if (!$authCode->markUsed()) {
+            $this->revokeTokens($authCode->client_id, $authCode->user_id);
             $this->errorServer(Yii::t('conquer/oauth2', 'The authorization code is not found or has been expired.'), Exception::INVALID_GRANT);
         }
 
@@ -164,11 +169,11 @@ class Authorization extends BaseModel
             'scope' => $authCode->scope,
         ]);
         return [
-            'access_token' => $acessToken->access_token,
+            'access_token' => $acessToken->token,
             'expires_in' => $this->accessTokenLifetime,
             'token_type' => $this->tokenType,
             'scope' => $authCode->scope,
-            'refresh_token' => $refreshToken->refresh_token,
+            'refresh_token' => $refreshToken->token,
         ];
     }
 
@@ -182,7 +187,7 @@ class Authorization extends BaseModel
             if (empty($this->code) || !is_string($this->code)) {
                 $this->errorServer(Yii::t('conquer/oauth2', 'Authorization code is missing.'), Exception::INVALID_REQUEST);
             }
-            if (!$this->_authCode = AuthorizationCode::findOne(['authorization_code' => $this->code])) {
+            if (!$this->_authCode = AuthorizationCode::findByToken($this->code)) {
                 $this->errorServer(Yii::t('conquer/oauth2', 'The authorization code is not found or has been expired.'), Exception::INVALID_GRANT);
             }
         }
