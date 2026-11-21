@@ -37,7 +37,7 @@ use yii\web\UnauthorizedHttpException;
 class TokenAuth extends AuthMethod
 {
     /**
-     * @var AccessToken
+     * @var AccessToken|null
      */
     private $_accessToken;
 
@@ -47,7 +47,7 @@ class TokenAuth extends AuthMethod
     public $realm;
 
     /**
-     * @var string the class name of the [[identity]] object.
+     * @var string|null the class name of the [[identity]] object, defaults to [[\yii\web\User::$identityClass]].
      */
     public $identityClass;
 

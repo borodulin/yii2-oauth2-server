@@ -20,7 +20,7 @@ use Yii;
 class RefreshToken extends BaseModel
 {
     /**
-     * @var \conquer\oauth2\models\RefreshToken
+     * @var \conquer\oauth2\models\RefreshToken|null
      */
     private $_refreshToken;
 
@@ -32,7 +32,7 @@ class RefreshToken extends BaseModel
 
     /**
      * The refresh token issued to the client.
-     * @var string
+     * @var mixed raw request value, checked in getRefreshToken()
      */
     public $refresh_token;
 

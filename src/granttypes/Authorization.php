@@ -28,7 +28,7 @@ use Yii;
 class Authorization extends BaseModel
 {
     /**
-     * @var AuthorizationCode
+     * @var AuthorizationCode|null
      */
     private $_authCode;
 
@@ -40,7 +40,7 @@ class Authorization extends BaseModel
 
     /**
      * The authorization code received from the authorization server.
-     * @var string
+     * @var mixed raw request value, checked in getAuthCode()
      */
     public $code;
 
@@ -64,7 +64,7 @@ class Authorization extends BaseModel
 
     /**
      * PKCE code verifier.
-     * @var string
+     * @var string|null
      */
     public $code_verifier;
 

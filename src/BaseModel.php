@@ -9,11 +9,13 @@ use yii\web\Request;
 
 /**
  * @property Client $client
+ * @property mixed $client_id
+ * @property mixed $client_secret
  */
 abstract class BaseModel extends Model
 {
     /**
-     * @var Client
+     * @var Client|null
      */
     protected $_client;
 
@@ -77,16 +79,35 @@ abstract class BaseModel extends Model
         return false;
     }
 
+    /**
+     * Throws on the first validation error instead of collecting errors.
+     * @param string $type
+     * @return never
+     * @throws Exception
+     */
     public function addError($attribute, $error = '', $type = Exception::INVALID_REQUEST)
     {
         throw new Exception($error, $type);
     }
 
+    /**
+     * @param string $error
+     * @param string $type
+     * @return never
+     * @throws Exception
+     */
     public function errorServer($error, $type = Exception::INVALID_REQUEST)
     {
         throw new Exception($error, $type);
     }
 
+    /**
+     * @param string $error
+     * @param string $type
+     * @return never
+     * @throws Exception
+     * @throws RedirectException
+     */
     public function errorRedirect($error, $type = Exception::INVALID_REQUEST)
     {
         if (!$this->redirectsErrors()) {
@@ -234,8 +255,10 @@ abstract class BaseModel extends Model
     public static function splitScope($scope)
     {
         if (is_array($scope)) {
-            return array_values(array_filter($scope, 'strlen'));
+            return array_values(array_filter($scope, static function ($item) {
+                return strlen($item) > 0;
+            }));
         }
-        return preg_split('/\s+/', trim((string)$scope), -1, PREG_SPLIT_NO_EMPTY);
+        return preg_split('/\s+/', trim((string)$scope), -1, PREG_SPLIT_NO_EMPTY) ?: [];
     }
 }

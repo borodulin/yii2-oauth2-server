@@ -21,3 +21,16 @@ jobs:
       - run: composer update --no-interaction --no-progress
       - run: vendor/bin/phpcs --standard=vendor/yiisoft/yii2-coding-standards/Yii2 --extensions=php --ignore=src/migrations src
       - run: vendor/bin/codecept run
+
+  phpstan:
+    runs-on: ubuntu-latest
+    name: PHPStan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - run: composer update --no-interaction --no-progress
+      - run: vendor/bin/codecept build
+      - run: vendor/bin/phpstan analyse --no-progress

@@ -1,0 +1,13 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - tests/_support/_generated
+    bootstrapFiles:
+        - vendor/yiisoft/yii2/Yii.php
+    ignoreErrors:
+        # models and identities are meant to be extended, a final constructor would break subclasses
+        -
+            identifier: new.static

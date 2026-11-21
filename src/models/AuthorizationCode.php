@@ -100,15 +100,17 @@ class AuthorizationCode extends ActiveRecord
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * @return \yii\db\ActiveQuery|null null when the identity class is not an ActiveRecord
      */
     public function getUser()
     {
         $identityClass = Yii::$app->user->identityClass;
         if (is_subclass_of($identityClass, ActiveRecord::class)) {
-            /** @var ActiveRecord $identityClass */
             $primaryKey = $identityClass::primaryKey();
-            return $this->hasOne($identityClass, [reset($primaryKey) => 'user_id']);
+            $key = reset($primaryKey);
+            if (is_string($key)) {
+                return $this->hasOne($identityClass, [$key => 'user_id']);
+            }
         }
         return null;
     }

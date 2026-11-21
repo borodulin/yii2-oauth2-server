@@ -42,7 +42,7 @@ class Authorization extends BaseModel
     /**
      * Cross-Site Request Forgery
      * @link https://tools.ietf.org/html/rfc6749#section-10.12
-     * @var string
+     * @var string|null
      */
     public $state;
 

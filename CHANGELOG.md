@@ -1,3 +1,9 @@
+2.1.1 under development
+-----------------------
+- Bug: `JwtBearer::getResponseData()` returned nothing; it now throws a `not_implemented` error
+- Bug: `getUser()` of the token models returns null instead of a broken relation when the identity class has no primary key
+- Enh: PHPStan (level 5) in CI
+
 2.1.0
 -----
 - Sec: authorization codes and refresh tokens are redeemed atomically: concurrent requests with the same code or refresh token no longer both get tokens

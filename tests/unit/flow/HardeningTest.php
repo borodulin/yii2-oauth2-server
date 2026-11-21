@@ -14,7 +14,9 @@ use conquer\oauth2\models\AccessToken;
 use tests\OAuthTestCase;
 use tests\TestIdentity;
 use Yii;
+use yii\base\Action;
 use yii\base\Component;
+use yii\web\Controller;
 
 /**
  * In-memory session for tests.
@@ -98,7 +100,7 @@ class HardeningTest extends OAuthTestCase
         Yii::$app->set('session', ArraySession::class);
         Yii::$app->request->setQueryParams(['response_type' => 'code', 'client_id' => 'app']);
         $filter = new AuthorizeFilter();
-        $filter->beforeAction(null);
+        $filter->beforeAction(new Action('authorize', new Controller('site', Yii::$app)));
         $this->assertTrue($filter->getIsOauthRequest());
 
         Yii::$app->user->setIdentity(new TestIdentity(['id' => 42]));

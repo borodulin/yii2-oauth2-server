@@ -48,7 +48,9 @@ class TokenAction extends Action
         // token responses must not be cached (RFC 6749, 5.1)
         Yii::$app->response->headers->set('Cache-Control', 'no-store');
         Yii::$app->response->headers->set('Pragma', 'no-cache');
-        $this->controller->enableCsrfValidation = false;
+        if ($this->controller instanceof \yii\web\Controller) {
+            $this->controller->enableCsrfValidation = false;
+        }
     }
 
     public function run()

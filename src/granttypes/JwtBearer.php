@@ -8,6 +8,7 @@
 namespace conquer\oauth2\granttypes;
 
 use conquer\oauth2\BaseModel;
+use conquer\oauth2\Exception;
 
 /**
  *
@@ -18,8 +19,12 @@ use conquer\oauth2\BaseModel;
 class JwtBearer extends BaseModel
 {
 
+    /**
+     * @return never
+     * @throws Exception
+     */
     public function getResponseData()
     {
-        // TODO: Implement getResponseData() method.
+        throw new Exception('The JWT bearer grant type is not implemented.', Exception::NOT_IMPLEMENTED);
     }
 }

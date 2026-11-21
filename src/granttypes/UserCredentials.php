@@ -98,7 +98,7 @@ class UserCredentials extends BaseModel
     public function validatePassword($attribute)
     {
         if (! $this->hasErrors()) {
-            /** @var OAuth2IdentityInterface $user */
+            /** @var OAuth2IdentityInterface|null $user */
             $user = $this->getUser();
             if (!$user || !$user->validatePassword($this->password)) {
                 $this->addError($attribute, Yii::t('conquer/oauth2', 'Invalid username or password.'));

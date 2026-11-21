@@ -53,7 +53,7 @@ class Implicit extends BaseModel
     /**
      * The parameter SHOULD be used for preventing cross-site request forgery as described in Section 10.12.
      * @link https://tools.ietf.org/html/rfc6749#section-10.12
-     * @var string
+     * @var string|null
      */
     public $state;
 
