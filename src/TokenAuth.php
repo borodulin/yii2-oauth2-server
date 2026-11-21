@@ -12,6 +12,7 @@ use conquer\oauth2\request\AccessTokenExtractor;
 use Yii;
 use yii\base\Controller;
 use yii\filters\auth\AuthMethod;
+use yii\web\ForbiddenHttpException;
 use yii\web\IdentityInterface;
 use yii\web\Response;
 use yii\web\UnauthorizedHttpException;
@@ -57,6 +58,11 @@ class TokenAuth extends AuthMethod
     public $scopes = [];
 
     /**
+     * @var bool whether the access_token query parameter is accepted (RFC 6750, 2.3: SHOULD NOT be used)
+     */
+    public $allowQueryToken = false;
+
+    /**
      * @param \yii\web\User $user
      * @param \yii\web\Request $request
      * @param \yii\web\Response $response
@@ -66,14 +72,22 @@ class TokenAuth extends AuthMethod
      */
     public function authenticate($user, $request, $response)
     {
-        $accessToken = $this->getAccessToken();
+        try {
+            $accessToken = $this->getAccessToken();
+        } catch (Exception $e) {
+            // malformed request (RFC 6750, 3.1)
+            $this->setChallenge($response, Exception::INVALID_REQUEST, $e->getMessage());
+            throw $e;
+        }
         if ($accessToken === null) {
             // no credentials: let AuthMethod handle optional actions, CompositeAuth and the 401 challenge
             return null;
         }
 
         if (!$this->checkScopes($this->scopes, $accessToken->scope)) {
-            throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'The access token does not have required scopes.'));
+            $message = Yii::t('conquer/oauth2', 'The access token does not have required scopes.');
+            $this->setChallenge($response, 'insufficient_scope', $message, BaseModel::splitScope($this->scopes));
+            throw new ForbiddenHttpException($message);
         }
 
         /** @var IdentityInterface $identityClass */
@@ -82,7 +96,7 @@ class TokenAuth extends AuthMethod
         $identity = $identityClass::findIdentity($accessToken->user_id);
 
         if (empty($identity)) {
-            throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'User is not found.'));
+            $this->invalidToken($response, Yii::t('conquer/oauth2', 'User is not found.'));
         }
 
         $user->setIdentity($identity);
@@ -107,10 +121,59 @@ class TokenAuth extends AuthMethod
      */
     public function challenge($response)
     {
-        /** @var Controller $owner */
+        $this->setChallenge($response);
+    }
+
+    /**
+     * Sets the WWW-Authenticate header (RFC 6750, 3).
+     * @param Response $response
+     * @param string|null $error invalid_request, invalid_token or insufficient_scope
+     * @param string|null $description
+     * @param string[] $scopes
+     * @return void
+     */
+    protected function setChallenge($response, $error = null, $description = null, array $scopes = [])
+    {
+        $params = ['realm' => $this->getRealm()];
+        if ($error !== null) {
+            $params['error'] = $error;
+        }
+        if ($description !== null && $description !== '') {
+            $params['error_description'] = $description;
+        }
+        if ($scopes) {
+            $params['scope'] = implode(' ', $scopes);
+        }
+        $parts = [];
+        foreach ($params as $name => $value) {
+            $parts[] = $name . '="' . addcslashes((string)$value, '"\\') . '"';
+        }
+        $response->getHeaders()->set('WWW-Authenticate', 'Bearer ' . implode(', ', $parts));
+    }
+
+    /**
+     * @return string
+     */
+    protected function getRealm()
+    {
+        if (!empty($this->realm)) {
+            return $this->realm;
+        }
+        /** @var Controller|null $owner */
         $owner = $this->owner;
-        $realm = empty($this->realm) ? $owner->getUniqueId() : $this->realm;
-        $response->getHeaders()->set('WWW-Authenticate', "Bearer realm=\"{$realm}\"");
+        return $owner instanceof Controller ? $owner->getUniqueId() : Yii::$app->id;
+    }
+
+    /**
+     * @param Response $response
+     * @param string $message
+     * @return never
+     * @throws UnauthorizedHttpException
+     */
+    protected function invalidToken($response, $message)
+    {
+        $this->setChallenge($response, 'invalid_token', $message);
+        throw new UnauthorizedHttpException($message);
     }
 
     /**
@@ -129,17 +192,17 @@ class TokenAuth extends AuthMethod
     protected function getAccessToken()
     {
         if (is_null($this->_accessToken)) {
-            $tokenExtractor = Yii::createObject(AccessTokenExtractor::class, [Yii::$app->getRequest()]);
+            $tokenExtractor = Yii::createObject(AccessTokenExtractor::class, [Yii::$app->getRequest(), $this->allowQueryToken]);
 
             $token = $tokenExtractor->extract(false);
             if ($token === null) {
                 return null;
             }
             if (!$accessToken = AccessToken::findOne(['access_token' => $token])) {
-                throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'The access token provided is invalid.'));
+                $this->invalidToken(Yii::$app->getResponse(), Yii::t('conquer/oauth2', 'The access token provided is invalid.'));
             }
             if ($accessToken->expires < time()) {
-                throw new UnauthorizedHttpException(Yii::t('conquer/oauth2', 'The access token provided has expired.'));
+                $this->invalidToken(Yii::$app->getResponse(), Yii::t('conquer/oauth2', 'The access token provided has expired.'));
             }
             $this->_accessToken = $accessToken;
         }

@@ -22,7 +22,7 @@ class AuthorizationRequestTest extends OAuthTestCase
             $model = $this->model(Authorization::class, [
                 'response_type' => 'code', 'client_id' => 'app', 'redirect_uri' => $uri,
             ]);
-            $this->assertOAuthError(Exception::REDIRECT_URI_MISMATCH, function () use ($model) {
+            $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($model) {
                 $model->validate();
             });
         }
@@ -39,7 +39,7 @@ class AuthorizationRequestTest extends OAuthTestCase
     {
         $this->createClient('multi', 's', "https://a.example.com/cb\nhttps://b.example.com/cb");
         $model = $this->model(Authorization::class, ['response_type' => 'code', 'client_id' => 'multi']);
-        $this->assertOAuthError(Exception::REDIRECT_URI_MISMATCH, function () use ($model) {
+        $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($model) {
             $model->validate();
         });
 

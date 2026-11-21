@@ -60,7 +60,12 @@ class AuthorizeFilter extends ActionFilter
             throw new Exception(Yii::t('conquer/oauth2', 'An unsupported response type was requested.'), Exception::UNSUPPORTED_RESPONSE_TYPE);
         }
 
-        $this->_responseType->validate();
+        try {
+            $this->_responseType->validate();
+        } catch (RedirectException $e) {
+            Yii::$app->response->redirect($e->getRedirectUri());
+            return false;
+        }
 
         if ($this->storeKey) {
             Yii::$app->session->set($this->storeKey, serialize($this->_responseType));
@@ -115,10 +120,15 @@ class AuthorizeFilter extends ActionFilter
         if ($this->storeKey && Yii::$app->has('session')) {
             Yii::$app->session->remove($this->storeKey);
         }
-        if (Yii::$app->user->isGuest) {
-            $responseType->errorRedirect(Yii::t('conquer/oauth2', 'The User denied access to your application.'), Exception::ACCESS_DENIED);
+        try {
+            if (Yii::$app->user->isGuest) {
+                $responseType->errorRedirect(Yii::t('conquer/oauth2', 'The User denied access to your application.'), Exception::ACCESS_DENIED);
+            }
+            $parts = $responseType->getResponseData();
+        } catch (RedirectException $e) {
+            Yii::$app->response->redirect($e->getRedirectUri());
+            return;
         }
-        $parts = $responseType->getResponseData();
 
         $redirectUri = http_build_url($responseType->redirect_uri, $parts, HTTP_URL_JOIN_QUERY | HTTP_URL_STRIP_FRAGMENT);
 

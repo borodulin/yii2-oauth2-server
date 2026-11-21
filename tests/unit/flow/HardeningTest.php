@@ -150,9 +150,40 @@ class HardeningTest extends OAuthTestCase
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
         Yii::$app->request->setQueryParams(['grant_type' => 'client_credentials', 'client_id' => 'app', 'client_secret' => 'secret']);
-        $this->assertOAuthError(Exception::INVALID_REQUEST, function () {
-            $this->tokenAction()->run();
-        });
+        $this->tokenAction()->run();
+        $this->assertTokenError(400, Exception::INVALID_REQUEST);
+    }
+
+    /**
+     * @param int $status
+     * @param string $error
+     */
+    private function assertTokenError($status, $error)
+    {
+        $this->assertSame($status, Yii::$app->response->statusCode);
+        $this->assertSame($error, Yii::$app->response->data['error']);
+        $this->assertArrayHasKey('error_description', Yii::$app->response->data);
+        $this->assertSame('no-store', Yii::$app->response->headers->get('Cache-Control'));
+    }
+
+    public function testTokenEndpointErrorFormat()
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        Yii::$app->request->setQueryParams([]);
+        Yii::$app->request->setBodyParams(['grant_type' => 'client_credentials', 'client_id' => 'app', 'client_secret' => 'wrong']);
+        $this->tokenAction()->run();
+        $this->assertTokenError(401, Exception::INVALID_CLIENT);
+        $this->assertStringStartsWith('Basic realm=', Yii::$app->response->headers->get('WWW-Authenticate'));
+
+        Yii::$app->response->clear();
+        Yii::$app->request->setBodyParams(['grant_type' => 'client_credentials', 'client_id' => 'app', 'client_secret' => 'secret', 'scope' => 'admin']);
+        $this->tokenAction()->run();
+        $this->assertTokenError(400, Exception::INVALID_SCOPE);
+
+        Yii::$app->response->clear();
+        Yii::$app->request->setBodyParams(['grant_type' => 'magic']);
+        $this->tokenAction()->run();
+        $this->assertTokenError(400, Exception::UNSUPPORTED_GRANT_TYPE);
     }
 
     public function testCredentialsInQueryStringAreRejected()
@@ -160,9 +191,88 @@ class HardeningTest extends OAuthTestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         Yii::$app->request->setBodyParams(['grant_type' => 'client_credentials', 'client_id' => 'app']);
         Yii::$app->request->setQueryParams(['client_secret' => 'secret']);
-        $this->assertOAuthError(Exception::INVALID_REQUEST, function () {
-            $this->tokenAction()->run();
+        $this->tokenAction()->run();
+        $this->assertTokenError(400, Exception::INVALID_REQUEST);
+    }
+
+    public function testAuthorizationErrorIsRedirectedToClient()
+    {
+        Yii::$app->set('session', ArraySession::class);
+        Yii::$app->request->setQueryParams(['response_type' => 'code', 'client_id' => 'app', 'scope' => 'admin', 'state' => 'xyz']);
+        $filter = new AuthorizeFilter();
+        $this->assertFalse($filter->beforeAction(new Action('authorize', new Controller('site', Yii::$app))));
+        $this->assertSame(302, Yii::$app->response->statusCode);
+        $location = Yii::$app->response->headers->get('Location');
+        $this->assertStringStartsWith('https://app.example.com/cb?error=invalid_scope', $location);
+        $this->assertStringContainsString('state=xyz', $location);
+    }
+
+    public function testInvalidClientOnAuthorizationEndpointIsNotRedirected()
+    {
+        Yii::$app->set('session', ArraySession::class);
+        Yii::$app->request->setQueryParams(['response_type' => 'code', 'client_id' => 'app', 'redirect_uri' => 'https://evil.example.com/cb']);
+        $filter = new AuthorizeFilter();
+        $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($filter) {
+            $filter->beforeAction(new Action('authorize', new Controller('site', Yii::$app)));
         });
+        $this->assertNull(Yii::$app->response->headers->get('Location'));
+    }
+
+    public function testImplicitErrorsAreSentInFragment()
+    {
+        Yii::$app->set('session', ArraySession::class);
+        Yii::$app->request->setQueryParams(['response_type' => 'token', 'client_id' => 'app', 'scope' => 'admin']);
+        $filter = new AuthorizeFilter(['allowImplicit' => true]);
+        $this->assertFalse($filter->beforeAction(new Action('authorize', new Controller('site', Yii::$app))));
+        $this->assertStringStartsWith('https://app.example.com/cb#error=invalid_scope', Yii::$app->response->headers->get('Location'));
+    }
+
+    private function tokenAuth(array $config = [])
+    {
+        $auth = new TokenAuth($config);
+        $auth->attach(new Controller('api', Yii::$app));
+        return $auth;
+    }
+
+    public function testInvalidAccessTokenChallenge()
+    {
+        Yii::$app->request->headers->set('Authorization', 'Bearer nope');
+        try {
+            $this->tokenAuth()->authenticate(Yii::$app->user, Yii::$app->request, Yii::$app->response);
+            $this->fail('invalid token must be rejected');
+        } catch (\yii\web\UnauthorizedHttpException $e) {
+            $this->assertStringContainsString('error="invalid_token"', Yii::$app->response->headers->get('WWW-Authenticate'));
+        }
+    }
+
+    public function testExpiredAccessTokenIsRejected()
+    {
+        $token = AccessToken::createAccessToken(['client_id' => 'app', 'user_id' => 42, 'expires' => time() - 1]);
+        Yii::$app->request->headers->set('Authorization', 'Bearer ' . $token->access_token);
+        $this->expectException(\yii\web\UnauthorizedHttpException::class);
+        $this->tokenAuth()->authenticate(Yii::$app->user, Yii::$app->request, Yii::$app->response);
+    }
+
+    public function testInsufficientScopeIsForbidden()
+    {
+        $token = AccessToken::createAccessToken(['client_id' => 'app', 'user_id' => 42, 'expires' => time() + 60, 'scope' => 'read']);
+        Yii::$app->request->headers->set('Authorization', 'bearer ' . $token->access_token);
+        try {
+            $this->tokenAuth(['scopes' => ['write']])->authenticate(Yii::$app->user, Yii::$app->request, Yii::$app->response);
+            $this->fail('insufficient scope must be rejected');
+        } catch (\yii\web\ForbiddenHttpException $e) {
+            $header = Yii::$app->response->headers->get('WWW-Authenticate');
+            $this->assertStringContainsString('error="insufficient_scope"', $header);
+            $this->assertStringContainsString('scope="write"', $header);
+        }
+    }
+
+    public function testLowercaseBearerSchemeIsAccepted()
+    {
+        $token = AccessToken::createAccessToken(['client_id' => 'app', 'user_id' => 42, 'expires' => time() + 60]);
+        Yii::$app->request->headers->set('Authorization', 'bearer ' . $token->access_token);
+        $identity = $this->tokenAuth()->authenticate(Yii::$app->user, Yii::$app->request, Yii::$app->response);
+        $this->assertSame(42, $identity->getId());
     }
 
     public function testTokenResponseIsNotCacheable()

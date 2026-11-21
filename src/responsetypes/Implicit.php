@@ -88,6 +88,14 @@ class Implicit extends BaseModel
         return true;
     }
 
+    /**
+     * @inheritdoc
+     */
+    protected function errorsInFragment()
+    {
+        return true;
+    }
+
     public function getResponseData()
     {
         $accessToken = AccessToken::createAccessToken([

@@ -60,13 +60,23 @@ class AccessTokenExtractorTest extends \Codeception\Test\Unit
         $this->assertEquals('321', $extractor->extract());
     }
 
-    public function testGetAccessTokenIsReturned()
+    public function testGetAccessTokenIsReturnedWhenAllowed()
+    {
+        $extractor = new AccessTokenExtractor($this->make(Request::class, [
+            'getQueryParams' => ['access_token' => '321'],
+            'getMethod' => 'GET',
+        ]), true);
+        $this->assertEquals('321', $extractor->extract());
+    }
+
+    public function testGetAccessTokenIsRejectedByDefault()
     {
         $extractor = new AccessTokenExtractor($this->make(Request::class, [
             'getQueryParams' => ['access_token' => '321'],
             'getMethod' => 'GET',
         ]));
-        $this->assertEquals('321', $extractor->extract());
+        $this->expectException(Exception::class);
+        $extractor->extract();
     }
 
     public function testHeaderAccessTokenIsReturned()

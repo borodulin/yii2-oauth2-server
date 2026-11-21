@@ -18,12 +18,20 @@ class AccessTokenExtractor
     private $_request;
 
     /**
+     * @var bool
+     */
+    private $_allowQuery;
+
+    /**
      * AccessTokenExtractor constructor.
      * @param Request $request
+     * @param bool $allowQuery whether the access_token query parameter is accepted. Tokens in URLs end up in logs,
+     * browser history and Referer headers (RFC 6750, 2.3; RFC 9700, 2.4.2).
      */
-    public function __construct(Request $request)
+    public function __construct(Request $request, $allowQuery = false)
     {
         $this->_request = $request;
+        $this->_allowQuery = $allowQuery;
     }
 
     /**
@@ -37,7 +45,8 @@ class AccessTokenExtractor
     {
         $headerToken = null;
         foreach ($this->_request->getHeaders()->get('Authorization', [], false) as $authHeader) {
-            if (preg_match('/^Bearer\\s+(.*?)$/', $authHeader, $matches)) {
+            // the scheme is case-insensitive (RFC 7235, 2.1)
+            if (preg_match('/^Bearer\\s+(.*?)$/i', $authHeader, $matches)) {
                 $headerToken = $matches[1];
                 break;
             }
@@ -77,6 +86,9 @@ class AccessTokenExtractor
             return $postToken;
         }
 
+        if (!$this->_allowQuery) {
+            throw new Exception(Yii::t('conquer/oauth2', 'The access token must not be sent in the URL.'));
+        }
         return $getToken;
     }
 }

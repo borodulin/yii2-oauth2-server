@@ -20,6 +20,12 @@ abstract class BaseModel extends Model
     const CLIENT_ASSERTION_TYPE_JWT = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
 
     /**
+     * @var string|null issuer identifier of the authorization server, sent as "iss" in authorization
+     * responses (RFC 9207) when set
+     */
+    public $issuer;
+
+    /**
      * @var JwtValidator|array<string, mixed>|string validator of JWT assertions
      */
     public $jwtValidator = JwtValidator::class;
@@ -152,6 +158,15 @@ abstract class BaseModel extends Model
     }
 
     /**
+     * Whether redirected errors are sent in the fragment (implicit grant) instead of the query.
+     * @return bool
+     */
+    protected function errorsInFragment()
+    {
+        return false;
+    }
+
+    /**
      * Throws on the first validation error instead of collecting errors.
      * @param string $type
      * @return never
@@ -187,7 +202,14 @@ abstract class BaseModel extends Model
         }
         $redirectUri = isset($this->redirect_uri) ? $this->redirect_uri : $this->getDefaultRedirectUri();
         if ($redirectUri) {
-            throw new RedirectException($redirectUri, $error, $type, isset($this->state) ? $this->state : null);
+            throw new RedirectException(
+                $redirectUri,
+                $error,
+                $type,
+                isset($this->state) ? $this->state : null,
+                $this->errorsInFragment(),
+                isset($this->issuer) ? $this->issuer : null
+            );
         } else {
             throw new Exception($error, $type);
         }
@@ -316,7 +338,7 @@ abstract class BaseModel extends Model
             if (!is_string($this->$attribute)
                 || !in_array($this->$attribute, $this->getClient()->getRedirectUris(), true)
             ) {
-                $this->errorServer(Yii::t('conquer/oauth2', 'The redirect URI provided is missing or does not match.'), Exception::REDIRECT_URI_MISMATCH);
+                $this->errorServer(Yii::t('conquer/oauth2', 'The redirect URI provided is missing or does not match.'), Exception::INVALID_REQUEST);
             }
         }
     }
@@ -330,7 +352,7 @@ abstract class BaseModel extends Model
     {
         if (empty($this->$attribute)) {
             if (!$this->$attribute = $this->getDefaultRedirectUri()) {
-                $this->errorServer(Yii::t('conquer/oauth2', 'The redirect URI provided is missing or does not match.'), Exception::REDIRECT_URI_MISMATCH);
+                $this->errorServer(Yii::t('conquer/oauth2', 'The redirect URI provided is missing or does not match.'), Exception::INVALID_REQUEST);
             }
             $this->_redirectUriFromClient = true;
         } else {

@@ -53,7 +53,38 @@ class TokenAction extends Action
         }
     }
 
+    /**
+     * Issues the token; OAuth errors are returned as RFC 6749 (5.2) error responses.
+     * @return void
+     */
     public function run()
+    {
+        try {
+            $this->issueToken();
+        } catch (Exception $e) {
+            $response = Yii::$app->response;
+            $response->setStatusCode($e->statusCode);
+            if ($e->statusCode === 401) {
+                // RFC 6749, 5.2: include the authentication scheme the client may use
+                $response->headers->set('WWW-Authenticate', 'Basic realm="' . $this->getRealm() . '"');
+            }
+            $response->data = $e->toArray();
+        }
+    }
+
+    /**
+     * @return string
+     */
+    protected function getRealm()
+    {
+        return $this->controller->getUniqueId();
+    }
+
+    /**
+     * @return void
+     * @throws Exception
+     */
+    protected function issueToken()
     {
         if (!$this->allowGet) {
             $request = Yii::$app->request;
