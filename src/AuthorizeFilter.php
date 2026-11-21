@@ -7,122 +7,203 @@
 
 namespace conquer\oauth2;
 
-use conquer\oauth2\responsetypes\Authorization;
 use Yii;
 use yii\base\ActionFilter;
 
 /**
+ * Authorization endpoint filter (RFC 6749, 3.1).
+ *
+ * Validates the authorization request and keeps it in the session while the user logs in.
+ * The user must approve the request: show a consent page with [[getAuthorizationRequest()]] and call
+ * [[finishAuthorization()]] on POST (protected by Yii's CSRF validation). Requests of trusted clients can be
+ * approved automatically with [[autoApprove]].
  *
  * @author Andrey Borodulin
- *
  */
 class AuthorizeFilter extends ActionFilter
 {
+    /**
+     * @var BaseModel|null
+     */
     private $_responseType;
 
+    /**
+     * @var bool whether the authorization has been finished in this request
+     */
+    private $_finished = false;
+
+    /**
+     * @var array<string, string|array<string, mixed>>
+     */
     public $responseTypes = [
         'token' => 'conquer\oauth2\responsetypes\Implicit',
         'code' => 'conquer\oauth2\responsetypes\Authorization',
     ];
 
     /**
-     *
      * @var boolean
      */
     public $allowImplicit = false;
 
+    /**
+     * @var bool|callable whether requests are approved without asking the user, e.g. for first-party clients:
+     * `function (\conquer\oauth2\BaseModel $request): bool`, the client is `$request->client`.
+     * When approved automatically, a logged-in user is redirected back to the client right away,
+     * so never enable it for third-party clients: any web page could then obtain codes for its visitors.
+     */
+    public $autoApprove = false;
+
+    /**
+     * @var string|null session key of the stored authorization request, null disables storing
+     */
     public $storeKey = 'ear6kme7or19rnfldtmwsxgzxsrmngqw';
 
+    /**
+     * @var int seconds a stored authorization request stays valid
+     */
+    public $requestLifetime = 600;
+
+    /**
+     * @return void
+     */
     public function init()
     {
+        parent::init();
         if (!$this->allowImplicit) {
             unset($this->responseTypes['token']);
         }
     }
 
     /**
-     * Performs OAuth 2.0 request validation and store granttype object in the session,
-     * so, user can go from our authorization server to the third party OAuth provider.
-     * You should call finishAuthorization() in the current controller to finish client authorization
-     * or to stop with Access Denied error message if the user is not logged on.
+     * Validates the authorization request and stores it in the session, so that the user can log in,
+     * also with a third party provider, before the request is finished.
+     * A request without response_type continues the stored request, if any.
      * @param \yii\base\Action $action
      * @return bool
      * @throws Exception
      */
     public function beforeAction($action)
     {
-        if (!($responseType = BaseModel::getRequestValue('response_type')) || !is_string($responseType)) {
+        $responseType = BaseModel::getRequestValue('response_type');
+        if (($responseType === null || $responseType === '') && $this->getStoredRequest() !== null) {
+            return true;
+        }
+        if (!$responseType || !is_string($responseType)) {
             throw new Exception(Yii::t('conquer/oauth2', 'Invalid or missing response type.'));
         }
-        if (isset($this->responseTypes[$responseType])) {
-            $this->_responseType = Yii::createObject($this->responseTypes[$responseType]);
-        } else {
+        if (!isset($this->responseTypes[$responseType])) {
             throw new Exception(Yii::t('conquer/oauth2', 'An unsupported response type was requested.'), Exception::UNSUPPORTED_RESPONSE_TYPE);
         }
-
+        /** @var BaseModel $model */
+        $model = Yii::createObject($this->responseTypes[$responseType]);
+        // the raw request parameters, before validation fills in defaults such as the redirect URI
+        $params = $model->getAttributes($model->safeAttributes());
         try {
-            $this->_responseType->validate();
+            $model->validate();
         } catch (RedirectException $e) {
             Yii::$app->response->redirect($e->getRedirectUri());
             return false;
         }
+        $this->_responseType = $model;
 
-        if ($this->storeKey) {
-            Yii::$app->session->set($this->storeKey, serialize($this->_responseType));
+        if ($this->canStore()) {
+            Yii::$app->session->set($this->storeKey, [
+                'type' => $responseType,
+                'params' => $params,
+                'time' => time(),
+            ]);
         }
 
         return true;
     }
 
     /**
-     * If user is logged on, do oauth login immediatly,
-     * continue authorization in the another case
+     * Finishes requests that are approved automatically, when the user is logged in.
      * @param \yii\base\Action $action
      * @param mixed $result
-     * @return mixed|null
+     * @return mixed
      */
     public function afterAction($action, $result)
     {
-        if (Yii::$app->user->isGuest) {
+        if ($this->_finished || Yii::$app->user->isGuest || !$this->getIsOauthRequest()) {
             return $result;
-        } else {
-            $this->finishAuthorization();
         }
-        return null;
+        try {
+            $request = $this->getAuthorizationRequest();
+        } catch (RedirectException $e) {
+            $this->clearStoredRequest();
+            Yii::$app->response->redirect($e->getRedirectUri());
+            return null;
+        }
+        if ($this->isAutoApproved($request)) {
+            $this->finishAuthorization();
+            return null;
+        }
+        return $result;
     }
 
     /**
-     * @throws Exception
-     * @return \conquer\oauth2\BaseModel
+     * Returns the current authorization request, for the consent page: the client is `$request->client`,
+     * the requested scope is `$request->scope`.
+     * @return BaseModel
+     * @throws Exception when there is no authorization request or it has expired
      */
-    protected function getResponseType()
+    public function getAuthorizationRequest()
     {
-        if (empty($this->_responseType) && $this->storeKey) {
-            if (Yii::$app->session->has($this->storeKey)) {
-                $this->_responseType = unserialize(Yii::$app->session->get($this->storeKey));
-            } else {
-                throw new Exception(Yii::t('conquer/oauth2', 'Invalid server state or the User Session has expired.'), Exception::SERVER_ERROR);
+        if ($this->_responseType === null) {
+            $stored = $this->getStoredRequest();
+            if ($stored === null) {
+                throw new Exception(Yii::t('conquer/oauth2', 'Invalid server state or the User Session has expired.'), Exception::INVALID_REQUEST);
             }
+            /** @var BaseModel $model */
+            $model = Yii::createObject($this->responseTypes[$stored['type']]);
+            $model->setAttributes($stored['params']);
+            // the client may have been changed or removed since the request was stored
+            $model->validate();
+            $this->_responseType = $model;
         }
         return $this->_responseType;
     }
 
     /**
-     * Finish oauth authorization.
-     * Builds redirect uri and performs redirect.
-     * If user is not logged on, redirect contains the Access Denied Error
+     * @return BaseModel
+     * @throws Exception
+     * @deprecated use getAuthorizationRequest()
      */
-    public function finishAuthorization()
+    protected function getResponseType()
     {
-        /** @var Authorization $responseType */
-        $responseType = $this->getResponseType();
-        // the stored request is used once: later logins in the same session are not OAuth requests
-        if ($this->storeKey && Yii::$app->has('session')) {
-            Yii::$app->session->remove($this->storeKey);
-        }
+        return $this->getAuthorizationRequest();
+    }
+
+    /**
+     * Finishes the authorization: redirects the user agent to the client with a code or token,
+     * or with the access_denied error when the user declined or is not logged in.
+     *
+     * Unless the request is approved automatically, it must be called on a POST request (the consent form),
+     * so that Yii's CSRF validation protects it.
+     *
+     * @param bool $approved whether the user approved the request
+     * @return void
+     * @throws Exception
+     */
+    public function finishAuthorization($approved = true)
+    {
         try {
-            if (Yii::$app->user->isGuest) {
+            $responseType = $this->getAuthorizationRequest();
+        } catch (RedirectException $e) {
+            $this->clearStoredRequest();
+            Yii::$app->response->redirect($e->getRedirectUri());
+            return;
+        }
+        $this->clearStoredRequest();
+        $this->_finished = true;
+
+        try {
+            if (!$approved || Yii::$app->user->isGuest) {
                 $responseType->errorRedirect(Yii::t('conquer/oauth2', 'The User denied access to your application.'), Exception::ACCESS_DENIED);
+            }
+            if (!$this->isAutoApproved($responseType) && !Yii::$app->request->getIsPost()) {
+                throw new Exception(Yii::t('conquer/oauth2', 'The authorization must be approved with a POST request.'));
             }
             $parts = $responseType->getResponseData();
         } catch (RedirectException $e) {
@@ -140,10 +221,64 @@ class AuthorizeFilter extends ActionFilter
     }
 
     /**
+     * Whether there is an unfinished authorization request.
      * @return boolean
      */
     public function getIsOauthRequest()
     {
-        return !empty($this->storeKey) && Yii::$app->session->has($this->storeKey);
+        if ($this->_finished) {
+            return false;
+        }
+        return $this->_responseType !== null || $this->getStoredRequest() !== null;
+    }
+
+    /**
+     * @param BaseModel $request
+     * @return bool
+     */
+    protected function isAutoApproved($request)
+    {
+        if (is_callable($this->autoApprove)) {
+            return (bool)call_user_func($this->autoApprove, $request);
+        }
+        return $this->autoApprove === true;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function canStore()
+    {
+        return !empty($this->storeKey) && Yii::$app->has('session');
+    }
+
+    /**
+     * Returns the stored request when it is valid and not expired.
+     * @return array{type: string, params: array<string, mixed>, time: int}|null
+     */
+    protected function getStoredRequest()
+    {
+        if (!$this->canStore()) {
+            return null;
+        }
+        $data = Yii::$app->session->get($this->storeKey);
+        if (!is_array($data) || !isset($data['type'], $data['params'], $data['time'])
+            || !is_string($data['type']) || !isset($this->responseTypes[$data['type']])
+            || !is_array($data['params']) || !is_int($data['time'])
+            || $data['time'] < time() - $this->requestLifetime
+        ) {
+            return null;
+        }
+        return $data;
+    }
+
+    /**
+     * @return void
+     */
+    protected function clearStoredRequest()
+    {
+        if ($this->canStore()) {
+            Yii::$app->session->remove($this->storeKey);
+        }
     }
 }

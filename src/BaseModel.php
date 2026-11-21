@@ -11,6 +11,8 @@ use yii\web\Request;
  * @property Client $client
  * @property mixed $client_id
  * @property mixed $client_secret
+ * @property mixed $redirect_uri declared by the authorization request models
+ * @property mixed $scope
  */
 abstract class BaseModel extends Model
 {
@@ -85,7 +87,11 @@ abstract class BaseModel extends Model
         parent::init();
         $attributes = $this->safeAttributes();
         foreach ($attributes as $attribute) {
-            $this->$attribute = self::getRequestValue($attribute);
+            // parameters missing in the request keep their configured defaults
+            $value = self::getRequestValue($attribute);
+            if ($value !== null) {
+                $this->$attribute = $value;
+            }
         }
         // HTTP Basic client authentication (RFC 6749, 2.3.1), only for requests that authenticate the client
         if (in_array('client_secret', $attributes, true)) {
@@ -115,6 +121,17 @@ abstract class BaseModel extends Model
                 }
             }
         }
+    }
+
+    /**
+     * Validates the request. The models throw on the first error instead of collecting errors.
+     * @inheritdoc
+     * @throws Exception
+     * @throws RedirectException errors of authorization requests that are reported to the client
+     */
+    public function validate($attributeNames = null, $clearErrors = true)
+    {
+        return parent::validate($attributeNames, $clearErrors);
     }
 
     /**
@@ -388,6 +405,20 @@ abstract class BaseModel extends Model
         }
     }
 
+    /**
+     * Checks at the authorization endpoint that the client may use the grant type; the error is redirected.
+     * @param string $grantType "authorization_code" or "implicit"
+     * @return void
+     * @throws Exception
+     */
+    public function checkResponseGrantType($grantType)
+    {
+        $allowed = self::splitScope((string)$this->getClient()->grant_type);
+        if ($allowed && !in_array($grantType, $allowed, true)) {
+            $this->errorRedirect(Yii::t('conquer/oauth2', 'The grant type is unauthorized for this client.'), Exception::UNAUTHORIZED_CLIENT);
+        }
+    }
+
     public function validateScope($attribute)
     {
         if (!$this->checkSets($this->$attribute, $this->client->scope)) {
@@ -416,7 +447,7 @@ abstract class BaseModel extends Model
     {
         if (is_array($scope)) {
             return array_values(array_filter($scope, static function ($item) {
-                return strlen($item) > 0;
+                return is_string($item) && $item !== '';
             }));
         }
         return preg_split('/\s+/', trim((string)$scope), -1, PREG_SPLIT_NO_EMPTY) ?: [];

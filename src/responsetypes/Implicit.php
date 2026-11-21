@@ -57,9 +57,6 @@ class Implicit extends BaseModel
      */
     public $state;
 
-    /**
-     * @return array
-     */
     public function rules()
     {
         return [
@@ -67,19 +64,23 @@ class Implicit extends BaseModel
             ['response_type', 'required', 'requiredValue' => 'token'],
             [['client_id'], 'string', 'max' => 80],
             [['state'], 'string', 'max' => 255],
-            [['redirect_uri'], 'url'],
+            [['redirect_uri', 'scope'], 'string'],
             [['client_id'], 'validateClientId'],
             [['redirect_uri'], 'validateAuthorizationRedirectUri', 'skipOnEmpty' => false],
+            [['response_type'], 'validateGrantType'],
             [['scope'], 'validateScope'],
-
         ];
     }
 
     /**
-     * @return array
+     * @return void
      * @throws \conquer\oauth2\Exception
-     * @throws \yii\base\Exception
      */
+    public function validateGrantType()
+    {
+        $this->checkResponseGrantType('implicit');
+    }
+
     /**
      * @inheritdoc
      */
@@ -112,8 +113,11 @@ class Implicit extends BaseModel
             'scope' => $this->scope,
         ];
 
-        if (!empty($this->state)) {
+        if ($this->state !== null && $this->state !== '') {
             $fragment['state'] = $this->state;
+        }
+        if ($this->issuer !== null) {
+            $fragment['iss'] = $this->issuer;
         }
         return [
             'fragment' => http_build_query($fragment),

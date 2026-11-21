@@ -15,20 +15,8 @@ use tests\OAuthTestCase;
 use tests\TestIdentity;
 use Yii;
 use yii\base\Action;
-use yii\base\Component;
+use tests\ArraySession;
 use yii\web\Controller;
-
-/**
- * In-memory session for tests.
- */
-class ArraySession extends Component
-{
-    private $data = [];
-    public function set($key, $value) { $this->data[$key] = $value; }
-    public function get($key) { return isset($this->data[$key]) ? $this->data[$key] : null; }
-    public function has($key) { return isset($this->data[$key]); }
-    public function remove($key) { unset($this->data[$key]); }
-}
 
 class HardeningTest extends OAuthTestCase
 {
@@ -136,6 +124,7 @@ class HardeningTest extends OAuthTestCase
         $this->assertTrue($filter->getIsOauthRequest());
 
         Yii::$app->user->setIdentity(new TestIdentity(['id' => 42]));
+        $_SERVER['REQUEST_METHOD'] = 'POST';
         $filter->finishAuthorization();
         $this->assertStringStartsWith('https://app.example.com/cb?code=', Yii::$app->response->headers->get('Location'));
         $this->assertFalse($filter->getIsOauthRequest(), 'a later login must not finish the old OAuth request again');

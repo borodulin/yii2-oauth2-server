@@ -71,9 +71,6 @@ class Authorization extends BaseModel
      */
     public $requirePkce = false;
 
-    /**
-     * @return array
-     */
     public function rules()
     {
         return [
@@ -81,13 +78,24 @@ class Authorization extends BaseModel
             ['response_type', 'required', 'requiredValue' => 'code'],
             [['client_id'], 'string', 'max' => 80],
             [['state'], 'string', 'max' => 255],
-            [['redirect_uri'], 'url'],
+            // exact match with a registered URI; no url validator, which rejects http://localhost and app schemes
+            [['redirect_uri', 'scope'], 'string'],
             [['client_id'], 'validateClientId'],
             [['redirect_uri'], 'validateAuthorizationRedirectUri', 'skipOnEmpty' => false],
+            [['response_type'], 'validateGrantType'],
             [['code_challenge_method'], 'in', 'range' => ['S256', 'plain']],
             [['code_challenge'], 'validateCodeChallenge', 'skipOnEmpty' => false],
             [['scope'], 'validateScope'],
         ];
+    }
+
+    /**
+     * @return void
+     * @throws \conquer\oauth2\Exception
+     */
+    public function validateGrantType()
+    {
+        $this->checkResponseGrantType('authorization_code');
     }
 
     /**
@@ -138,8 +146,11 @@ class Authorization extends BaseModel
             'code' => $authCode->authorization_code,
         ];
 
-        if (isset($this->state)) {
+        if ($this->state !== null && $this->state !== '') {
             $query['state'] = $this->state;
+        }
+        if ($this->issuer !== null) {
+            $query['iss'] = $this->issuer;
         }
 
         return [

@@ -78,7 +78,8 @@ class UserCredentials extends BaseModel
         return [
             [['grant_type', 'client_id', 'username', 'password'], 'required'],
             ['grant_type', 'required', 'requiredValue' => 'password'],
-            [['client_id'], 'string', 'max' => 80],
+            [['client_id', 'client_secret'], 'string', 'max' => 80],
+            [['username', 'password', 'scope'], 'string'],
             [['client_id'], 'validateClientId'],
             [['client_secret'], 'validateClientSecret', 'skipOnEmpty' => false],
             [['grant_type'], 'validateGrantType'],

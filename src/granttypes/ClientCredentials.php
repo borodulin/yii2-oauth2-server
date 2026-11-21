@@ -47,6 +47,7 @@ class ClientCredentials extends BaseModel
             [['grant_type', 'client_id'], 'required'],
             ['grant_type', 'required', 'requiredValue' => 'client_credentials'],
             [['client_id', 'client_secret'], 'string', 'max' => 80],
+            [['scope'], 'string'],
             [['client_id'], 'validateClientId'],
             [['client_secret'], 'validateClientSecret', 'skipOnEmpty' => false],
             [['grant_type'], 'validateGrantType'],
