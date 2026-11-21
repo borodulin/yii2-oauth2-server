@@ -2,6 +2,7 @@
 
 namespace tests;
 
+use conquer\oauth2\BaseModel;
 use conquer\oauth2\Exception;
 use conquer\oauth2\models\AuthorizationCode;
 use conquer\oauth2\models\Client;
@@ -14,6 +15,9 @@ use yii\db\Connection;
  */
 abstract class OAuthTestCase extends \Codeception\Test\Unit
 {
+    /**
+     * @return void
+     */
     protected function _before()
     {
         new \yii\web\Application([
@@ -35,11 +39,17 @@ abstract class OAuthTestCase extends \Codeception\Test\Unit
         $this->createClient('other', 'other-secret', 'https://other.example.com/cb');
     }
 
+    /**
+     * @return void
+     */
     protected function _after()
     {
         Yii::$app = null;
     }
 
+    /**
+     * @return void
+     */
     private function createSchema()
     {
         $db = Yii::$app->db;
@@ -75,6 +85,14 @@ abstract class OAuthTestCase extends \Codeception\Test\Unit
         ])->execute();
     }
 
+    /**
+     * @param string $id
+     * @param string $secret
+     * @param string $redirectUri
+     * @param string|null $grantType
+     * @param string|null $scope
+     * @return Client|null
+     */
     protected function createClient($id, $secret, $redirectUri, $grantType = null, $scope = 'read write')
     {
         Yii::$app->db->createCommand()->insert('{{%oauth2_client}}', [
@@ -89,6 +107,11 @@ abstract class OAuthTestCase extends \Codeception\Test\Unit
         return Client::findOne($id);
     }
 
+    /**
+     * @param string $clientId
+     * @param array<string, mixed> $attributes
+     * @return AuthorizationCode
+     */
     protected function createCode($clientId, array $attributes = [])
     {
         return AuthorizationCode::createAuthorizationCode(array_merge([
@@ -100,6 +123,11 @@ abstract class OAuthTestCase extends \Codeception\Test\Unit
         ], $attributes));
     }
 
+    /**
+     * @param string $clientId
+     * @param array<string, mixed> $attributes
+     * @return RefreshToken
+     */
     protected function createRefreshToken($clientId, array $attributes = [])
     {
         return RefreshToken::createRefreshToken(array_merge([
@@ -112,6 +140,10 @@ abstract class OAuthTestCase extends \Codeception\Test\Unit
 
     /**
      * Sets request params and creates the model (models read params in init()).
+     * @template T of BaseModel
+     * @param class-string<T> $class
+     * @param array<string, mixed> $params
+     * @return T
      */
     protected function model($class, array $params)
     {
@@ -122,6 +154,8 @@ abstract class OAuthTestCase extends \Codeception\Test\Unit
 
     /**
      * Asserts that validating the model throws an OAuth2 error with the given code.
+     * @param string $expectedError
+     * @return void
      */
     protected function assertOAuthError($expectedError, callable $callback)
     {

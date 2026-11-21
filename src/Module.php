@@ -15,10 +15,14 @@ use yii\base\BootstrapInterface;
  */
 class Module extends \yii\base\Module implements BootstrapInterface
 {
+    /**
+     * @var array<mixed>|null
+     */
     public $behaviors;
 
     /**
      * @inheritdoc
+     * @return void
      */
     public function bootstrap($app)
     {

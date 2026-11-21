@@ -9,11 +9,13 @@ use yii\web\Request;
 
 /**
  * @property Client $client
+ * @property string|array<mixed>|null $client_id
+ * @property string|array<mixed>|null $client_secret
  */
 abstract class BaseModel extends Model
 {
     /**
-     * @var Client
+     * @var Client|null
      */
     protected $_client;
 
@@ -46,6 +48,7 @@ abstract class BaseModel extends Model
 
     /**
      * @inheritdoc
+     * @return void
      */
     public function init()
     {
@@ -77,16 +80,39 @@ abstract class BaseModel extends Model
         return false;
     }
 
+    /**
+     * @inheritdoc
+     * @throws Exception on the first validation error
+     */
+    public function validate($attributeNames = null, $clearErrors = true)
+    {
+        return parent::validate($attributeNames, $clearErrors);
+    }
+
+    /**
+     * @param string $type
+     * @return never
+     */
     public function addError($attribute, $error = '', $type = Exception::INVALID_REQUEST)
     {
         throw new Exception($error, $type);
     }
 
+    /**
+     * @param string $error
+     * @param string $type
+     * @return never
+     */
     public function errorServer($error, $type = Exception::INVALID_REQUEST)
     {
         throw new Exception($error, $type);
     }
 
+    /**
+     * @param string $error
+     * @param string $type
+     * @return never
+     */
     public function errorRedirect($error, $type = Exception::INVALID_REQUEST)
     {
         if (!$this->redirectsErrors()) {
@@ -100,8 +126,17 @@ abstract class BaseModel extends Model
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     abstract public function getResponseData();
 
+    /**
+     * @param string $param
+     * @param string|null $header
+     * @param Request|null $request
+     * @return mixed
+     */
     public static function getRequestValue($param, $header = null, Request $request = null)
     {
         if (is_null($request)) {
@@ -130,11 +165,18 @@ abstract class BaseModel extends Model
         return $this->_client;
     }
 
+    /**
+     * @return void
+     */
     public function validateClientId()
     {
         $this->getClient();
     }
 
+    /**
+     * @param string $attribute
+     * @return void
+     */
     public function validateClientSecret($attribute)
     {
         $secret = $this->$attribute;
@@ -150,6 +192,7 @@ abstract class BaseModel extends Model
      * (RFC 6749, section 3.1.2.3; OAuth 2.0 Security BCP).
      * Several URIs can be registered in Client::$redirect_uri separated by whitespace.
      * @param string $attribute
+     * @return void
      */
     public function validateRedirectUri($attribute)
     {
@@ -166,6 +209,7 @@ abstract class BaseModel extends Model
      * Validates redirect_uri of an authorization request. When it is omitted, the client must have
      * exactly one registered redirect URI, which is used instead.
      * @param string $attribute
+     * @return void
      */
     public function validateAuthorizationRedirectUri($attribute)
     {
@@ -198,6 +242,7 @@ abstract class BaseModel extends Model
      * Checks that the client is allowed to use the grant type.
      * Client::$grant_type is a space-delimited list of permitted grant types, empty means all.
      * @param string $grantType
+     * @return void
      */
     public function checkGrantType($grantType)
     {
@@ -207,6 +252,10 @@ abstract class BaseModel extends Model
         }
     }
 
+    /**
+     * @param string $attribute
+     * @return void
+     */
     public function validateScope($attribute)
     {
         if (!$this->checkSets($this->$attribute, $this->client->scope)) {
@@ -217,8 +266,8 @@ abstract class BaseModel extends Model
     /**
      * Checks if everything in required set is contained in available set.
      *
-     * @param string|array $requiredSet
-     * @param string|array $availableSet
+     * @param string|string[] $requiredSet
+     * @param string|string[] $availableSet
      * @return boolean
      */
     protected function checkSets($requiredSet, $availableSet)
@@ -228,13 +277,13 @@ abstract class BaseModel extends Model
 
     /**
      * Splits a space-delimited scope string into a list; null and empty strings give an empty list.
-     * @param string|array|null $scope
+     * @param string|string[]|null $scope
      * @return string[]
      */
     public static function splitScope($scope)
     {
         if (is_array($scope)) {
-            return array_values(array_filter($scope, 'strlen'));
+            return array_values(array_filter($scope, static fn($item) => strlen($item) > 0));
         }
         return preg_split('/\s+/', trim((string)$scope), -1, PREG_SPLIT_NO_EMPTY);
     }

@@ -18,8 +18,14 @@ use yii\base\ActionFilter;
  */
 class AuthorizeFilter extends ActionFilter
 {
+    /**
+     * @var BaseModel|null
+     */
     private $_responseType;
 
+    /**
+     * @var array<string, class-string<BaseModel>|array{class: class-string<BaseModel>, ...}>
+     */
     public $responseTypes = [
         'token' => 'conquer\oauth2\responsetypes\Implicit',
         'code' => 'conquer\oauth2\responsetypes\Authorization',
@@ -31,8 +37,14 @@ class AuthorizeFilter extends ActionFilter
      */
     public $allowImplicit = false;
 
+    /**
+     * @var string|null
+     */
     public $storeKey = 'ear6kme7or19rnfldtmwsxgzxsrmngqw';
 
+    /**
+     * @return void
+     */
     public function init()
     {
         if (!$this->allowImplicit) {
@@ -88,7 +100,7 @@ class AuthorizeFilter extends ActionFilter
 
     /**
      * @throws Exception
-     * @return \conquer\oauth2\BaseModel
+     * @return \conquer\oauth2\BaseModel|null
      */
     protected function getResponseType()
     {
@@ -106,6 +118,7 @@ class AuthorizeFilter extends ActionFilter
      * Finish oauth authorization.
      * Builds redirect uri and performs redirect.
      * If user is not logged on, redirect contains the Access Denied Error
+     * @return void
      */
     public function finishAuthorization()
     {

@@ -28,6 +28,9 @@ class Exception extends HttpException
 
     const NOT_IMPLEMENTED = 'not_implemented';
 
+    /**
+     * @var string|null
+     */
     protected $error;
 
     /**

@@ -8,11 +8,18 @@ use tests\OAuthTestCase;
 
 class RefreshTokenGrantTest extends OAuthTestCase
 {
+    /**
+     * @param array<string, mixed> $params
+     * @return RefreshToken
+     */
     private function grant(array $params)
     {
         return $this->model(RefreshToken::class, array_merge(['grant_type' => 'refresh_token'], $params));
     }
 
+    /**
+     * @return void
+     */
     public function testRefreshRotatesToken()
     {
         $token = $this->createRefreshToken('app');
@@ -24,6 +31,9 @@ class RefreshTokenGrantTest extends OAuthTestCase
         $this->assertNull(\conquer\oauth2\models\RefreshToken::findOne($token->refresh_token));
     }
 
+    /**
+     * @return void
+     */
     public function testTokenOfAnotherClientIsRejected()
     {
         $token = $this->createRefreshToken('app');
@@ -33,6 +43,9 @@ class RefreshTokenGrantTest extends OAuthTestCase
         });
     }
 
+    /**
+     * @return void
+     */
     public function testExpiredTokenIsRejected()
     {
         $token = $this->createRefreshToken('app', ['expires' => time() - 1]);
@@ -42,6 +55,9 @@ class RefreshTokenGrantTest extends OAuthTestCase
         });
     }
 
+    /**
+     * @return void
+     */
     public function testScopeCanOnlyBeNarrowed()
     {
         $token = $this->createRefreshToken('app', ['scope' => 'read']);

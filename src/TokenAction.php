@@ -13,6 +13,8 @@ use yii\web\Response;
 
 /**
  * @author Andrey Borodulin
+ *
+ * @extends Action<\yii\web\Controller>
  */
 class TokenAction extends Action
 {
@@ -34,6 +36,9 @@ class TokenAction extends Action
      */
     public $bodyOnlyParams = ['client_secret', 'code', 'code_verifier', 'refresh_token', 'password', 'assertion'];
 
+    /**
+     * @var array<string, class-string<BaseModel>|array{class: class-string<BaseModel>, ...}>
+     */
     public $grantTypes = [
         'authorization_code' => 'conquer\oauth2\granttypes\Authorization',
         'refresh_token' => 'conquer\oauth2\granttypes\RefreshToken',
@@ -42,6 +47,9 @@ class TokenAction extends Action
 //         'urn:ietf:params:oauth:grant-type:jwt-bearer' => 'conquer\oauth2\granttypes\JwtBearer',
     ];
 
+    /**
+     * @return void
+     */
     public function init()
     {
         Yii::$app->response->format = $this->format;
@@ -51,6 +59,9 @@ class TokenAction extends Action
         $this->controller->enableCsrfValidation = false;
     }
 
+    /**
+     * @return void
+     */
     public function run()
     {
         if (!$this->allowGet) {

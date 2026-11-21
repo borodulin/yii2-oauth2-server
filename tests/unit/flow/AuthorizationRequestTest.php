@@ -8,6 +8,9 @@ use tests\OAuthTestCase;
 
 class AuthorizationRequestTest extends OAuthTestCase
 {
+    /**
+     * @return void
+     */
     public function testExactRedirectUriIsAccepted()
     {
         $model = $this->model(Authorization::class, [
@@ -16,6 +19,9 @@ class AuthorizationRequestTest extends OAuthTestCase
         $this->assertTrue($model->validate());
     }
 
+    /**
+     * @return void
+     */
     public function testRedirectUriPrefixAttackIsRejected()
     {
         foreach (['https://app.example.com/cb.evil.net', 'https://app.example.com/cb/../../evil', 'HTTPS://APP.EXAMPLE.COM/CB'] as $uri) {
@@ -28,6 +34,9 @@ class AuthorizationRequestTest extends OAuthTestCase
         }
     }
 
+    /**
+     * @return void
+     */
     public function testRegisteredRedirectUriIsUsedWhenOmitted()
     {
         $model = $this->model(Authorization::class, ['response_type' => 'code', 'client_id' => 'app']);
@@ -35,6 +44,9 @@ class AuthorizationRequestTest extends OAuthTestCase
         $this->assertSame('https://app.example.com/cb', $model->redirect_uri);
     }
 
+    /**
+     * @return void
+     */
     public function testRedirectUriRequiredWhenSeveralRegistered()
     {
         $this->createClient('multi', 's', "https://a.example.com/cb\nhttps://b.example.com/cb");
@@ -49,6 +61,9 @@ class AuthorizationRequestTest extends OAuthTestCase
         $this->assertTrue($model->validate());
     }
 
+    /**
+     * @return void
+     */
     public function testCodeStoresPkceChallenge()
     {
         \Yii::$app->user->setIdentity(new \tests\TestIdentity(['id' => 7]));
@@ -59,6 +74,7 @@ class AuthorizationRequestTest extends OAuthTestCase
         $this->assertTrue($model->validate());
         parse_str($model->getResponseData()['query'], $query);
         $code = \conquer\oauth2\models\AuthorizationCode::findOne($query['code']);
+        $this->assertNotNull($code);
         $this->assertSame(str_repeat('a', 43), $code->code_challenge);
         $this->assertSame('S256', $code->code_challenge_method);
         $this->assertSame('', $code->redirect_uri, 'redirect_uri taken from client is not bound to the code');

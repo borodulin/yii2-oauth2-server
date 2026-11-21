@@ -21,21 +21,51 @@ use yii\base\Component;
  */
 class ArraySession extends Component
 {
+    /**
+     * @var array<string, mixed>
+     */
     private $data = [];
+
+    /**
+     * @param string $key
+     * @param mixed $value
+     * @return void
+     */
     public function set($key, $value) { $this->data[$key] = $value; }
+
+    /**
+     * @param string $key
+     * @return mixed
+     */
     public function get($key) { return isset($this->data[$key]) ? $this->data[$key] : null; }
+
+    /**
+     * @param string $key
+     * @return bool
+     */
     public function has($key) { return isset($this->data[$key]); }
+
+    /**
+     * @param string $key
+     * @return void
+     */
     public function remove($key) { unset($this->data[$key]); }
 }
 
 class HardeningTest extends OAuthTestCase
 {
+    /**
+     * @return void
+     */
     protected function _after()
     {
         unset($_SERVER['REQUEST_METHOD']);
         parent::_after();
     }
 
+    /**
+     * @return void
+     */
     public function testHttpBasicClientAuthentication()
     {
         Yii::$app->request->headers->set('Authorization', 'Basic ' . base64_encode('app:secret'));
@@ -50,6 +80,9 @@ class HardeningTest extends OAuthTestCase
         });
     }
 
+    /**
+     * @return void
+     */
     public function testTokenEndpointErrorsAreNotRedirects()
     {
         $model = $this->model(ClientCredentials::class, [
@@ -65,6 +98,9 @@ class HardeningTest extends OAuthTestCase
         }
     }
 
+    /**
+     * @return void
+     */
     public function testScopesWithExtraSpacesAreAccepted()
     {
         $model = $this->model(ClientCredentials::class, [
@@ -73,6 +109,9 @@ class HardeningTest extends OAuthTestCase
         $this->assertTrue($model->validate());
     }
 
+    /**
+     * @return void
+     */
     public function testTokenWithoutScopeAuthenticatesOnPhp81()
     {
         $token = AccessToken::createAccessToken(['client_id' => 'app', 'user_id' => 42, 'expires' => time() + 60]);
@@ -88,30 +127,44 @@ class HardeningTest extends OAuthTestCase
         $this->assertSame(42, $identity->getId());
     }
 
+    /**
+     * @return void
+     */
     public function testMissingTokenIsNotAuthenticatedInsteadOfError()
     {
         $this->assertNull((new TokenAuth())->authenticate(Yii::$app->user, Yii::$app->request, Yii::$app->response));
     }
 
+    /**
+     * @return void
+     */
     public function testStoredAuthorizationRequestIsUsedOnce()
     {
         Yii::$app->set('session', ArraySession::class);
         Yii::$app->request->setQueryParams(['response_type' => 'code', 'client_id' => 'app']);
         $filter = new AuthorizeFilter();
-        $filter->beforeAction(null);
+        $filter->beforeAction(new \yii\base\Action('authorize', new \yii\web\Controller('auth', Yii::$app)));
         $this->assertTrue($filter->getIsOauthRequest());
 
         Yii::$app->user->setIdentity(new TestIdentity(['id' => 42]));
         $filter->finishAuthorization();
-        $this->assertStringStartsWith('https://app.example.com/cb?code=', Yii::$app->response->headers->get('Location'));
+        $location = Yii::$app->response->headers->get('Location');
+        $this->assertNotNull($location);
+        $this->assertStringStartsWith('https://app.example.com/cb?code=', $location);
         $this->assertFalse($filter->getIsOauthRequest(), 'a later login must not finish the old OAuth request again');
     }
 
+    /**
+     * @return TokenAction
+     */
     private function tokenAction()
     {
         return new TokenAction('token', new \yii\web\Controller('auth', Yii::$app));
     }
 
+    /**
+     * @return void
+     */
     public function testTokenEndpointRequiresPost()
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -121,6 +174,9 @@ class HardeningTest extends OAuthTestCase
         });
     }
 
+    /**
+     * @return void
+     */
     public function testCredentialsInQueryStringAreRejected()
     {
         $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -131,6 +187,9 @@ class HardeningTest extends OAuthTestCase
         });
     }
 
+    /**
+     * @return void
+     */
     public function testTokenResponseIsNotCacheable()
     {
         $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -142,6 +201,9 @@ class HardeningTest extends OAuthTestCase
         $this->assertSame('no-cache', Yii::$app->response->headers->get('Pragma'));
     }
 
+    /**
+     * @return void
+     */
     public function testCodeCannotBeRedeemedTwiceConcurrently()
     {
         $code = $this->createCode('app');
@@ -156,6 +218,9 @@ class HardeningTest extends OAuthTestCase
         });
     }
 
+    /**
+     * @return void
+     */
     public function testRefreshTokenCannotBeUsedTwiceConcurrently()
     {
         $token = $this->createRefreshToken('app');

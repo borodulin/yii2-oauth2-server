@@ -9,11 +9,18 @@ use tests\OAuthTestCase;
 
 class AuthorizationCodeGrantTest extends OAuthTestCase
 {
+    /**
+     * @param array<string, mixed> $params
+     * @return Authorization
+     */
     private function grant(array $params)
     {
         return $this->model(Authorization::class, array_merge(['grant_type' => 'authorization_code'], $params));
     }
 
+    /**
+     * @return void
+     */
     public function testSuccessfulExchangeReturnsGrantedScope()
     {
         $code = $this->createCode('app', ['scope' => 'read']);
@@ -26,6 +33,9 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
         $this->assertNull(AuthorizationCode::findOne($code->authorization_code), 'code is single-use');
     }
 
+    /**
+     * @return void
+     */
     public function testCodeIssuedToAnotherClientIsRejected()
     {
         $code = $this->createCode('app');
@@ -35,6 +45,9 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
         });
     }
 
+    /**
+     * @return void
+     */
     public function testClientSecretIsRequired()
     {
         $code = $this->createCode('app');
@@ -49,6 +62,9 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
         });
     }
 
+    /**
+     * @return void
+     */
     public function testExpiredCodeIsRejected()
     {
         $code = $this->createCode('app', ['expires' => time() - 1]);
@@ -58,6 +74,9 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
         });
     }
 
+    /**
+     * @return void
+     */
     public function testRedirectUriMustMatchTheOneUsedForTheCode()
     {
         $code = $this->createCode('app', ['redirect_uri' => 'https://app.example.com/cb']);
@@ -72,6 +91,9 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
         $this->assertTrue($model->validate());
     }
 
+    /**
+     * @return void
+     */
     public function testPkceS256AllowsPublicClient()
     {
         $verifier = str_repeat('v', 50);
@@ -87,6 +109,9 @@ class AuthorizationCodeGrantTest extends OAuthTestCase
         $this->assertTrue($model->validate());
     }
 
+    /**
+     * @return void
+     */
     public function testGrantTypeRestrictionIsEnforced()
     {
         $this->createClient('cc-only', 's', 'https://cc.example.com/cb', 'client_credentials');

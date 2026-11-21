@@ -73,6 +73,9 @@ class ClientCredentials extends BaseModel
         ];
     }
 
+    /**
+     * @return void
+     */
     public function validateGrantType()
     {
         $this->checkGrantType('client_credentials');

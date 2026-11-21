@@ -7,6 +7,9 @@ use yii\web\IdentityInterface;
 
 class TestIdentity extends BaseObject implements IdentityInterface
 {
+    /**
+     * @var int|string
+     */
     public $id;
 
     public static function findIdentity($id)

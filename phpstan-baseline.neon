@@ -1,0 +1,61 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method conquer\\oauth2\\BaseModel\:\:splitScope\(\) should return array\<string\> but returns list\<string\>\|false\.$#'
+			identifier: return.type
+			count: 1
+			path: src/BaseModel.php
+
+		-
+			message: '#^Parameter \#2 \$haystack of function in_array expects array, list\<string\>\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/BaseModel.php
+
+		-
+			message: '#^Method conquer\\oauth2\\granttypes\\JwtBearer\:\:getResponseData\(\) should return array\<string, mixed\> but return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: src/granttypes/JwtBearer.php
+
+		-
+			message: '#^Access to an undefined property yii\\console\\Application\|yii\\web\\Application\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/models/AccessToken.php
+
+		-
+			message: '#^Parameter \#2 \$link of method yii\\db\\ActiveRecord\:\:hasOne\(\) expects array\<string, string\>, array\<int\|string, string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/models/AccessToken.php
+
+		-
+			message: '#^Access to an undefined property yii\\console\\Application\|yii\\web\\Application\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/models/AuthorizationCode.php
+
+		-
+			message: '#^Parameter \#2 \$link of method yii\\db\\ActiveRecord\:\:hasOne\(\) expects array\<string, string\>, array\<int\|string, string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/models/AuthorizationCode.php
+
+		-
+			message: '#^Method conquer\\oauth2\\models\\Client\:\:getRedirectUris\(\) should return array\<string\> but returns list\<string\>\|false\.$#'
+			identifier: return.type
+			count: 1
+			path: src/models/Client.php
+
+		-
+			message: '#^Access to an undefined property yii\\console\\Application\|yii\\web\\Application\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/models/RefreshToken.php
+
+		-
+			message: '#^Parameter \#2 \$link of method yii\\db\\ActiveRecord\:\:hasOne\(\) expects array\<string, string\>, array\<int\|string, string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/models/RefreshToken.php

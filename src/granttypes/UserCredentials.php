@@ -33,6 +33,9 @@ use yii\web\IdentityInterface;
  */
 class UserCredentials extends BaseModel
 {
+    /**
+     * @var IdentityInterface|null
+     */
     private $_user;
 
     /**
@@ -94,11 +97,12 @@ class UserCredentials extends BaseModel
      * @param string $attribute the attribute currently being validated
      * @throws \conquer\oauth2\Exception
      * @throws \yii\base\InvalidConfigException
+     * @return void
      */
     public function validatePassword($attribute)
     {
         if (! $this->hasErrors()) {
-            /** @var OAuth2IdentityInterface $user */
+            /** @var OAuth2IdentityInterface|null $user */
             $user = $this->getUser();
             if (!$user || !$user->validatePassword($this->password)) {
                 $this->addError($attribute, Yii::t('conquer/oauth2', 'Invalid username or password.'));
@@ -145,7 +149,7 @@ class UserCredentials extends BaseModel
      */
     protected function getUser()
     {
-        /** @var OAuth2IdentityInterface $identityClass */
+        /** @var class-string<OAuth2IdentityInterface> $identityClass */
         $identityClass = Yii::$app->user->identityClass;
 
         $identityObject = Yii::createObject($identityClass);
@@ -160,6 +164,9 @@ class UserCredentials extends BaseModel
         return $this->_user;
     }
 
+    /**
+     * @return void
+     */
     public function validateGrantType()
     {
         $this->checkGrantType('password');

@@ -1,0 +1,48 @@
+includes:
+    - vendor/mspirkov/yii2-phpstan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 8
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - tests/_support/_generated
+    bootstrapFiles:
+        - vendor/yiisoft/yii2/Yii.php
+    treatPhpDocTypesAsCertain: false
+    mspirkovYii2:
+        enableAllRules: false
+        enableValidationRules: true
+        yiiAppTypes:
+            -
+                paths:
+                    - src
+                type: yii\web\Application
+                nullable: false
+            -
+                paths:
+                    - src/models
+                type: yii\console\Application|yii\web\Application
+                nullable: false
+            -
+                paths:
+                    - src/console
+                    - src/migrations
+                type: yii\console\Application
+                nullable: false
+            -
+                paths:
+                    - tests
+                type: yii\web\Application<tests\TestIdentity>
+                nullable: false
+    ignoreErrors:
+        -
+            identifier: new.static
+        # HeaderCollection::get() with a non-null $default never returns null, fixed in Yii 2.0.56:
+        # https://github.com/yiisoft/yii2/pull/21147
+        -
+            identifier: foreach.nonIterable
+            path: src/request/AccessTokenExtractor.php
+            count: 1

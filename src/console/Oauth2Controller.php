@@ -17,10 +17,16 @@ use conquer\oauth2\models\AccessToken;
  */
 class Oauth2Controller extends Controller
 {
+    /**
+     * @return void
+     */
     public function actionIndex()
     {
     }
 
+    /**
+     * @return void
+     */
     public function actionClear()
     {
         AuthorizationCode::deleteAll(['<', 'expires', time()]);

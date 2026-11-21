@@ -20,7 +20,7 @@ use Yii;
 class RefreshToken extends BaseModel
 {
     /**
-     * @var \conquer\oauth2\models\RefreshToken
+     * @var \conquer\oauth2\models\RefreshToken|null
      */
     private $_refreshToken;
 
@@ -32,7 +32,7 @@ class RefreshToken extends BaseModel
 
     /**
      * The refresh token issued to the client.
-     * @var string
+     * @var string|array<mixed>|null
      */
     public $refresh_token;
 
@@ -67,6 +67,9 @@ class RefreshToken extends BaseModel
         ];
     }
 
+    /**
+     * @return void
+     */
     public function validateRefreshToken()
     {
         $refreshToken = $this->getRefreshToken();
@@ -85,7 +88,6 @@ class RefreshToken extends BaseModel
     }
 
     /**
-     * @return array
      * @throws Exception
      */
     public function getResponseData()

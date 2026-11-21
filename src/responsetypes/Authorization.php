@@ -42,7 +42,7 @@ class Authorization extends BaseModel
     /**
      * Cross-Site Request Forgery
      * @link https://tools.ietf.org/html/rfc6749#section-10.12
-     * @var string
+     * @var string|null
      */
     public $state;
 
@@ -58,9 +58,6 @@ class Authorization extends BaseModel
      */
     public $code_challenge_method;
 
-    /**
-     * @return array
-     */
     public function rules()
     {
         return [
@@ -78,11 +75,6 @@ class Authorization extends BaseModel
     }
 
     /**
-     * @return array
-     * @throws \conquer\oauth2\Exception
-     * @throws \yii\base\Exception
-     */
-    /**
      * @inheritdoc
      */
     protected function redirectsErrors()
@@ -90,6 +82,10 @@ class Authorization extends BaseModel
         return true;
     }
 
+    /**
+     * @throws \conquer\oauth2\Exception
+     * @throws \yii\base\Exception
+     */
     public function getResponseData()
     {
         $authCode = AuthorizationCode::createAuthorizationCode([

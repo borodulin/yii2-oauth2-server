@@ -75,9 +75,6 @@ class Client extends \yii\db\ActiveRecord
     }
 
     /**
-     * @return \yii\db\ActiveQuery
-     */
-    /**
      * @return string[] registered redirect URIs (whitespace-separated in the redirect_uri column)
      */
     public function getRedirectUris()
@@ -85,6 +82,9 @@ class Client extends \yii\db\ActiveRecord
         return preg_split('/\s+/', trim((string)$this->redirect_uri), -1, PREG_SPLIT_NO_EMPTY);
     }
 
+    /**
+     * @return \yii\db\ActiveQuery
+     */
     public function getAccessTokens()
     {
         return $this->hasMany(AccessToken::class, ['client_id' => 'client_id']);

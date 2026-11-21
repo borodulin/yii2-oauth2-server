@@ -71,7 +71,7 @@ class AuthorizationCode extends ActiveRecord
 
     /**
      *
-     * @param array $params
+     * @param array<string, mixed> $params
      * @throws Exception
      * @return AuthorizationCode
      * @throws \yii\base\Exception
@@ -100,13 +100,12 @@ class AuthorizationCode extends ActiveRecord
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * @return \yii\db\ActiveQuery|null
      */
     public function getUser()
     {
         $identityClass = Yii::$app->user->identityClass;
         if (is_subclass_of($identityClass, ActiveRecord::class)) {
-            /** @var ActiveRecord $identityClass */
             $primaryKey = $identityClass::primaryKey();
             return $this->hasOne($identityClass, [reset($primaryKey) => 'user_id']);
         }

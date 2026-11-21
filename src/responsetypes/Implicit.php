@@ -57,9 +57,6 @@ class Implicit extends BaseModel
      */
     public $state;
 
-    /**
-     * @return array
-     */
     public function rules()
     {
         return [
@@ -76,11 +73,6 @@ class Implicit extends BaseModel
     }
 
     /**
-     * @return array
-     * @throws \conquer\oauth2\Exception
-     * @throws \yii\base\Exception
-     */
-    /**
      * @inheritdoc
      */
     protected function redirectsErrors()
@@ -88,6 +80,10 @@ class Implicit extends BaseModel
         return true;
     }
 
+    /**
+     * @throws \conquer\oauth2\Exception
+     * @throws \yii\base\Exception
+     */
     public function getResponseData()
     {
         $accessToken = AccessToken::createAccessToken([

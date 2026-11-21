@@ -28,7 +28,7 @@ use Yii;
 class Authorization extends BaseModel
 {
     /**
-     * @var AuthorizationCode
+     * @var AuthorizationCode|null
      */
     private $_authCode;
 
@@ -40,7 +40,7 @@ class Authorization extends BaseModel
 
     /**
      * The authorization code received from the authorization server.
-     * @var string
+     * @var string|array<mixed>|null
      */
     public $code;
 
@@ -64,7 +64,7 @@ class Authorization extends BaseModel
 
     /**
      * PKCE code verifier.
-     * @var string
+     * @var string|array<mixed>|null
      */
     public $code_verifier;
 
@@ -84,6 +84,7 @@ class Authorization extends BaseModel
 
     /**
      * Validates the code, its owner, lifetime, redirect URI and client authentication.
+     * @return void
      */
     public function validateCode()
     {
@@ -132,7 +133,6 @@ class Authorization extends BaseModel
     }
 
     /**
-     * @return array
      * @throws Exception
      */
     public function getResponseData()

@@ -37,7 +37,7 @@ use yii\web\UnauthorizedHttpException;
 class TokenAuth extends AuthMethod
 {
     /**
-     * @var AccessToken
+     * @var AccessToken|null
      */
     private $_accessToken;
 
@@ -47,12 +47,12 @@ class TokenAuth extends AuthMethod
     public $realm;
 
     /**
-     * @var string the class name of the [[identity]] object.
+     * @var string|null the class name of the [[identity]] object.
      */
     public $identityClass;
 
     /**
-     * @var array scopes that need to be on token.
+     * @var string[] scopes that need to be on token.
      */
     public $scopes = [];
 
@@ -93,8 +93,8 @@ class TokenAuth extends AuthMethod
     /**
      * Checks if everything in required set is contained in available set.
      *
-     * @param string|array $requiredSet
-     * @param string|array $availableSet
+     * @param string|string[] $requiredSet
+     * @param string|string[] $availableSet
      * @return boolean
      */
     protected function checkScopes($requiredSet, $availableSet)
@@ -104,6 +104,7 @@ class TokenAuth extends AuthMethod
 
     /**
      * @param Response $response
+     * @return void
      */
     public function challenge($response)
     {
@@ -115,6 +116,7 @@ class TokenAuth extends AuthMethod
 
     /**
      * @inheritdoc
+     * @return never
      */
     public function handleFailure($response)
     {

@@ -21,16 +21,21 @@
     ],
     "minimum-stability": "dev",
     "prefer-stable": true,
+    "scripts": {
+      "phpstan": "vendor/bin/phpstan"
+    },
     "require": {
         "php": "^7.4 || ^8.0",
         "yiisoft/yii2": "^2.0.14",
         "jakeasmith/http_build_url": ">=1.0.1"
     },
     "require-dev": {
+        "ext-pdo_sqlite": "*",
         "codeception/codeception": "^4.2 || ^5.0",
         "codeception/module-asserts": "^2.0 || ^3.0",
-        "yiisoft/yii2-coding-standards": "^2.0",
-        "ext-pdo_sqlite": "*"
+        "mspirkov/yii2-phpstan": "^0.18.0",
+        "phpstan/phpstan": "^2.3",
+        "yiisoft/yii2-coding-standards": "^2.0"
     },
     "autoload": {
         "psr-4": {
