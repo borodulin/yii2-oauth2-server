@@ -8,11 +8,16 @@ use conquer\oauth2\granttypes\Authorization;
 use conquer\oauth2\granttypes\ClientCredentials;
 use conquer\oauth2\granttypes\JwtBearer;
 use conquer\oauth2\granttypes\RefreshToken;
+use conquer\oauth2\granttypes\UserCredentials;
+use conquer\oauth2\JwtValidator;
+use conquer\oauth2\models\Client;
 use conquer\oauth2\models\AccessToken;
 use Firebase\JWT\JWT;
 use tests\OAuthTestCase;
 use Yii;
+use yii\base\InvalidConfigException;
 use yii\caching\ArrayCache;
+use yii\caching\DummyCache;
 
 /**
  * JWT bearer grant and JWT client authentication (RFC 7523).
@@ -32,12 +37,17 @@ class JwtTest extends OAuthTestCase
             $this->markTestSkipped('firebase/php-jwt is not installed');
         }
         parent::_before();
-        // the default audience is the URL of the token endpoint
-        Yii::$app->request->setHostInfo('https://server.example.com');
-        Yii::$app->request->setUrl('/oauth2/token?foo=bar');
+        Yii::$container->set(JwtValidator::class, ['audience' => self::AUDIENCE]);
+        Yii::$app->set('cache', ArrayCache::class);
         $this->createClient('jwt', 'jwt-secret', 'https://jwt.example.com/cb', JwtBearer::GRANT_TYPE . ' client_credentials refresh_token authorization_code');
         $this->setPublicKey('jwt', self::key('rsa')['public']);
         $this->setPublicKey('app', self::key('rsa')['public']);
+    }
+
+    protected function _after()
+    {
+        Yii::$container->clear(JwtValidator::class);
+        parent::_after();
     }
 
     /**
@@ -70,6 +80,7 @@ class JwtTest extends OAuthTestCase
             'aud' => self::AUDIENCE,
             'exp' => time() + 300,
             'iat' => time(),
+            'jti' => Yii::$app->security->generateRandomString(16),
         ], $claims);
         return JWT::encode(array_filter($claims, function ($v) {
             return $v !== null;
@@ -123,7 +134,7 @@ class JwtTest extends OAuthTestCase
     {
         // "app" has a public key and an empty grant_type (all grants), but jwt-bearer is not listed
         $model = $this->grant(['assertion' => $this->jwt(['iss' => 'app'])]);
-        $this->assertOAuthError(Exception::UNAUTHORIZED_CLIENT, function () use ($model) {
+        $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
             $model->validate();
         });
     }
@@ -132,7 +143,7 @@ class JwtTest extends OAuthTestCase
     {
         $this->setPublicKey('jwt', null);
         $model = $this->grant(['assertion' => $this->jwt()]);
-        $this->assertOAuthError(Exception::UNAUTHORIZED_CLIENT, function () use ($model) {
+        $this->assertOAuthError(Exception::INVALID_GRANT, function () use ($model) {
             $model->validate();
         });
     }
@@ -152,6 +163,10 @@ class JwtTest extends OAuthTestCase
             'audience with query string' => [['aud' => self::AUDIENCE . '?foo=bar']],
             'without subject' => [['sub' => null]],
             'unknown user' => [['sub' => '0']],
+            'unknown client' => [['iss' => 'nobody']],
+            'client assertion used as a grant' => [['sub' => 'jwt']],
+            'without jti' => [['jti' => null]],
+            'array kid' => [[], 'array-kid'],
             'EC algorithm for an RSA key' => [[], 'ec', 'ES256'],
             'HS256 signed with the public key' => [[], 'hs256-public-key'],
             'unsigned' => [[], 'none'],
@@ -172,6 +187,9 @@ class JwtTest extends OAuthTestCase
         } elseif ($keyType === 'none') {
             $parts = explode('.', $this->jwt());
             $jwt = JWT::urlsafeB64Encode('{"alg":"none","typ":"JWT"}') . '.' . $parts[1] . '.';
+        } elseif ($keyType === 'array-kid') {
+            $parts = explode('.', $this->jwt());
+            $jwt = JWT::urlsafeB64Encode('{"alg":"RS256","kid":[1]}') . '.' . $parts[1] . '.' . $parts[2];
         } elseif ($keyType === 'malformed') {
             $jwt = 'not-a-jwt';
         } else {
@@ -183,9 +201,8 @@ class JwtTest extends OAuthTestCase
         });
     }
 
-    public function testReplayedJtiIsRejectedWhenCacheIsConfigured()
+    public function testReplayedJtiIsRejected()
     {
-        Yii::$app->set('cache', ArrayCache::class);
         $jwt = $this->jwt(['jti' => 'once']);
         $this->assertTrue($this->grant(['assertion' => $jwt])->validate());
         $model = $this->grant(['assertion' => $jwt]);
@@ -194,14 +211,46 @@ class JwtTest extends OAuthTestCase
         });
     }
 
-    public function testConfiguredAudience()
+    public function testAudienceMustBeConfigured()
     {
-        Yii::$container->set(\conquer\oauth2\JwtValidator::class, ['audience' => 'https://issuer.example.com']);
-        try {
-            $this->assertTrue($this->grant(['assertion' => $this->jwt(['aud' => 'https://issuer.example.com'])])->validate());
-        } finally {
-            Yii::$container->clear(\conquer\oauth2\JwtValidator::class);
-        }
+        Yii::$container->set(JwtValidator::class, []);
+        $model = $this->grant(['assertion' => $this->jwt()]);
+        $this->expectException(InvalidConfigException::class);
+        $model->validate();
+    }
+
+    public function testReplayCacheMustBeConfigured()
+    {
+        Yii::$app->set('cache', DummyCache::class);
+        $model = $this->grant(['assertion' => $this->jwt()]);
+        $this->expectException(InvalidConfigException::class);
+        $model->validate();
+    }
+
+    public function testReplayProtectionCanBeDisabledExplicitly()
+    {
+        Yii::$container->set(JwtValidator::class, ['audience' => self::AUDIENCE, 'requireJti' => false, 'replayCache' => null]);
+        $jwt = $this->jwt(['jti' => null]);
+        $this->assertTrue($this->grant(['assertion' => $jwt])->validate());
+        $this->assertTrue($this->grant(['assertion' => $jwt])->validate());
+    }
+
+    public function testGrantWithValidClientSecret()
+    {
+        $this->assertTrue($this->grant(['assertion' => $this->jwt(), 'client_id' => 'jwt', 'client_secret' => 'jwt-secret'])->validate());
+    }
+
+    public function testGrantWithWrongClientSecret()
+    {
+        $model = $this->grant(['assertion' => $this->jwt(), 'client_id' => 'jwt', 'client_secret' => 'wrong']);
+        $this->assertOAuthError(Exception::UNAUTHORIZED_CLIENT, function () use ($model) {
+            $model->validate();
+        });
+    }
+
+    public function testGrantWithClientAssertion()
+    {
+        $this->assertTrue($this->grant(array_merge(['assertion' => $this->jwt()], $this->assertion()))->validate());
     }
 
     // JWT client authentication
@@ -259,7 +308,8 @@ class JwtTest extends OAuthTestCase
 
     public function testClientAssertionOfAnotherClientIsRejected()
     {
-        // signed with the key of "jwt", but claims to be "other" which has no public key
+        // signed with the key of "jwt", but claims to be "other" which has another key
+        $this->setPublicKey('other', self::key('rsa2')['public']);
         $model = $this->model(ClientCredentials::class, array_merge(
             ['grant_type' => 'client_credentials'],
             $this->assertion(['iss' => 'other', 'sub' => 'other'])
@@ -299,5 +349,62 @@ class JwtTest extends OAuthTestCase
         $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($model) {
             $model->validate();
         });
+    }
+
+    public function testReplayedClientAssertionIsRejected()
+    {
+        $assertion = $this->assertion();
+        $params = array_merge(['grant_type' => 'client_credentials'], $assertion);
+        $this->assertTrue($this->model(ClientCredentials::class, $params)->validate());
+        $model = $this->model(ClientCredentials::class, $params);
+        $this->assertOAuthError(Exception::INVALID_CLIENT, function () use ($model) {
+            $model->validate();
+        });
+    }
+
+    public function testPasswordGrantWithClientAssertion()
+    {
+        $model = $this->model(UserCredentials::class, array_merge(
+            ['grant_type' => 'password', 'username' => 'u', 'password' => 'p'],
+            $this->assertion()
+        ));
+        // the client is authenticated, then the grant type is checked: "jwt" may not use the password grant
+        $this->assertOAuthError(Exception::UNAUTHORIZED_CLIENT, function () use ($model) {
+            $model->validate();
+        });
+    }
+
+    public function testClientAssertionTypeWithoutAssertion()
+    {
+        $model = $this->model(ClientCredentials::class, [
+            'grant_type' => 'client_credentials',
+            'client_id' => 'jwt',
+            'client_assertion_type' => BaseModel::CLIENT_ASSERTION_TYPE_JWT,
+        ]);
+        $this->assertOAuthError(Exception::INVALID_REQUEST, function () use ($model) {
+            $model->validate();
+        });
+    }
+
+    public function testClientWorksWithoutPublicKeyColumn()
+    {
+        // schema before m261122_120000_oauth_jwt (SQLite cannot drop columns)
+        Yii::$app->db->createCommand()->dropTable('{{%oauth2_client}}')->execute();
+        Yii::$app->db->createCommand()->createTable('{{%oauth2_client}}', [
+            'client_id' => 'string(80) NOT NULL PRIMARY KEY',
+            'client_secret' => 'string(80) NOT NULL',
+            'redirect_uri' => 'text NOT NULL',
+            'grant_type' => 'text',
+            'scope' => 'text',
+            'created_at' => 'integer',
+            'updated_at' => 'integer',
+            'created_by' => 'integer',
+            'updated_by' => 'integer',
+        ])->execute();
+        Yii::$app->db->schema->refresh();
+        $client = new Client();
+        $client->load(['client_id' => 'x', 'client_secret' => 's', 'redirect_uri' => 'https://x', 'public_key' => 'k'], '');
+        $this->assertTrue($client->validate());
+        $this->assertNull($client->getPublicKey());
     }
 }

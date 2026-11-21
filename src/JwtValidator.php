@@ -13,6 +13,7 @@ use Yii;
 use yii\base\BaseObject;
 use yii\base\InvalidConfigException;
 use yii\caching\CacheInterface;
+use yii\caching\DummyCache;
 use yii\di\Instance;
 
 /**
@@ -23,19 +24,21 @@ use yii\di\Instance;
  *
  * Requires firebase/php-jwt ^7.0 (PHP 8.0+).
  *
- * Can be configured through the DI container:
+ * [[audience]] must be configured, usually through the DI container:
  *
  * ```php
  * Yii::$container->set(\conquer\oauth2\JwtValidator::class, [
  *     'audience' => 'https://example.com/oauth2/token',
  * ]);
  * ```
+ *
+ * Replay protection needs a cache shared by all application servers (the "cache" component by default).
  */
 class JwtValidator extends BaseObject
 {
     /**
-     * @var string|string[]|null accepted "aud" values. Null means the absolute URL of the current request
-     * without the query string, i.e. the token endpoint.
+     * @var string|string[]|null accepted "aud" values, usually the URL of the token endpoint. Required: it is not
+     * derived from the request, because the Host header is controlled by the client.
      */
     public $audience;
 
@@ -56,14 +59,15 @@ class JwtValidator extends BaseObject
 
     /**
      * @var CacheInterface|array<string, mixed>|string|null cache used to reject JWTs with a reused "jti".
-     * A component ID that is not configured in the application disables the check, as does null.
+     * Null disables replay protection and is allowed only when [[requireJti]] is false.
+     * The cache must be shared by all application servers and support atomic add() (e.g. Redis, Memcached, DB).
      */
     public $replayCache = 'cache';
 
     /**
-     * @var bool whether the "jti" claim is required
+     * @var bool whether the "jti" claim is required. Without it, a JWT can be used any number of times until it expires.
      */
-    public $requireJti = false;
+    public $requireJti = true;
 
     /**
      * Returns the claims of a JWT without verifying it, null if the JWT is malformed.
@@ -117,7 +121,8 @@ class JwtValidator extends BaseObject
             $claims = (array)JWT::decode($jwt, new Key($publicKey, $alg));
         } catch (UnexpectedValueException $e) {
             throw $e;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            // malformed input may also cause TypeError in the library
             throw new UnexpectedValueException($e->getMessage(), 0, $e);
         } finally {
             JWT::$leeway = $leeway;
@@ -145,11 +150,12 @@ class JwtValidator extends BaseObject
 
     /**
      * @return string[]
+     * @throws InvalidConfigException when the audience is not configured
      */
     public function getAudiences()
     {
-        if ($this->audience === null) {
-            return [explode('?', Yii::$app->request->getAbsoluteUrl())[0]];
+        if ($this->audience === null || $this->audience === '' || $this->audience === []) {
+            throw new InvalidConfigException(__CLASS__ . '::$audience must be configured, usually with the URL of the token endpoint.');
         }
         return (array)$this->audience;
     }
@@ -189,7 +195,8 @@ class JwtValidator extends BaseObject
         if ($cache === null) {
             return;
         }
-        $ttl = max(1, (int)ceil($claims['exp']) - time() + $this->leeway);
+        // the JWT is accepted until exp + leeway, keep the jti at least that long
+        $ttl = (int)min(max(1, ceil((float)$claims['exp']) - time() + $this->leeway), 86400 * 30);
         if (!$cache->add([__CLASS__, $issuer, $claims['jti']], 1, $ttl)) {
             throw new UnexpectedValueException('The JWT has already been used.');
         }
@@ -201,12 +208,18 @@ class JwtValidator extends BaseObject
      */
     protected function getReplayCache()
     {
-        if ($this->replayCache === null
-            || (is_string($this->replayCache) && !Yii::$app->has($this->replayCache))
-        ) {
+        if ($this->replayCache === null) {
+            if ($this->requireJti) {
+                throw new InvalidConfigException(__CLASS__ . '::$replayCache is required when $requireJti is true.');
+            }
             return null;
         }
-        return Instance::ensure($this->replayCache, CacheInterface::class);
+        /** @var CacheInterface $cache */
+        $cache = Instance::ensure($this->replayCache, CacheInterface::class);
+        if ($cache instanceof DummyCache) {
+            throw new InvalidConfigException(__CLASS__ . '::$replayCache must not be a DummyCache.');
+        }
+        return $cache;
     }
 
     /**

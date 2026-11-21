@@ -41,13 +41,17 @@ class Client extends \yii\db\ActiveRecord
      */
     public function rules()
     {
-        return [
+        $rules = [
             [['client_id', 'client_secret', 'redirect_uri'], 'required'],
             [['scope'], 'string'],
             [['client_id', 'client_secret', 'grant_type'], 'string', 'max' => 80],
             [['redirect_uri'], 'string', 'max' => 2000],
-            [['public_key'], 'string'],
         ];
+        // the column is added by m261122_120000_oauth_jwt
+        if ($this->hasAttribute('public_key')) {
+            $rules[] = [['public_key'], 'string'];
+        }
+        return $rules;
     }
 
     /**

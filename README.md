@@ -271,14 +271,18 @@ composer require firebase/php-jwt:^7.0
 Run `yii migrate/up`: the migration adds `oauth2_client.public_key`. Store the client's PEM encoded public key there
 (RSA of at least 2048 bits, or EC P-256/P-384). Supported algorithms: RS256, RS384, RS512, ES256, ES384.
 
-Every JWT must contain `iss`, `sub`, `aud` and `exp`. `aud` is the URL of the token endpoint by default.
-`exp` may be at most 10 minutes in the future, and the allowed clock skew is 60 seconds. Reused `jti` values
-are rejected when the application has a `cache` component. The settings are on `conquer\oauth2\JwtValidator`:
+Every JWT must contain `iss`, `sub`, `aud`, `exp` and `jti`. `exp` may be at most 10 minutes in the future, and the
+allowed clock skew is 60 seconds. A `jti` can be used once: it is remembered in the `cache` component, which must be
+shared by all application servers and support atomic `add()` (Redis, Memcached, DB; not `DummyCache`).
+
+The accepted audience must be configured; it is not derived from the request because the `Host` header is controlled
+by the client:
 
 ```php
 Yii::$container->set(\conquer\oauth2\JwtValidator::class, [
     'audience' => 'https://example.com/oauth2/token',
-    'requireJti' => true,
+    // 'replayCache' => 'redisCache',
+    // 'requireJti' => false, 'replayCache' => null, // not recommended: JWTs can be replayed until they expire
 ]);
 ```
 
@@ -287,8 +291,8 @@ Yii::$container->set(\conquer\oauth2\JwtValidator::class, [
 signed with its private key, where `iss` and `sub` are its `client_id`. This works with every grant once the
 client has a public key.
 
-**JWT bearer grant.** The client exchanges a JWT (`iss`: its `client_id`, `sub`: the user ID) for an access token
-of that user. A client with this grant can get tokens of any user, so the grant is disabled by default. To use it,
+**JWT bearer grant.** The client exchanges a JWT (`iss`: its `client_id`, `sub`: the user ID, which must differ from
+the `client_id`) for an access token of that user. A client with this grant can get tokens of any user, so the grant is disabled by default. To use it,
 enable it on `TokenAction` and list it explicitly in `oauth2_client.grant_type`; an empty `grant_type` does not
 allow it:
 

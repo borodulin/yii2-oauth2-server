@@ -35,7 +35,8 @@
         "yiisoft/yii2-coding-standards": "^2.0"
     },
     "suggest": {
-        "firebase/php-jwt": "^7.0, required for the JWT bearer grant and JWT client authentication (RFC 7523), needs PHP 8.0+"
+        "firebase/php-jwt": "^7.0, required for the JWT bearer grant and JWT client authentication (RFC 7523), needs PHP 8.0+",
+        "ext-openssl": "Required for JWT support"
     },
     "autoload": {
         "psr-4": {

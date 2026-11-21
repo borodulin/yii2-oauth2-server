@@ -1,4 +1,4 @@
-2.2.0 under development
+3.0.0 under development
 -----------------------
 - Bug: `getUser()` of the token models returns null instead of a broken relation when the identity class has no primary key
 - Enh: PHPStan (level 5) in CI

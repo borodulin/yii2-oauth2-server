@@ -11,7 +11,9 @@ use conquer\oauth2\BaseModel;
 use conquer\oauth2\Exception;
 use conquer\oauth2\JwtValidator;
 use conquer\oauth2\models\AccessToken;
+use conquer\oauth2\models\Client;
 use Yii;
+use yii\helpers\VarDumper;
 use yii\web\IdentityInterface;
 
 /**
@@ -93,27 +95,30 @@ class JwtBearer extends BaseModel
     {
         $claims = JwtValidator::peekClaims($this->assertion);
         $issuer = isset($claims['iss']) && is_string($claims['iss']) ? $claims['iss'] : null;
-        if ($issuer === null) {
-            $this->errorServer(Yii::t('conquer/oauth2', 'The assertion is invalid.'), Exception::INVALID_GRANT);
-        }
-        if (!empty($this->client_id) && $this->client_id !== $issuer) {
+        if ($this->client_id !== null && $this->client_id !== '' && $this->client_id !== $issuer) {
             $this->errorServer(Yii::t('conquer/oauth2', 'The assertion was issued by another client.'), Exception::INVALID_GRANT);
         }
+        // the same error for an unknown client, a client without the grant or without a key and a bad assertion,
+        // so that unauthenticated callers cannot probe clients
+        $client = $issuer === null ? null : Client::findOne(['client_id' => $issuer]);
+        $publicKey = $client === null ? null : $client->getPublicKey();
+        if ($client === null || $publicKey === null
+            || !in_array(self::GRANT_TYPE, self::splitScope($client->grant_type), true)
+        ) {
+            Yii::info('JWT bearer grant is not allowed for client ' . VarDumper::dumpAsString($issuer), __METHOD__);
+            $this->errorServer(Yii::t('conquer/oauth2', 'The assertion is invalid.'), Exception::INVALID_GRANT);
+        }
         $this->client_id = $issuer;
-        $client = $this->getClient();
-
-        if (!in_array(self::GRANT_TYPE, self::splitScope($client->grant_type), true)) {
-            $this->errorServer(Yii::t('conquer/oauth2', 'The grant type is unauthorized for this client.'), Exception::UNAUTHORIZED_CLIENT);
-        }
-        $publicKey = $client->getPublicKey();
-        if ($publicKey === null) {
-            $this->errorServer(Yii::t('conquer/oauth2', 'The client has no public key.'), Exception::UNAUTHORIZED_CLIENT);
-        }
+        $this->_client = $client;
 
         try {
             $claims = $this->getJwtValidator()->validate((string)$this->assertion, $publicKey, $issuer);
         } catch (\UnexpectedValueException $e) {
             Yii::info('Invalid assertion of ' . $issuer . ': ' . $e->getMessage(), __METHOD__);
+            $this->errorServer(Yii::t('conquer/oauth2', 'The assertion is invalid.'), Exception::INVALID_GRANT);
+        }
+        // a client assertion (sub = client_id) must not be usable as an authorization grant
+        if ($claims['sub'] === $issuer) {
             $this->errorServer(Yii::t('conquer/oauth2', 'The assertion is invalid.'), Exception::INVALID_GRANT);
         }
 
