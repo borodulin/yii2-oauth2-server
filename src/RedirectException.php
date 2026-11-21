@@ -63,10 +63,6 @@ class RedirectException extends Exception
      */
     public static function buildUri($uri, array $params, $fragment = false)
     {
-        $query = http_build_query($params);
-        if ($fragment) {
-            return http_build_url($uri, [], HTTP_URL_STRIP_FRAGMENT) . '#' . $query;
-        }
-        return http_build_url($uri, ['query' => $query], HTTP_URL_JOIN_QUERY | HTTP_URL_STRIP_FRAGMENT);
+        return Uri::withParams($uri, $params, $fragment);
     }
 }

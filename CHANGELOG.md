@@ -20,6 +20,7 @@ Security release with breaking changes, see "Upgrading to 3.0" in README.
 - Enh: `Client::generateSecret()`, `Client::isPublic()`; translations are registered automatically; `yii oauth2/clear` reports what it deleted
 - Enh: new migrations `m261122_120000_oauth_jwt` (`public_key`) and `m261123_120000_oauth_v3` (hashing, `used` columns, indexes); the base migration works on SQLite
 - Enh: PHPStan (level 5) in CI; tests run the package migrations
+- Chg: the abandoned `jakeasmith/http_build_url` dependency is removed; redirect URIs are built by `conquer\oauth2\Uri`, which keeps the registered URI as is
 - Bug: authorization errors were 400 pages instead of redirects to the client; implicit errors go in the fragment
 - Bug: the README flow issued two codes per login
 - Bug: `oauth2_client.grant_type` was not checked at the authorization endpoint

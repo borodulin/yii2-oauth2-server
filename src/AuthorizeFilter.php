@@ -212,11 +212,9 @@ class AuthorizeFilter extends ActionFilter
             return;
         }
 
-        $redirectUri = http_build_url($responseType->redirect_uri, $parts, HTTP_URL_JOIN_QUERY | HTTP_URL_STRIP_FRAGMENT);
-
-        if (isset($parts['fragment'])) {
-            $redirectUri .= '#' . $parts['fragment'];
-        }
+        $redirectUri = isset($parts['fragment'])
+            ? Uri::withParams($responseType->redirect_uri, $parts['fragment'], true)
+            : Uri::withParams($responseType->redirect_uri, isset($parts['query']) ? $parts['query'] : '');
 
         Yii::$app->response->redirect($redirectUri);
     }

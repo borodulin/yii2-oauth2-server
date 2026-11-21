@@ -23,8 +23,7 @@
     "prefer-stable": true,
     "require": {
         "php": "^7.4 || ^8.0",
-        "yiisoft/yii2": "^2.0.14",
-        "jakeasmith/http_build_url": "^1.0.1"
+        "yiisoft/yii2": "^2.0.14"
     },
     "require-dev": {
         "ext-pdo_sqlite": "*",
