@@ -20,7 +20,7 @@ use yii\behaviors\TimestampBehavior;
  * @property string $grant_type
  * @property string $scope
  * @property integer $user_id
- * @property string $public_key
+ * @property string|null $public_key PEM encoded public key for JWT assertions (RFC 7523)
  *
  * @property AccessToken[] $accessTokens
  * @property AuthorizationCode[] $authorizationCodes
@@ -45,7 +45,8 @@ class Client extends \yii\db\ActiveRecord
             [['client_id', 'client_secret', 'redirect_uri'], 'required'],
             [['scope'], 'string'],
             [['client_id', 'client_secret', 'grant_type'], 'string', 'max' => 80],
-            [['redirect_uri'], 'string', 'max' => 2000]
+            [['redirect_uri'], 'string', 'max' => 2000],
+            [['public_key'], 'string'],
         ];
     }
 
@@ -71,7 +72,20 @@ class Client extends \yii\db\ActiveRecord
             'redirect_uri' => Yii::t('conquer/oauth2', 'Redirect URI used for Authorization Grant'),
             'grant_type' => Yii::t('conquer/oauth2', 'Space-delimited list of grant types permitted, null = all'),
             'scope' => Yii::t('conquer/oauth2', 'Space-delimited list of approved scopes'),
+            'public_key' => Yii::t('conquer/oauth2', 'PEM encoded public key for JWT assertions'),
         ];
+    }
+
+    /**
+     * Returns the public key that verifies JWTs signed by the client (RFC 7523).
+     * @return string|null null when no key is registered or the table has no public_key column
+     */
+    public function getPublicKey()
+    {
+        if (!$this->hasAttribute('public_key') || !is_string($this->public_key) || trim($this->public_key) === '') {
+            return null;
+        }
+        return $this->public_key;
     }
 
     /**

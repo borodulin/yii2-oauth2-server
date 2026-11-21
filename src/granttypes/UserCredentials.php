@@ -76,11 +76,14 @@ class UserCredentials extends BaseModel
     public function rules()
     {
         return [
-            [['grant_type', 'client_id', 'client_secret', 'username', 'password'], 'required'],
+            [['grant_type', 'client_id', 'username', 'password'], 'required'],
+            ['client_secret', 'required', 'when' => function () {
+                return !$this->hasClientAssertion();
+            }],
             ['grant_type', 'required', 'requiredValue' => 'password'],
             [['client_id'], 'string', 'max' => 80],
             [['client_id'], 'validateClientId'],
-            [['client_secret'], 'validateClientSecret'],
+            [['client_secret'], 'validateClientSecret', 'skipOnEmpty' => false],
             [['grant_type'], 'validateGrantType'],
             [['scope'], 'validateScope'],
             // password is validated by validatePassword()

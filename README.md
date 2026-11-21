@@ -260,6 +260,57 @@ class User extends ActiveRecord implements IdentityInterface, OAuth2IdentityInte
 }
 ```
 
+### JWT (RFC 7523)
+
+Requires `firebase/php-jwt`:
+
+```
+composer require firebase/php-jwt
+```
+
+Run `yii migrate/up`: the migration adds `oauth2_client.public_key`. Store the client's PEM encoded public key there
+(RSA of at least 2048 bits, or EC P-256/P-384). Supported algorithms: RS256, RS384, RS512, ES256, ES384.
+
+Every JWT must contain `iss`, `sub`, `aud` and `exp`. `aud` is the URL of the token endpoint by default.
+`exp` may be at most 10 minutes in the future, and the allowed clock skew is 60 seconds. Reused `jti` values
+are rejected when the application has a `cache` component. The settings are on `conquer\oauth2\JwtValidator`:
+
+```php
+Yii::$container->set(\conquer\oauth2\JwtValidator::class, [
+    'audience' => 'https://example.com/oauth2/token',
+    'requireJti' => true,
+]);
+```
+
+**Client authentication.** Instead of `client_secret`, a client can send
+`client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer` and a `client_assertion` JWT
+signed with its private key, where `iss` and `sub` are its `client_id`. This works with every grant once the
+client has a public key.
+
+**JWT bearer grant.** The client exchanges a JWT (`iss`: its `client_id`, `sub`: the user ID) for an access token
+of that user. A client with this grant can get tokens of any user, so the grant is disabled by default. To use it,
+enable it on `TokenAction` and list it explicitly in `oauth2_client.grant_type`; an empty `grant_type` does not
+allow it:
+
+```php
+'token' => [
+    'class' => \conquer\oauth2\TokenAction::class,
+    'grantTypes' => [
+        'authorization_code' => \conquer\oauth2\granttypes\Authorization::class,
+        'refresh_token' => \conquer\oauth2\granttypes\RefreshToken::class,
+        'client_credentials' => \conquer\oauth2\granttypes\ClientCredentials::class,
+        'urn:ietf:params:oauth:grant-type:jwt-bearer' => \conquer\oauth2\granttypes\JwtBearer::class,
+    ],
+],
+```
+
+Token request:
+
+```
+POST /oauth2/token
+grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=eyJhbGciOiJSUzI1NiJ9...&scope=read
+```
+
 ### Warning
 
 As official documentation says:

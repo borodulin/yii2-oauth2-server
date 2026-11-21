@@ -1,8 +1,10 @@
-2.1.1 under development
+2.2.0 under development
 -----------------------
-- Bug: `JwtBearer::getResponseData()` returned nothing; it now throws a `not_implemented` error
 - Bug: `getUser()` of the token models returns null instead of a broken relation when the identity class has no primary key
 - Enh: PHPStan (level 5) in CI
+- Enh: JWT bearer grant (RFC 7523, 2.1), disabled by default; clients must list it explicitly in `grant_type`
+- Enh: JWT client authentication with `client_assertion` (RFC 7523, 2.2)
+- Enh: new migration `m261122_120000_oauth_jwt` adds `oauth2_client.public_key`; JWT support requires `firebase/php-jwt`
 
 2.1.0
 -----

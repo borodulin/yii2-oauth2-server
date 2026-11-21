@@ -15,6 +15,26 @@ use yii\web\Request;
 abstract class BaseModel extends Model
 {
     /**
+     * Client assertion type for client authentication with a JWT (RFC 7523, section 2.2).
+     */
+    const CLIENT_ASSERTION_TYPE_JWT = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
+
+    /**
+     * @var JwtValidator|array<string, mixed>|string validator of JWT assertions
+     */
+    public $jwtValidator = JwtValidator::class;
+
+    /**
+     * @var mixed client_assertion_type request parameter
+     */
+    protected $_clientAssertionType;
+
+    /**
+     * @var mixed client_assertion request parameter
+     */
+    protected $_clientAssertion;
+
+    /**
      * @var Client|null
      */
     protected $_client;
@@ -66,7 +86,47 @@ abstract class BaseModel extends Model
                     $this->client_secret = urldecode((string)$password);
                 }
             }
+            // JWT client authentication (RFC 7523, 2.2): client_id may be omitted, it is the "sub" of the assertion
+            $assertionType = self::getRequestValue('client_assertion_type');
+            if ($assertionType !== null && $assertionType !== '') {
+                $this->_clientAssertionType = $assertionType;
+                $this->_clientAssertion = self::getRequestValue('client_assertion');
+                $claims = JwtValidator::peekClaims($this->_clientAssertion);
+                if (empty($this->client_id) && isset($claims['sub']) && is_string($claims['sub'])) {
+                    $this->client_id = $claims['sub'];
+                }
+            }
         }
+    }
+
+    /**
+     * Whether the client authenticates with a client assertion instead of a client secret.
+     * @return bool
+     */
+    public function hasClientAssertion()
+    {
+        return $this->_clientAssertionType !== null;
+    }
+
+    /**
+     * Whether the request authenticates the client with a secret or an assertion.
+     * @return bool
+     */
+    public function hasClientCredentials()
+    {
+        return $this->hasClientAssertion() || (is_string($this->client_secret) && $this->client_secret !== '');
+    }
+
+    /**
+     * @return JwtValidator
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function getJwtValidator()
+    {
+        if (!$this->jwtValidator instanceof JwtValidator) {
+            $this->jwtValidator = Yii::createObject($this->jwtValidator);
+        }
+        return $this->jwtValidator;
     }
 
     /**
@@ -158,11 +218,45 @@ abstract class BaseModel extends Model
 
     public function validateClientSecret($attribute)
     {
+        if ($this->hasClientAssertion()) {
+            $this->validateClientAssertion();
+            return;
+        }
         $secret = $this->$attribute;
         if (!is_string($secret) || $secret === ''
             || !Yii::$app->security->compareString((string)$this->getClient()->client_secret, $secret)
         ) {
             $this->addError($attribute, Yii::t('conquer/oauth2', 'The client credentials are invalid.'), Exception::UNAUTHORIZED_CLIENT);
+        }
+    }
+
+    /**
+     * Authenticates the client with a JWT signed with its private key (RFC 7523, sections 2.2 and 3).
+     * @return void
+     * @throws Exception
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function validateClientAssertion()
+    {
+        if (is_string($this->client_secret) && $this->client_secret !== '') {
+            $this->errorServer(Yii::t('conquer/oauth2', 'Only one client authentication method may be used.'), Exception::INVALID_REQUEST);
+        }
+        if ($this->_clientAssertionType !== self::CLIENT_ASSERTION_TYPE_JWT) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'The client assertion type is not supported.'), Exception::INVALID_CLIENT);
+        }
+        if (!is_string($this->_clientAssertion) || $this->_clientAssertion === '') {
+            $this->errorServer(Yii::t('conquer/oauth2', 'The client assertion is missing.'), Exception::INVALID_REQUEST);
+        }
+        $client = $this->getClient();
+        $publicKey = $client->getPublicKey();
+        if ($publicKey === null) {
+            $this->errorServer(Yii::t('conquer/oauth2', 'The client credentials are invalid.'), Exception::INVALID_CLIENT);
+        }
+        try {
+            $this->getJwtValidator()->validate($this->_clientAssertion, $publicKey, $client->client_id, $client->client_id);
+        } catch (\UnexpectedValueException $e) {
+            Yii::info('Invalid client assertion of ' . $client->client_id . ': ' . $e->getMessage(), __METHOD__);
+            $this->errorServer(Yii::t('conquer/oauth2', 'The client assertion is invalid.'), Exception::INVALID_CLIENT);
         }
     }
 

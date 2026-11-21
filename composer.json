@@ -30,8 +30,12 @@
         "ext-pdo_sqlite": "*",
         "codeception/codeception": "^4.2 || ^5.0",
         "codeception/module-asserts": "^2.0 || ^3.0",
+        "firebase/php-jwt": "^6.0 || ^7.0",
         "phpstan/phpstan": "^2.1",
         "yiisoft/yii2-coding-standards": "^2.0"
+    },
+    "suggest": {
+        "firebase/php-jwt": "Required for the JWT bearer grant and JWT client authentication (RFC 7523)"
     },
     "autoload": {
         "psr-4": {
@@ -46,7 +50,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "2.1.x-dev"
+            "dev-master": "2.2.x-dev"
         }
     },
     "repositories": [

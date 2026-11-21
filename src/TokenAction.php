@@ -32,7 +32,7 @@ class TokenAction extends Action
      * Request parameters that must never be accepted from the query string.
      * @var string[]
      */
-    public $bodyOnlyParams = ['client_secret', 'code', 'code_verifier', 'refresh_token', 'password', 'assertion'];
+    public $bodyOnlyParams = ['client_secret', 'client_assertion', 'code', 'code_verifier', 'refresh_token', 'password', 'assertion'];
 
     public $grantTypes = [
         'authorization_code' => 'conquer\oauth2\granttypes\Authorization',

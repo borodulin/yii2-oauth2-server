@@ -105,7 +105,7 @@ class Authorization extends BaseModel
             if (!$this->verifyCodeChallenge($authCode->code_challenge, $authCode->code_challenge_method)) {
                 $this->errorServer(Yii::t('conquer/oauth2', 'The code verifier is invalid.'), Exception::INVALID_GRANT);
             }
-            if ($this->client_secret !== null && $this->client_secret !== '') {
+            if ($this->hasClientCredentials()) {
                 $this->validateClientSecret('client_secret');
             }
         } else {

@@ -49,6 +49,7 @@ abstract class OAuthTestCase extends \Codeception\Test\Unit
             'redirect_uri' => 'text NOT NULL',
             'grant_type' => 'text',
             'scope' => 'text',
+            'public_key' => 'text',
             'created_at' => 'integer NOT NULL',
             'updated_at' => 'integer NOT NULL',
             'created_by' => 'integer',

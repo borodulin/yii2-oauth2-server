@@ -56,13 +56,16 @@ class RefreshToken extends BaseModel
     public function rules()
     {
         return [
-            [['client_id', 'grant_type', 'client_secret', 'refresh_token'], 'required'],
+            [['client_id', 'grant_type', 'refresh_token'], 'required'],
+            ['client_secret', 'required', 'when' => function () {
+                return !$this->hasClientAssertion();
+            }],
             ['grant_type', 'required', 'requiredValue' => 'refresh_token'],
             [['client_id', 'client_secret'], 'string', 'max' => 80],
             [['refresh_token'], 'string', 'max' => 40],
             [['scope'], 'string'],
             [['client_id'], 'validateClientId'],
-            [['client_secret'], 'validateClientSecret'],
+            [['client_secret'], 'validateClientSecret', 'skipOnEmpty' => false],
             [['refresh_token'], 'validateRefreshToken'],
         ];
     }
