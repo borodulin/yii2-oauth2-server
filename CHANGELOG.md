@@ -4,7 +4,7 @@
 - Enh: PHPStan (level 5) in CI
 - Enh: JWT bearer grant (RFC 7523, 2.1), disabled by default; clients must list it explicitly in `grant_type`
 - Enh: JWT client authentication with `client_assertion` (RFC 7523, 2.2)
-- Enh: new migration `m261122_120000_oauth_jwt` adds `oauth2_client.public_key`; JWT support requires `firebase/php-jwt`
+- Enh: new migration `m261122_120000_oauth_jwt` adds `oauth2_client.public_key`; JWT support requires PHP 8.0+ and `firebase/php-jwt` ^7.0
 
 2.1.0
 -----

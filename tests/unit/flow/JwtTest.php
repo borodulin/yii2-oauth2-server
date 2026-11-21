@@ -28,6 +28,9 @@ class JwtTest extends OAuthTestCase
 
     protected function _before()
     {
+        if (!class_exists(JWT::class)) {
+            $this->markTestSkipped('firebase/php-jwt is not installed');
+        }
         parent::_before();
         // the default audience is the URL of the token endpoint
         Yii::$app->request->setHostInfo('https://server.example.com');

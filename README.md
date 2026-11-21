@@ -262,10 +262,10 @@ class User extends ActiveRecord implements IdentityInterface, OAuth2IdentityInte
 
 ### JWT (RFC 7523)
 
-Requires `firebase/php-jwt`:
+Requires PHP 8.0+ and `firebase/php-jwt` 7 (earlier versions have known vulnerabilities):
 
 ```
-composer require firebase/php-jwt
+composer require firebase/php-jwt:^7.0
 ```
 
 Run `yii migrate/up`: the migration adds `oauth2_client.public_key`. Store the client's PEM encoded public key there

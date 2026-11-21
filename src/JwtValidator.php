@@ -21,7 +21,7 @@ use yii\di\Instance;
  * The JWT must be signed with the private key matching the client's public key, and contain
  * "iss", "sub", "aud" and "exp" claims (RFC 7523, section 3).
  *
- * Requires firebase/php-jwt.
+ * Requires firebase/php-jwt ^7.0 (PHP 8.0+).
  *
  * Can be configured through the DI container:
  *
@@ -97,7 +97,7 @@ class JwtValidator extends BaseObject
     public function validate($jwt, $publicKey, $issuer, $subject = null)
     {
         if (!class_exists(JWT::class)) {
-            throw new InvalidConfigException('JWT support requires firebase/php-jwt: composer require firebase/php-jwt');
+            throw new InvalidConfigException('JWT support requires firebase/php-jwt: composer require firebase/php-jwt:^7.0');
         }
 
         $parts = explode('.', $jwt);
