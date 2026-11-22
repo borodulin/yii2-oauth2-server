@@ -1,5 +1,5 @@
-3.0.0 under development
------------------------
+3.0.0
+-----
 Security release with breaking changes, see "Upgrading to 3.0" in README.
 
 - Sec: confidential clients must authenticate in the authorization code grant also with PKCE (a leaked code could be redeemed with just the verifier); public clients are clients without a secret and public key
